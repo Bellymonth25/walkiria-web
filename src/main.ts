@@ -8,7 +8,7 @@ import { sinDomicilio } from "./lib/entrega";
 import { estaAgotado, leerAgotados } from "./lib/disponibilidad";
 import {
   aumentar, conRellenoSugerido, disminuir, enlaceWhatsApp, faltantes, normalizarCantidad, normalizarKgPavo,
-  normalizarKgRelleno, nuevaLinea, textoFaltantes,
+  normalizarKgRelleno, nuevaLinea, textoFaltantes, variasLineas,
 } from "./lib/pedido";
 import { $, aviso, llenar } from "./ui/dom";
 import { pintarChips, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
@@ -33,7 +33,8 @@ let busqueda = "";
 let agotados: ReadonlySet<string> = new Set(pruebaAgotados());
 const hoy = new Date();
 let mesVisto = { anio: hoy.getFullYear(), mes: hoy.getMonth() };
-let siguienteMaquila = 1;
+/** Siguiente número de línea para productos que se agregan varias veces (maquila-1, pavo-relleno-2…). */
+const siguiente: Record<string, number> = {};
 
 const ctx: ContextoOrden = {
   catalogo: productos,
@@ -182,7 +183,11 @@ function pruebaAgotados(): string[] {
 function agregar(productoId: string): void {
   const p = producto(productoId);
   if (!p || estaAgotado(p, agotados)) return;
-  const id = p.maquila ? `maquila-${siguienteMaquila++}` : p.id;
+  let id = p.id;
+  if (variasLineas(p)) {
+    siguiente[p.id] = (siguiente[p.id] ?? 0) + 1;
+    id = `${p.id}-${siguiente[p.id]}`;
+  }
   ponerLinea(id, nuevaLinea(p));
   repintar(p.id);
   if (p.maquila) document.querySelector<HTMLSelectElement>(`#tipo-${id}`)?.focus();

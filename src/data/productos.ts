@@ -21,7 +21,7 @@ export const productos: readonly Producto[] = [
   { id: "pavo-ahumado", nombre: "Pavo Ahumado", categoria: "pavo", unidad: "kg", precio: 390, pavoEntero: true, firebaseIds: ["PROD_003"] },
   { id: "pechuga-pavo", nombre: "Pechuga de Pavo", categoria: "pavo", unidad: "kg", precio: 590, descripcion: "Mechada, horneada o adobada.", firebaseIds: ["PROD_017", "PROD_018", "PROD_019"] },
   { id: "pierna-pavo", nombre: "Pierna de Pavo horneada", categoria: "pavo", unidad: "kg", precio: 200, firebaseIds: ["PROD_032"] },
-  { id: "pato-naranja", nombre: "Pato a la Naranja", categoria: "pavo", unidad: "kg", precio: 500, descripcion: "Relleno de manzanas.", firebaseIds: ["PROD_007"] },
+  { id: "pato-naranja", nombre: "Pato a la Naranja", categoria: "pavo", unidad: "kg", precio: 500, descripcion: "Relleno de manzanas. Se pide por pato y se cobra por peso: cada uno pesa de 1.8 a 2.2 kg.", pieza: { nombre: "pato", plural: "patos", kgMin: 1.8, kgMax: 2.2, kgEstimado: 2 }, firebaseIds: ["PROD_007"] },
 
   { id: "lomo-mechado", nombre: "Lomo Mechado", categoria: "cerdo", unidad: "kg", precio: 420, descripcion: "Con pasitas.", clasico: true, firebaseIds: ["PROD_005"] },
   { id: "lomo-adobado", nombre: "Lomo Adobado", categoria: "cerdo", unidad: "kg", precio: 430, descripcion: "Enchilado.", clasico: true, firebaseIds: ["PROD_015"] },

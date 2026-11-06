@@ -14,7 +14,7 @@ export const nombrePresentacion: Record<Presentacion, string> = {
 /** Opciones de presentación que aplican a un producto. La primera es la de default (sin costo). */
 export function presentaciones(p: Producto): Presentacion[] {
   if (p.unidad === "pza" || p.maquila) return [];
-  return p.pavoEntero ? ["bolsa", "vacio", "charola"] : ["acrilico", "vacio", "charola"];
+  return p.pavoEntero || p.pieza ? ["bolsa", "vacio", "charola"] : ["acrilico", "vacio", "charola"];
 }
 
 export const tieneCosto = (pr: Presentacion): pr is "vacio" | "charola" => pr === "vacio" || pr === "charola";
@@ -39,6 +39,10 @@ export function empaquesDe(p: Producto, l: Linea): Empaque[] {
   if (!presentaciones(p).length || !tieneCosto(l.presentacion)) return [];
   const precios = empaques.precio[l.presentacion];
   if (p.pavoEntero) return [{ tamano: "grande", piezas: l.cantidad, precio: precios.grande }];
+  if (p.pieza) {
+    const tamano = tamanoPara(p.pieza.kgEstimado);
+    return [{ tamano, piezas: l.cantidad, precio: precios[tamano] }];
+  }
   const kg = l.cantidad;
   const piezas = Math.max(1, Math.ceil(kg / empaques.capacidad.grande - 1e-9));
   const tamano = tamanoPara(kg / piezas);
@@ -83,6 +87,9 @@ export const maquilaIncompleta = (l: Linea): boolean =>
 
 // ---------- Cantidades ----------
 
+/** Productos que se agregan como varias líneas independientes (cada maquila, cada pavo). */
+export const variasLineas = (p: Producto): boolean => Boolean(p.maquila || p.pavoEntero);
+
 export function nuevaLinea(p: Producto): Linea {
   return {
     productoId: p.id,
@@ -102,6 +109,7 @@ export function nuevaLinea(p: Producto): Linea {
 /** kg que se van a cobrar (estimado en pavos enteros). En piezas regresa 0. */
 export function kgDe(p: Producto, l: Linea): number {
   if (p.pavoEntero) return l.cantidad * (l.tamano === "completo" ? l.kgPorPavo : pavo.kgMedio.estimado);
+  if (p.pieza) return l.cantidad * p.pieza.kgEstimado;
   return p.unidad === "kg" ? l.cantidad : 0;
 }
 
@@ -121,8 +129,14 @@ export const importeLinea = (p: Producto, l: Linea): number => importeProducto(p
 export function textoCantidad(p: Producto, l: Linea): string {
   if (p.pavoEntero) {
     const n = l.cantidad;
-    if (l.tamano === "medio") return `${n} ${n === 1 ? "medio pavo" : "medios pavos"} (3 a 4 kg c/u)`;
-    return `${n} ${n === 1 ? "pavo completo" : "pavos completos"} (aprox. ${kilos(l.kgPorPavo)} c/u)`;
+    const cu = n === 1 ? "" : " c/u";
+    if (l.tamano === "medio") return `${n} ${n === 1 ? "medio pavo" : "medios pavos"} (${pavo.kgMedio.min} a ${pavo.kgMedio.max} kg${cu})`;
+    return `${n} ${n === 1 ? "pavo completo" : "pavos completos"} (aprox. ${kilos(l.kgPorPavo)}${cu})`;
+  }
+  if (p.pieza) {
+    const { nombre, plural, kgMin, kgMax } = p.pieza;
+    const n = l.cantidad;
+    return `${n} ${n === 1 ? nombre : plural} (${kgMin} a ${kgMax} kg c/u, aprox. ${kilos(kgDe(p, l))})`;
   }
   if (p.maquila) return `aprox. ${kilos(l.cantidad)}`;
   return p.unidad === "pza" ? `${l.cantidad} ${l.cantidad === 1 ? "pza" : "pzas"}` : kilos(l.cantidad);
@@ -132,7 +146,7 @@ export function textoCantidad(p: Producto, l: Linea): string {
 export const nombreLinea = (p: Producto, l: Linea): string =>
   p.maquila ? `Maquila de ${nombreMaquila(l) || "carne"}` : p.nombre;
 
-const porKilo = (p: Producto): boolean => p.unidad === "kg" && !p.pavoEntero;
+const porKilo = (p: Producto): boolean => p.unidad === "kg" && !p.pavoEntero && !p.pieza;
 
 /** Paso de los botones + y −. */
 export const paso = (p: Producto): number => (porKilo(p) ? 0.5 : 1);

@@ -96,7 +96,7 @@ describe("mensaje de WhatsApp", () => {
       ctx,
     );
     expect(m.split("\n")[1]).toBe("Nombre: Ana López");
-    expect(m).toContain("• Pavo Relleno, 1 medio pavo (3 a 4 kg c/u): $1,365");
+    expect(m).toContain("• Pavo Relleno, 1 medio pavo (3 a 4 kg): $1,365");
     expect(m).toContain("Presentación: Bolsa o caja de cartón (sin costo)");
     expect(m).toContain("• Lomo Adobado, 6 kg: $2,580");
     expect(m).toContain("Presentación: 2 charolas grandes (+$70)");
@@ -201,5 +201,31 @@ describe("reglas de entrega", () => {
     expect(sinDomicilio("2026-12-24", hoy, temporada)).toBe("tienda");
     expect(sinDomicilio("2026-11-07", hoy, temporada)).toBe("aviso");
     expect(sinDomicilio("2026-11-08", hoy, temporada)).toBeNull();
+  });
+});
+
+describe("varios pavos y patos", () => {
+  it("cada pavo es su propia línea, con su propio peso", () => {
+    const pedido = {
+      lineas: {
+        "pavo-relleno-1": linea(pavoR, { kgPorPavo: 7 }),
+        "pavo-relleno-2": linea(pavoR, { kgPorPavo: 9, presentacion: "charola" as const }),
+      },
+      nombre: "Ana", modo: "tienda" as const, zona: 0, direccion: "", referencias: "", nota: "", fecha: "2026-12-23",
+    };
+    expect(total(pedido, productos, [])).toBe(7 * 390 + 9 * 390 + 35);
+    const m = mensaje(pedido, { catalogo: productos, zonas: [], nombreDia: "Miércoles 23 de diciembre", tardio: false });
+    expect(m).toContain("• Pavo Relleno, 1 pavo completo (aprox. 7 kg): $2,730");
+    expect(m).toContain("• Pavo Relleno, 1 pavo completo (aprox. 9 kg): $3,510");
+  });
+
+  it("el pato se pide por pieza y se cobra por su peso aproximado", () => {
+    const pato = prod("pato-naranja");
+    const l = linea(pato, { cantidad: 2 });
+    expect(importeLinea(pato, l)).toBe(2 * 2 * 500);
+    expect(l.presentacion).toBe("bolsa");
+    expect(aumentar(pato, 2)).toBe(3);
+    expect(normalizarCantidad(pato, 1.4)).toBe(1);
+    expect(empaquesDe(pato, linea(pato, { cantidad: 2, presentacion: "charola" }))).toEqual([{ tamano: "mediana", piezas: 2, precio: 30 }]);
   });
 });

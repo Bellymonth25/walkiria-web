@@ -1,7 +1,7 @@
 import type { Categoria, CategoriaId, Linea, Producto } from "../types";
 import { dinero, escapar, kilos, normalizar } from "../lib/formato";
 import {
-  empaquesDe, importeLinea, llevaRelleno, nombrePresentacion, presentaciones, textoEmpaques,
+  empaquesDe, importeLinea, variasLineas, llevaRelleno, nombrePresentacion, presentaciones, textoEmpaques,
 } from "../lib/pedido";
 import { maquila, pavo } from "../data/temporada";
 import { $ } from "./dom";
@@ -46,11 +46,13 @@ function campoNumero(id: string, attr: string, valor: number, min: string, step:
   return `<input id="${attr}-${id}" class="num" type="number" inputmode="${modo}" min="${min}" step="${step}" value="${valor}" data-${attr}="${id}" aria-label="${etiqueta}">`;
 }
 
-function detalle(p: Producto, id: string, l: Linea): string {
+function detalle(p: Producto, id: string, l: Linea, numero: number): string {
   const n = escapar(p.nombre);
-  const porKilo = p.unidad === "kg" && !p.pavoEntero;
-  const unidad = p.pavoEntero ? (l.cantidad === 1 ? "pavo" : "pavos") : p.unidad === "pza" ? "pzas" : "kg";
+  const porKilo = p.unidad === "kg" && !p.pavoEntero && !p.pieza;
+  const unidad = p.pieza ? (l.cantidad === 1 ? p.pieza.nombre : p.pieza.plural) : p.unidad === "pza" ? "pzas" : "kg";
   const partes: string[] = [];
+  // Con varios pavos o maquilas, cada uno lleva su número para no confundirlos.
+  if (numero > 0) partes.push(`<div class="dnum dwide">${p.maquila ? "Maquila" : "Pavo"} ${numero}</div>`);
 
   if (p.maquila) {
     const opciones = maquila.tipos
@@ -68,7 +70,8 @@ function detalle(p: Producto, id: string, l: Linea): string {
     ], l.tamano)}</div>`);
   }
 
-  partes.push(`<div class="dfield"><label class="dlabel" for="qty-${id}">${p.maquila ? "Kilos aprox. de su carne" : "Cantidad"}</label>
+  // Cada pavo es su propia línea: no lleva cantidad, solo tamaño y peso.
+  if (!p.pavoEntero) partes.push(`<div class="dfield"><label class="dlabel" for="qty-${id}">${p.maquila ? "Kilos aprox. de su carne" : "Cantidad"}</label>
     <div class="qty">
       <button type="button" data-dec="${id}" aria-label="Menos ${n}">−</button>
       ${p.maquila
@@ -114,8 +117,8 @@ export function renglon(p: Producto, lineas: readonly [string, Linea][], agotado
   const enPedido = lineas.length > 0;
   const accion = agotado
     ? `<span class="soldout">Agotado</span>`
-    : p.maquila
-      ? `<button type="button" class="add" data-add="${p.id}">${enPedido ? "Agregar otra" : "Agregar"}</button>`
+    : variasLineas(p)
+      ? `<button type="button" class="add" data-add="${p.id}">${enPedido ? (p.maquila ? "Agregar otra" : "Agregar otro") : "Agregar"}</button>`
       : enPedido
         ? `<span class="inorder">En tu pedido</span>`
         : `<button type="button" class="add" data-add="${p.id}">Agregar</button>`;
@@ -123,7 +126,7 @@ export function renglon(p: Producto, lineas: readonly [string, Linea][], agotado
     <div class="name">${n}${p.clasico ? '<span class="tag">Clásico</span>' : ""}${p.descripcion ? `<span class="meta">${escapar(p.descripcion)}</span>` : ""}</div>
     <div class="price num"><b>${dinero(p.precio)}</b><span>/${p.unidad}</span></div>
     <div class="action">${accion}</div>
-    ${agotado ? "" : lineas.map(([id, l]) => detalle(p, id, l)).join("")}</li>`;
+    ${agotado ? "" : lineas.map(([id, l], i) => detalle(p, id, l, lineas.length > 1 ? i + 1 : 0)).join("")}</li>`;
 }
 
 const lineasDe = (v: VistaMenu, p: Producto): [string, Linea][] =>
