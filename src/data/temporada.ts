@@ -1,39 +1,98 @@
-import type { DiaEntrega, ZonaEnvio } from "../types";
+import type { DiaEspecial, TamanoEmpaque, ZonaEnvio } from "../types";
+
+export interface Corte {
+  para: string;
+  limite: number;
+  tardio: number;
+}
 
 export interface Temporada {
   anio: number;
   notaPrecios: string;
-  /** Último día de diciembre para pedidos en línea y por teléfono. */
-  diaLimite: number;
-  /** Día de pedidos tardíos: se reciben, sujetos a disponibilidad. */
-  diaTardio: number;
+  /**
+   * Fechas límite de diciembre para pedidos en línea y por teléfono (2 días antes de la entrega).
+   * El día siguiente al límite se reciben pedidos tardíos, sujetos a disponibilidad.
+   */
+  cortes: readonly Corte[];
   anticipo: string;
-  diasEntrega: readonly DiaEntrega[];
-  /** Índice de `diasEntrega` que aparece seleccionado al entrar. */
-  diaPorDefecto: number;
+  /** Días de diciembre con regla especial (se marcan en el calendario). */
+  diasEspeciales: readonly DiaEspecial[];
+  /** Último día que se puede elegir en el calendario (diciembre). */
+  ultimoDia: number;
+  /** Días de anticipación para envío a domicilio. */
+  diasAvisoDomicilio: number;
   zonas: readonly ZonaEnvio[];
 }
 
-/** Datos de la temporada y del negocio. Lo que cambia cada año está aquí. */
 export const temporada: Temporada = {
   anio: 2026,
   notaPrecios: "Precios de la temporada 2025 mientras salen los de 2026.",
-  diaLimite: 22,
-  diaTardio: 23,
-  anticipo: "50%",
-  diasEntrega: [
-    { dia: 20 }, { dia: 21 }, { dia: 22 }, { dia: 23 },
-    { dia: 24, soloTienda: true },
-    { dia: 30 },
-    { dia: 31, soloTienda: true },
+  cortes: [
+    { para: "Navidad", limite: 22, tardio: 23 },
+    { para: "Año Nuevo", limite: 29, tardio: 30 },
   ],
-  diaPorDefecto: 3,
+  anticipo: "50%",
+  diasEspeciales: [
+    { dia: 22, tipo: "limite" },
+    { dia: 23, tipo: "sujeto" },
+    { dia: 24, tipo: "tienda" },
+    { dia: 29, tipo: "limite" },
+    { dia: 30, tipo: "sujeto" },
+    { dia: 31, tipo: "tienda" },
+  ],
+  ultimoDia: 31,
+  diasAvisoDomicilio: 2,
   zonas: [
     { nombre: "Zona Sur", costo: 100 },
     { nombre: "Zona Centro", costo: 150 },
     { nombre: "Zona Norte", costo: 200 },
   ],
 };
+
+/** Pavos enteros. */
+export const pavo = {
+  /** Mínimo de un pavo completo. */
+  kgMinimoCompleto: 5,
+  /** Medio pavo pesa entre 3 y 4 kg; para el estimado se usa el punto medio. */
+  kgMedio: { min: 3, max: 4, estimado: 3.5 },
+} as const;
+
+/**
+ * Empaques con costo. Capacidad máxima en kg de cada tamaño
+ * (chica hasta 1 kg, mediana hasta 2.5 kg, grande hasta 4 kg).
+ * Si no cabe en una grande, se reparte en varias.
+ */
+export const empaques = {
+  capacidad: { chica: 1, mediana: 2.5, grande: 4 } satisfies Record<TamanoEmpaque, number>,
+  precio: {
+    vacio: { chica: 25, mediana: 30, grande: 35 } satisfies Record<TamanoEmpaque, number>,
+    charola: { chica: 25, mediana: 30, grande: 35 } satisfies Record<TamanoEmpaque, number>,
+  },
+} as const;
+
+/** Servicio "¿Le regalaron el pavo?". */
+export const maquila = {
+  precioCocinarKg: 75,
+  precioRellenoKg: 390,
+  /** Días antes de la entrega para traer el producto a la tienda. */
+  diasAnticipacion: 2,
+  /** Opciones de "¿qué nos trae?". "Otro" pide especificar. */
+  tipos: [
+    "Pavo Relleno", "Pavo Adobado", "Pavo Ahumado",
+    "Lomo Horneado", "Lomo Mechado", "Lomo Adobado", "Lomo a la Ciruela",
+    "Pechuga de Pavo Adobada", "Pechuga de Pavo Horneada", "Pechuga de Pavo Mechada",
+    "Pierna Adobada", "Pierna Horneada", "Pierna Mechada",
+    "Pato", "Costillas", "Otro",
+  ],
+  /** El tipo que lleva relleno (se cobra aparte por kilo de relleno). */
+  tipoConRelleno: "Pavo Relleno",
+  /** Relleno sugerido según el peso del pavo: hasta 7 kg → 1 kg, hasta 9 kg → 1.5 kg, más → 2 kg. */
+  rellenoSugerido: [
+    { hastaKg: 7, kgRelleno: 1 },
+    { hastaKg: 9, kgRelleno: 1.5 },
+    { hastaKg: Infinity, kgRelleno: 2 },
+  ],
+} as const;
 
 export const negocio = {
   /** 52 + 10 dígitos, sin espacios. */
@@ -44,4 +103,10 @@ export const negocio = {
   /** Dirección para Google Maps y Waze. */
   direccionMapas: "Clavel Norte 3, San Pedro Mártir, Tlalpan, 14650 Ciudad de México",
   horario: "9:00 a 19:00",
+} as const;
+
+/** Documento público de Firestore con los productos agotados (lo escribe una Cloud Function). */
+export const firebase = {
+  proyecto: "lwk-app-a583b",
+  documento: "publicWeb/disponibilidad",
 } as const;

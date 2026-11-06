@@ -10,9 +10,37 @@ Solo hay que tocar dos archivos:
 | Archivo | Qué tiene |
 |---|---|
 | `src/data/productos.ts` | Productos, descripciones y precios. No cambies los `id`. |
-| `src/data/temporada.ts` | Año, día límite, día de pedidos tardíos, anticipo, días de entrega, zonas de envío, teléfonos, dirección y horario. |
+| `src/data/temporada.ts` | Año, día límite, día de pedidos tardíos, anticipo, días especiales de diciembre (23 y 30 sujetos a disponibilidad, 24 y 31 solo tienda), días de aviso para envío a domicilio, zonas de envío, teléfonos, dirección y horario. |
 
-Los días de la semana se calculan solos a partir del año.
+El calendario arranca en el mes actual y deja elegir de hoy al 31 de diciembre.
+
+En `temporada.ts` también están los precios de empaques (y su capacidad en kg), el servicio
+la maquila (precio, relleno y la lista de "¿Qué nos trae?") y los datos del negocio.
+
+## Productos agotados
+
+La página lee `publicWeb/disponibilidad` de Firestore (sin SDK, con un `fetch`). Ese documento
+lo escribe la Cloud Function `onProductWritten` del repo de la app: cada vez que un producto
+cambia, guarda la lista de ids con `estaDisponible == false`. Un producto de la web está agotado
+cuando todos sus `firebaseIds` (en `productos.ts`) están en esa lista.
+
+Reglas de Firestore necesarias:
+
+```
+match /publicWeb/{doc} {
+  allow read: if true;
+  allow write: if false;
+}
+```
+
+Si no se puede leer el documento, la página muestra todo disponible.
+
+Para probar en local sin Firebase: `http://localhost:5173/?agotados=PROD_001,PROD_008`
+
+## Foto de la cena
+
+Si existe `public/img/cena.jpg` se muestra como banda debajo del servicio de maquila
+(proporción 21:8, se recorta al centro). Si no existe, no aparece nada.
 
 ## Desarrollo
 

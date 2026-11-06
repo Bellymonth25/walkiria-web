@@ -1,8 +1,12 @@
 import type { Pedido, Producto } from "../types";
 import type { Temporada } from "../data/temporada";
-import { cantidad, dinero, escapar } from "../lib/formato";
-import { costoEnvio, enlaceWhatsApp, faltantes, mensaje, renglones, textoFaltantes, total } from "../lib/pedido";
-import { nombreDia } from "../lib/fechas";
+import { dinero, escapar } from "../lib/formato";
+import {
+  costoEnvio, empaquesDe, enlaceWhatsApp, faltantes, mensaje, nombreLinea, presentaciones, renglones, textoCantidad,
+  textoEmpaques, textoFaltantes, total,
+} from "../lib/pedido";
+import { nombreFecha } from "../lib/fechas";
+import { tipoDeFecha } from "../lib/entrega";
 import { $ } from "./dom";
 
 export interface ContextoOrden {
@@ -13,11 +17,11 @@ export interface ContextoOrden {
 }
 
 export function textoPedido(pedido: Pedido, ctx: ContextoOrden): string {
-  const d = ctx.temporada.diasEntrega[pedido.dia];
   return mensaje(pedido, {
     catalogo: ctx.catalogo,
     zonas: ctx.temporada.zonas,
-    nombreDia: d ? nombreDia(ctx.temporada.anio, d.dia) : "",
+    nombreDia: pedido.fecha === null ? "" : nombreFecha(pedido.fecha),
+    diaSujeto: pedido.fecha !== null && tipoDeFecha(pedido.fecha, ctx.temporada) === "sujeto",
     tardio: ctx.tardio,
   });
 }
@@ -32,10 +36,12 @@ export function pintarOrden(pedido: Pedido, ctx: ContextoOrden): void {
   $("#hint").hidden = n > 0;
   $("#lines").innerHTML =
     filas
-      .map(
-        (r) =>
-          `<li><span><span class="q num">${cantidad(r.cantidad, r.producto.unidad)}</span>${escapar(r.producto.nombre)}</span><span class="num">${dinero(r.importe)}</span></li>`,
-      )
+      .map((r) => {
+        const pres = presentaciones(r.producto).length
+          ? `<small>${escapar(textoEmpaques(r.linea.presentacion, empaquesDe(r.producto, r.linea)))}</small>`
+          : "";
+        return `<li><span>${escapar(nombreLinea(r.producto, r.linea))} <span class="q">· ${escapar(textoCantidad(r.producto, r.linea))}</span>${pres}</span><span class="num">${dinero(r.importe)}</span></li>`;
+      })
       .join("") +
     (envio ? `<li><span>Envío ${escapar(ctx.temporada.zonas[pedido.zona]!.nombre)}</span><span class="num">${dinero(envio)}</span></li>` : "");
   $("#total").textContent = dinero(t);
@@ -47,7 +53,6 @@ export function pintarOrden(pedido: Pedido, ctx: ContextoOrden): void {
   const enviar = $<HTMLAnchorElement>("#send");
   enviar.href = listo ? enlaceWhatsApp(ctx.whatsapp, textoPedido(pedido, ctx)) : "#";
   enviar.setAttribute("aria-disabled", String(!listo));
-  enviar.style.opacity = listo ? "1" : ".5";
   const msg = $("#missing");
   msg.hidden = listo;
   msg.textContent = textoFaltantes(falta);
@@ -57,5 +62,6 @@ export function pintarOrden(pedido: Pedido, ctx: ContextoOrden): void {
     b.setAttribute("aria-pressed", String(b.dataset.mode === pedido.modo)),
   );
   $("#zoneField").hidden = !domicilio;
+  $("#domNote").hidden = !domicilio;
   $("#addrField").hidden = !domicilio;
 }

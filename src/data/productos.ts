@@ -4,6 +4,7 @@ import type { Categoria, Producto } from "../types";
  * Lista de precios pública.
  * Cada temporada solo hay que cambiar los precios aquí (y `notaPrecios` en temporada.ts).
  * Fuente actual: volante "Cenas de fin de año 2025".
+ * `firebaseIds` sale de products/productos.json de la app: confirmar contra Firestore.
  */
 export const categorias: readonly Categoria[] = [
   { id: "pavo", nombre: "Pavo y pato" },
@@ -11,33 +12,31 @@ export const categorias: readonly Categoria[] = [
   { id: "trad", nombre: "Bacalao y romeritos" },
   { id: "guarn", nombre: "Guarniciones y pastas" },
   { id: "pan", nombre: "Postres" },
-  { id: "serv", nombre: "¿Le regalaron el pavo?" },
+  { id: "maquila", nombre: "Maquila: le cocinamos su carne" },
 ];
 
 export const productos: readonly Producto[] = [
-  { id: "pavo-relleno", nombre: "Pavo Relleno", categoria: "pavo", unidad: "kg", precio: 390, descripcion: "Con relleno tradicional. Por pieza o media pieza.", clasico: true },
-  { id: "pavo-adobado", nombre: "Pavo Adobado", categoria: "pavo", unidad: "kg", precio: 390, descripcion: "Enchilado. Por pieza o media pieza." },
-  { id: "pavo-ahumado", nombre: "Pavo Ahumado", categoria: "pavo", unidad: "kg", precio: 390, descripcion: "En pieza." },
-  { id: "pechuga-pavo", nombre: "Pechuga de Pavo", categoria: "pavo", unidad: "kg", precio: 590, descripcion: "Mechada, horneada o adobada." },
-  { id: "pierna-pavo", nombre: "Pierna de Pavo horneada", categoria: "pavo", unidad: "kg", precio: 200 },
-  { id: "pato-naranja", nombre: "Pato a la Naranja", categoria: "pavo", unidad: "kg", precio: 500, descripcion: "Relleno de manzanas. Por pieza." },
+  { id: "pavo-relleno", nombre: "Pavo Relleno", categoria: "pavo", unidad: "kg", precio: 390, descripcion: "Con nuestro relleno tradicional de carne de cerdo y res, especias y fruta seca.", clasico: true, pavoEntero: true, firebaseIds: ["PROD_001"] },
+  { id: "pavo-adobado", nombre: "Pavo Adobado", categoria: "pavo", unidad: "kg", precio: 390, descripcion: "Enchilado.", pavoEntero: true, firebaseIds: ["PROD_002"] },
+  { id: "pavo-ahumado", nombre: "Pavo Ahumado", categoria: "pavo", unidad: "kg", precio: 390, pavoEntero: true, firebaseIds: ["PROD_003"] },
+  { id: "pechuga-pavo", nombre: "Pechuga de Pavo", categoria: "pavo", unidad: "kg", precio: 590, descripcion: "Mechada, horneada o adobada.", firebaseIds: ["PROD_017", "PROD_018", "PROD_019"] },
+  { id: "pierna-pavo", nombre: "Pierna de Pavo horneada", categoria: "pavo", unidad: "kg", precio: 200, firebaseIds: ["PROD_032"] },
+  { id: "pato-naranja", nombre: "Pato a la Naranja", categoria: "pavo", unidad: "kg", precio: 500, descripcion: "Relleno de manzanas.", firebaseIds: ["PROD_007"] },
 
-  { id: "lomo-mechado", nombre: "Lomo Mechado", categoria: "cerdo", unidad: "kg", precio: 420, descripcion: "Con pasitas.", clasico: true },
-  { id: "lomo-adobado", nombre: "Lomo Adobado", categoria: "cerdo", unidad: "kg", precio: 430, descripcion: "Enchilado.", clasico: true },
-  { id: "lomo-ciruela", nombre: "Lomo a la Ciruela", categoria: "cerdo", unidad: "kg", precio: 450, descripcion: "Enrollado con ciruela y tocino." },
-  { id: "costilla-cerdo", nombre: "Costilla de Cerdo horneada", categoria: "cerdo", unidad: "kg", precio: 350 },
+  { id: "lomo-mechado", nombre: "Lomo Mechado", categoria: "cerdo", unidad: "kg", precio: 420, descripcion: "Con pasitas.", clasico: true, firebaseIds: ["PROD_005"] },
+  { id: "lomo-adobado", nombre: "Lomo Adobado", categoria: "cerdo", unidad: "kg", precio: 430, descripcion: "Enchilado.", clasico: true, firebaseIds: ["PROD_015"] },
+  { id: "lomo-ciruela", nombre: "Lomo a la Ciruela", categoria: "cerdo", unidad: "kg", precio: 450, descripcion: "Enrollado con ciruela y tocino.", firebaseIds: ["PROD_034"] },
+  { id: "costilla-cerdo", nombre: "Costilla de Cerdo horneada", categoria: "cerdo", unidad: "kg", precio: 350, firebaseIds: ["PROD_021"] },
 
-  { id: "bacalao", nombre: "Bacalao", categoria: "trad", unidad: "kg", precio: 800, descripcion: "A la vizcaína, con aceitunas, almendras y aceite de oliva.", clasico: true },
-  { id: "romeritos", nombre: "Romeritos", categoria: "trad", unidad: "kg", precio: 280, descripcion: "Con nopales, camarones y tortitas de camarón.", clasico: true },
+  { id: "bacalao", nombre: "Bacalao", categoria: "trad", unidad: "kg", precio: 800, descripcion: "A la vizcaína, con aceitunas, almendras y aceite de oliva.", clasico: true, firebaseIds: ["PROD_008"] },
+  { id: "romeritos", nombre: "Romeritos", categoria: "trad", unidad: "kg", precio: 280, descripcion: "Con nopales, camarones y tortitas de camarón.", clasico: true, firebaseIds: ["PROD_009"] },
 
-  { id: "ensalada-manzana", nombre: "Ensalada de Manzana", categoria: "guarn", unidad: "kg", precio: 250, descripcion: "Con nuez, piña y apio.", clasico: true },
-  { id: "relleno", nombre: "Relleno Tradicional", categoria: "guarn", unidad: "kg", precio: 390, descripcion: "Carne de cerdo y res, especias y fruta seca. También enchilado." },
-  { id: "espagueti", nombre: "Espagueti", categoria: "guarn", unidad: "kg", precio: 250, descripcion: "A las finas hierbas o en salsa de 3 quesos." },
-  { id: "ravioles", nombre: "Ravioles de Queso", categoria: "guarn", unidad: "kg", precio: 320 },
+  { id: "ensalada-manzana", nombre: "Ensalada de Manzana", categoria: "guarn", unidad: "kg", precio: 250, descripcion: "Con nuez, piña y apio.", clasico: true, firebaseIds: ["PROD_010"] },
+  { id: "relleno", nombre: "Relleno Tradicional", categoria: "guarn", unidad: "kg", precio: 390, descripcion: "Carne de cerdo y res, especias y fruta seca. También enchilado.", firebaseIds: ["PROD_012"] },
+  { id: "espagueti", nombre: "Espagueti", categoria: "guarn", unidad: "kg", precio: 250, descripcion: "A las finas hierbas o en salsa de 3 quesos.", firebaseIds: ["PROD_029", "PROD_030"] },
+  { id: "ravioles", nombre: "Ravioles de Queso", categoria: "guarn", unidad: "kg", precio: 320, firebaseIds: ["PROD_022"] },
 
-  { id: "strudel", nombre: "Strudel de Manzana", categoria: "pan", unidad: "pza", precio: 500, descripcion: "Pasta hojaldrada rellena de manzana. Para 10 personas.", clasico: true },
-  { id: "strudel-individual", nombre: "Strudel Individual", categoria: "pan", unidad: "pza", precio: 40, descripcion: "Pasta hojaldrada rellena de manzana." },
-
-  { id: "maquila", nombre: "Cocinamos su pavo", categoria: "serv", unidad: "kg", precio: 150, descripcion: "Usted trae su pavo y nosotros lo cocinamos. Se cobra por kilo de lo que pese." },
-  { id: "maquila-relleno", nombre: "Relleno para su pavo", categoria: "serv", unidad: "kg", precio: 390, descripcion: "Si quiere que su pavo lleve relleno. Se cobra por kilo de relleno." },
+  { id: "strudel", nombre: "Strudel de Manzana", categoria: "pan", unidad: "pza", precio: 500, descripcion: "Pasta hojaldrada rellena de manzana. Para 10 personas.", clasico: true, firebaseIds: ["PROD_025"] },
+  { id: "maquila", nombre: "Maquila", categoria: "maquila", unidad: "kg", precio: 75, descripcion: "Usted nos trae su pavo, lomo, pierna o la carne que guste y nosotros la cocinamos. Se cobra por kilo de lo que pese. Tráigalo a la tienda al menos 2 días antes de la entrega.", maquila: true, firebaseIds: ["PROD_013"] },
+  { id: "strudel-individual", nombre: "Strudel Individual", categoria: "pan", unidad: "pza", precio: 40, descripcion: "Pasta hojaldrada rellena de manzana.", firebaseIds: ["PROD_035"] },
 ];
