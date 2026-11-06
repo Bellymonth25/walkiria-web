@@ -7,8 +7,8 @@ import { esPedidoTardio } from "./lib/fechas";
 import { sinDomicilio } from "./lib/entrega";
 import { estaAgotado, leerAgotados } from "./lib/disponibilidad";
 import {
-  aumentar, disminuir, enlaceWhatsApp, faltantes, normalizarCantidad, normalizarKgPavo, normalizarKgRelleno, nuevaLinea,
-  textoFaltantes,
+  aumentar, conRellenoSugerido, disminuir, enlaceWhatsApp, faltantes, normalizarCantidad, normalizarKgPavo,
+  normalizarKgRelleno, nuevaLinea, textoFaltantes,
 } from "./lib/pedido";
 import { $, aviso, llenar } from "./ui/dom";
 import { pintarChips, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
@@ -198,7 +198,8 @@ document.addEventListener("click", (e) => {
     const x = deLinea(id);
     if (!x) return;
     const n = d.inc ? aumentar(x.p, x.l.cantidad) : disminuir(x.p, x.l.cantidad);
-    ponerLinea(id, n > 0 ? { ...x.l, cantidad: n } : null);
+    if (x.p.maquila) ponerLinea(id, conRellenoSugerido({ ...x.l, cantidad: n }));
+    else ponerLinea(id, n > 0 ? { ...x.l, cantidad: n } : null);
     repintar(x.p.id);
   } else if (d.del) {
     const x = deLinea(d.del);
@@ -265,12 +266,15 @@ document.addEventListener("input", (e) => {
   if (!x) return;
   const num = Number(el.value.replace(",", "."));
   if (d.qty) {
-    const n = normalizarCantidad(x.p, num);
-    if (n !== null) ponerLinea(id, { ...x.l, cantidad: n });
+    const n = el.value.trim() === "" && x.p.maquila ? 0 : normalizarCantidad(x.p, num);
+    if (n !== null) ponerLinea(id, x.p.maquila ? conRellenoSugerido({ ...x.l, cantidad: n }) : { ...x.l, cantidad: n });
+    // El relleno sugerido cambia con el peso: actualizar su campo sin repintar.
+    const r = document.querySelector<HTMLInputElement>(`#relleno-${id}`);
+    if (r && pedido.lineas[id]) r.value = String(pedido.lineas[id]!.kgRelleno);
   } else if (d.kgpavo) {
     if (Number.isFinite(num) && num > 0) ponerLinea(id, { ...x.l, kgPorPavo: normalizarKgPavo(num) });
   } else if (d.relleno) {
-    if (el.value.trim() !== "") ponerLinea(id, { ...x.l, kgRelleno: normalizarKgRelleno(num) });
+    if (el.value.trim() !== "") ponerLinea(id, { ...x.l, kgRelleno: normalizarKgRelleno(num), rellenoManual: true });
   } else if (d.otro) {
     ponerLinea(id, { ...x.l, otroMaquila: el.value });
   } else {
@@ -285,7 +289,7 @@ document.addEventListener("change", (e) => {
   if (d.tipo) {
     const x = deLinea(d.tipo);
     if (!x) return;
-    ponerLinea(d.tipo, { ...x.l, tipoMaquila: el.value });
+    ponerLinea(d.tipo, conRellenoSugerido({ ...x.l, tipoMaquila: el.value }));
     repintar(x.p.id);
     if (el.value === "Otro") document.querySelector<HTMLInputElement>(`#otro-${d.tipo}`)?.focus();
     return;
@@ -295,7 +299,8 @@ document.addEventListener("change", (e) => {
   const id = d.qty ?? d.kgpavo ?? d.relleno;
   const l = id ? pedido.lineas[id] : undefined;
   if (!id || !l) return;
-  el.value = String(d.qty ? l.cantidad : d.kgpavo ? l.kgPorPavo : l.kgRelleno);
+  const limpio = d.qty ? l.cantidad : d.kgpavo ? l.kgPorPavo : l.kgRelleno;
+  el.value = d.qty && limpio === 0 ? "" : String(limpio);
   actualizarInfo(id);
 });
 

@@ -67,6 +67,16 @@ export function nombreMaquila(l: Linea): string {
   return l.tipoMaquila;
 }
 
+/** Kilos de relleno sugeridos para un pavo de cierto peso. */
+export function rellenoSugerido(kgPavo: number): number {
+  return maquila.rellenoSugerido.find((r) => kgPavo <= r.hastaKg)?.kgRelleno ?? 1;
+}
+
+/** Si el cliente no ha tocado el relleno, se ajusta solo al peso del pavo. */
+export function conRellenoSugerido(l: Linea): Linea {
+  return l.rellenoManual ? l : { ...l, kgRelleno: rellenoSugerido(l.cantidad) };
+}
+
 /** La maquila necesita saber qué carne trae el cliente. */
 export const maquilaIncompleta = (l: Linea): boolean =>
   !l.tipoMaquila || (l.tipoMaquila === "Otro" && !l.otroMaquila.trim());
@@ -76,13 +86,15 @@ export const maquilaIncompleta = (l: Linea): boolean =>
 export function nuevaLinea(p: Producto): Linea {
   return {
     productoId: p.id,
-    cantidad: p.maquila ? pavo.kgMinimoCompleto : 1,
+    // Maquila: el cliente escribe cuánto pesa su carne (empieza vacío).
+    cantidad: p.maquila ? 0 : 1,
     tamano: "completo",
     kgPorPavo: pavo.kgMinimoCompleto,
     presentacion: presentaciones(p)[0] ?? "acrilico",
     tipoMaquila: "",
     otroMaquila: "",
     kgRelleno: 1,
+    rellenoManual: false,
     nota: "",
   };
 }
@@ -127,6 +139,7 @@ export const paso = (p: Producto): number => (porKilo(p) ? 0.5 : 1);
 
 /** Limpia lo que el cliente escribe. Regresa null si no es un número válido. */
 export function normalizarCantidad(p: Producto, valor: number): number | null {
+  if (p.maquila) return Number.isFinite(valor) && valor >= 0 ? Math.round(valor * 100) / 100 : null;
   if (!Number.isFinite(valor) || valor <= 0) return null;
   if (!porKilo(p)) return Math.max(1, Math.round(valor));
   return Math.max(0.25, Math.round(valor * 100) / 100);
@@ -147,9 +160,10 @@ export function aumentar(p: Producto, actual: number): number {
   return redondear1(actual + paso(p));
 }
 
-/** Regresa 0 cuando ya no queda nada (el producto sale del pedido). */
+/** Regresa 0 cuando ya no queda nada (el producto sale del pedido; la maquila se queda en 0 kg). */
 export function disminuir(p: Producto, actual: number): number {
   const n = redondear1(actual - paso(p));
+  if (p.maquila) return Math.max(0, n);
   return n < (porKilo(p) ? 0.25 : 1) ? 0 : n;
 }
 
@@ -188,7 +202,9 @@ export function faltantes(pedido: Pedido, catalogo: readonly Producto[]): string
   const f: string[] = [];
   const filas = renglones(pedido, catalogo);
   if (filas.length === 0) f.push("al menos un producto");
-  if (filas.some((r) => r.producto.maquila && maquilaIncompleta(r.linea))) f.push("qué carne nos trae para la maquila");
+  const maquilas = filas.filter((r) => r.producto.maquila);
+  if (maquilas.some((r) => maquilaIncompleta(r.linea))) f.push("qué carne nos trae para la maquila");
+  if (maquilas.some((r) => r.linea.cantidad <= 0)) f.push("el peso aproximado de su carne");
   if (!pedido.nombre.trim()) f.push("tu nombre");
   if (pedido.fecha === null) f.push("el día de entrega");
   if (pedido.modo === "domicilio" && !pedido.direccion.trim()) f.push("la dirección de entrega");

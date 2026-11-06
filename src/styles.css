@@ -334,3 +334,4 @@ button.cal-day:hover{border-color:var(--primary)}
 .dot.hoy{border-color:var(--ok)}
 .dot.sujeto{border-color:var(--gold-ink);border-style:dashed}
 @media (max-width:440px){.logo-text{display:none}}
+.dhint{font-size:.78rem;color:var(--muted);max-width:34ch}

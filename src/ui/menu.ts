@@ -71,7 +71,9 @@ function detalle(p: Producto, id: string, l: Linea): string {
   partes.push(`<div class="dfield"><label class="dlabel" for="qty-${id}">${p.maquila ? "Kilos aprox. de su carne" : "Cantidad"}</label>
     <div class="qty">
       <button type="button" data-dec="${id}" aria-label="Menos ${n}">−</button>
-      ${campoNumero(id, "qty", l.cantidad, porKilo ? "0.25" : "1", porKilo ? "0.25" : "1", porKilo ? "decimal" : "numeric", `Cantidad de ${n}`)}
+      ${p.maquila
+        ? `<input id="qty-${id}" class="num" type="number" inputmode="decimal" min="0" step="0.25" value="${l.cantidad > 0 ? l.cantidad : ""}" placeholder="Ej. 6" data-qty="${id}" aria-label="Kilos aproximados de su carne">`
+        : campoNumero(id, "qty", l.cantidad, porKilo ? "0.25" : "1", porKilo ? "0.25" : "1", porKilo ? "decimal" : "numeric", `Cantidad de ${n}`)}
       <button type="button" data-inc="${id}" aria-label="Más ${n}">+</button>
       <span class="unit">${unidad}</span>
     </div></div>`);
@@ -83,7 +85,8 @@ function detalle(p: Producto, id: string, l: Linea): string {
 
   if (p.maquila && llevaRelleno(l)) {
     partes.push(`<div class="dfield"><label class="dlabel" for="relleno-${id}">Kilos de relleno</label>
-      <div class="qty">${campoNumero(id, "relleno", l.kgRelleno, "0", "0.25", "decimal", "Kilos de relleno")}<span class="unit">kg · ${dinero(maquila.precioRellenoKg)}/kg</span></div></div>`);
+      <div class="qty">${campoNumero(id, "relleno", l.kgRelleno, "0", "0.25", "decimal", "Kilos de relleno")}<span class="unit">kg · ${dinero(maquila.precioRellenoKg)}/kg</span></div>
+      <span class="dhint">Sugerido: 1 kg para pavos de 5 a 7 kg, 1.5 kg de 7 a 9 kg; más grande, más relleno.</span></div>`);
   }
 
   const pres = presentaciones(p);

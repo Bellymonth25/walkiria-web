@@ -51,6 +51,8 @@ export interface Linea {
   otroMaquila: string;
   /** Maquila de pavo relleno: kilos de relleno. */
   kgRelleno: number;
+  /** true si el cliente cambió el relleno a mano (ya no se sugiere solo). */
+  rellenoManual: boolean;
   /** Nota solo para este producto. */
   nota: string;
 }

@@ -3,7 +3,7 @@ import type { Linea, Pedido, Producto } from "../src/types";
 import { productos } from "../src/data/productos";
 import { temporada } from "../src/data/temporada";
 import {
-  aumentar, disminuir, empaquesDe, faltantes, importeLinea, mensaje, normalizarCantidad, normalizarKgPavo, nuevaLinea, total,
+  aumentar, conRellenoSugerido, disminuir, empaquesDe, rellenoSugerido, faltantes, importeLinea, mensaje, normalizarCantidad, normalizarKgPavo, nuevaLinea, total,
 } from "../src/lib/pedido";
 import { esPedidoTardio, nombreDia } from "../src/lib/fechas";
 import { estaAgotado, parsearAgotados } from "../src/lib/disponibilidad";
@@ -132,16 +132,29 @@ describe("agotados", () => {
 
 describe("maquila", () => {
   const maq = prod("maquila");
+  it("empieza en 0 kg y no se quita al bajar a 0", () => {
+    expect(nuevaLinea(maq).cantidad).toBe(0);
+    expect(disminuir(maq, 0.5)).toBe(0);
+    expect(aumentar(maq, 0)).toBe(0.5);
+  });
+  it("sugiere el relleno según el peso del pavo, salvo que el cliente lo cambie", () => {
+    expect(rellenoSugerido(6)).toBe(1);
+    expect(rellenoSugerido(7)).toBe(1);
+    expect(rellenoSugerido(8)).toBe(1.5);
+    expect(rellenoSugerido(11)).toBe(2);
+    expect(conRellenoSugerido(linea(maq, { cantidad: 8.5 })).kgRelleno).toBe(1.5);
+    expect(conRellenoSugerido(linea(maq, { cantidad: 8.5, kgRelleno: 3, rellenoManual: true })).kgRelleno).toBe(3);
+  });
   it("se cobra por kilo y el pavo relleno suma su relleno", () => {
     expect(importeLinea(maq, linea(maq, { cantidad: 4, tipoMaquila: "Lomo Mechado" }))).toBe(4 * 75);
     expect(importeLinea(maq, linea(maq, { cantidad: 6, tipoMaquila: "Pavo Relleno", kgRelleno: 1.5 }))).toBe(6 * 75 + 1.5 * 390);
   });
   it("pide qué carne trae, y en Otro que lo especifique", () => {
     const p: Pedido = { ...base, nombre: "Ana", lineas: { "maquila-1": linea(maq) } };
-    expect(faltantes(p, productos)).toEqual(["qué carne nos trae para la maquila"]);
-    const otro: Pedido = { ...p, lineas: { "maquila-1": linea(maq, { tipoMaquila: "Otro" }) } };
+    expect(faltantes(p, productos)).toEqual(["qué carne nos trae para la maquila", "el peso aproximado de su carne"]);
+    const otro: Pedido = { ...p, lineas: { "maquila-1": linea(maq, { tipoMaquila: "Otro", cantidad: 3 }) } };
     expect(faltantes(otro, productos)).toEqual(["qué carne nos trae para la maquila"]);
-    const listo: Pedido = { ...p, lineas: { "maquila-1": linea(maq, { tipoMaquila: "Otro", otroMaquila: "Cabrito" }) } };
+    const listo: Pedido = { ...p, lineas: { "maquila-1": linea(maq, { tipoMaquila: "Otro", otroMaquila: "Cabrito", cantidad: 3 }) } };
     expect(faltantes(listo, productos)).toEqual([]);
   });
   it("varias maquilas con su nota en el mensaje", () => {

@@ -76,6 +76,12 @@ export const maquila = {
   ],
   /** El tipo que lleva relleno (se cobra aparte por kilo de relleno). */
   tipoConRelleno: "Pavo Relleno",
+  /** Relleno sugerido según el peso del pavo: hasta 7 kg → 1 kg, hasta 9 kg → 1.5 kg, más → 2 kg. */
+  rellenoSugerido: [
+    { hastaKg: 7, kgRelleno: 1 },
+    { hastaKg: 9, kgRelleno: 1.5 },
+    { hastaKg: Infinity, kgRelleno: 2 },
+  ],
 } as const;
 
 export const negocio = {
