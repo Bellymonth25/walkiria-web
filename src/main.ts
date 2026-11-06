@@ -16,6 +16,7 @@ import { pintarOrden, textoPedido, type ContextoOrden } from "./ui/orden";
 import { pintarCalendario, rangoMeses } from "./ui/calendario";
 import { iniciarNieve } from "./ui/nieve";
 import { iniciarLuces } from "./ui/luces";
+import { iniciarNav } from "./ui/nav";
 import { iniciarTema } from "./ui/tema";
 
 // ---------- Estado ----------
@@ -386,4 +387,5 @@ const barra = $("header.top");
 new ResizeObserver(() => {
   document.documentElement.style.setProperty("--alto-top", `${barra.getBoundingClientRect().bottom}px`);
 }).observe(barra);
+iniciarNav($(".nav"), () => barra.getBoundingClientRect().bottom);
 void cargarDisponibilidad();
