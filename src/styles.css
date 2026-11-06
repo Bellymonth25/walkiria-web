@@ -199,9 +199,9 @@ td:last-child{text-align:right;font-weight:700}
 
 /* Calendario */
 .cal{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
-.day{flex:1 1 110px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.day b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.9rem;line-height:1}
-.day small{display:block;color:var(--muted);font-weight:600;margin-top:4px}
+.day{flex:1 1 140px;min-width:0;min-height:190px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 18px}
+.day b{display:block;font-family:var(--font-display);font-weight:400;font-size:2.6rem;line-height:1}
+.day small{display:block;color:var(--muted);font-weight:600;margin-top:8px;font-size:.95rem}
 .day.hot{border-color:var(--brand);background:color-mix(in srgb,var(--primary-soft) 55%,var(--surface))}
 .day.hot small{color:var(--brand)}
 .day.due{border-color:var(--gold-ink);background:color-mix(in srgb,var(--gold-soft) 55%,var(--surface))}
@@ -214,7 +214,7 @@ td:last-child{text-align:right;font-weight:700}
 .cline:first-of-type{border-top:0}
 .cline .k{font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .cline .v{font-weight:600;font-size:1.1rem}
-footer{background:var(--hero);color:var(--hero-fg);margin-top:20px}
+footer{background:var(--hero);color:var(--hero-fg)}
 footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:.9rem}
 .toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:.92rem;z-index:40}
 .map{display:grid;grid-template-columns:1.4fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
@@ -380,17 +380,4 @@ button.cal-day:hover{border-color:var(--primary)}
 .nav-ind{position:absolute;bottom:0;left:0;width:0;height:6px;pointer-events:none;opacity:0;
   transition:transform .55s cubic-bezier(.5,0,.2,1),width .55s cubic-bezier(.5,0,.2,1),opacity .3s}
 .nav-ind.on{opacity:1}
-/* Variante luces: una mini serie de focos que "corre" mientras se mueve */
-.nav[data-estilo="luces"] .nav-ind{
-  background:radial-gradient(circle,var(--bulb-a) 1.6px,transparent 2.2px) 0 50%/18px 6px repeat-x,
-             radial-gradient(circle,var(--bulb-b) 1.6px,transparent 2.2px) 6px 50%/18px 6px repeat-x,
-             radial-gradient(circle,var(--bulb-c) 1.6px,transparent 2.2px) 12px 50%/18px 6px repeat-x;
-  filter:drop-shadow(0 0 2px rgba(255,220,140,.8))}
-.nav[data-estilo="luces"] .nav-ind.moviendo{animation:correr .55s linear}
-@keyframes correr{to{background-position:36px 50%,42px 50%,48px 50%}}
-/* Variante copo: un copo que se desliza girando */
-.nav[data-estilo="copo"] .nav-ind{height:14px;bottom:-6px;background:none}
-.nav[data-estilo="copo"] .nav-ind svg{display:block;width:14px;height:14px;margin:auto;color:var(--gold);transition:transform .55s cubic-bezier(.5,0,.2,1)}
-.nav[data-estilo="copo"] .nav-ind.moviendo svg{transform:rotate(240deg)}
-/* Variante línea: subrayado dorado simple */
-.nav[data-estilo="linea"] .nav-ind{height:2px;bottom:2px;background:var(--gold);border-radius:2px}
+.nav-ind{height:2px;bottom:2px;background:var(--gold);border-radius:2px}
