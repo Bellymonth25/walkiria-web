@@ -6,6 +6,12 @@
   <title>La Walkiria · Cenas de fin de año</title>
   <meta name="description" content="Pavo, lomo, bacalao, romeritos y ensalada de manzana por kilo. Pide por WhatsApp y recoge en Tlalpan o recibe a domicilio.">
   <meta name="theme-color" content="#5C1418">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta property="og:title" content="La Walkiria · Cenas de fin de año">
+  <meta property="og:description" content="Pavo, lomo, bacalao y romeritos por kilo. Pide por WhatsApp.">
+  <meta property="og:image" content="/img/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600;700&display=swap">
@@ -13,7 +19,7 @@
 <body>
 <header class="top">
   <div class="wrap">
-    <a class="logo" href="#inicio">La <span>Walkiria</span></a>
+    <a class="logo" href="#inicio"><img src="/img/logo.webp" alt="" width="44" height="39">La <span>Walkiria</span></a>
     <nav class="nav" aria-label="Secciones">
       <a href="#precios">Precios</a>
       <a href="#como-pedir">Cómo pedir</a>
@@ -25,12 +31,15 @@
       WhatsApp
     </a>
   </div>
+  <div class="lights" aria-hidden="true"></div>
 </header>
+<canvas id="snow" aria-hidden="true"></canvas>
 
 <main id="inicio">
   <section class="hero">
     <div class="wrap">
       <div>
+        <img class="hero-logo" src="/img/logo.webp" alt="La Walkiria Quality Food" width="200" height="176">
         <div class="eyebrow">La Walkiria Alimentos · Cenas de fin de año <span data-cfg="anio"></span></div>
         <h1>La cena de Navidad, <em>hecha en casa</em> y por kilo.</h1>
         <p class="lead">Pavo, lomo, bacalao, romeritos y ensalada de manzana. Elige cuánto quieres, aparta con anticipo y recoge en tienda o te lo llevamos.</p>
@@ -46,19 +55,41 @@
         <ul class="facts">
           <li><span class="k">Pedidos</span><span>En línea y por teléfono hasta el <b data-cfg="limite"></b>. El <span data-cfg="tardio"></span> se reciben sujetos a disponibilidad.</span></li>
           <li><span class="k">Anticipo</span><span>Apartas tu pedido con <b data-cfg="anticipo"></b>. El resto al recoger.</span></li>
-          <li><span class="k">24 y 31</span><span><b>Solo entrega en tienda.</b> Esos días no hay envíos a domicilio.</span></li>
+          <li><span class="k">Envíos</span><span>El <b>24 de diciembre</b> y el <b>31 de diciembre</b> <b>solo hay entrega en tienda</b>. Esos días no hay envíos a domicilio.</span></li>
           <li><span class="k">Peso</span><span>Cobramos el peso real que sale de cocina. Tu total puede variar un poco.</span></li>
         </ul>
       </aside>
     </div>
   </section>
 
+  <section class="regalo-sec" id="regalo">
+    <div class="wrap">
+      <div class="regalo">
+        <div class="regalo-head">
+          <span class="regalo-tag">Servicio especial</span>
+          <h2>¿Le regalaron el pavo?</h2>
+          <p>Lo cocinamos por usted. También piernas, lomos o la carne que nos traiga.</p>
+        </div>
+        <ul class="regalo-facts">
+          <li><b class="num" data-cfg="precioCocinar"></b><span>por kilo de lo que pese su producto</span></li>
+          <li><b class="num" data-cfg="precioRelleno"></b><span>por kilo de relleno, si quiere que su pavo lleve</span></li>
+          <li><b><span data-cfg="diasAnticipacion"></span> días antes</b><span>Tráigalo a la tienda al menos <span data-cfg="diasAnticipacion"></span> días antes de su fecha de entrega. Al recibirlo le damos una ficha; sin la carne en tienda, el pedido no queda apartado.</span></li>
+        </ul>
+        <a class="btn btn-gold" id="regaloWa" href="#" target="_blank" rel="noopener">Apartar por WhatsApp</a>
+      </div>
+    </div>
+  </section>
+
+  <figure class="foto" id="foto" hidden>
+    <img id="fotoImg" alt="Mesa con la cena de Navidad de La Walkiria" loading="lazy">
+  </figure>
+
   <section class="sec" id="precios">
     <div class="wrap">
       <div class="sec-head">
         <div>
           <h2>Precios</h2>
-          <p><span data-cfg="notaPrecios"></span> Por kilo o por pieza. Toca <b>Agregar</b> para armar tu pedido y mándalo por WhatsApp ya escrito.</p>
+          <p><span data-cfg="notaPrecios"></span> Toca <b>Agregar</b>, ajusta cantidad y presentación, y manda tu pedido por WhatsApp ya escrito.</p>
         </div>
       </div>
       <div class="shop">
@@ -76,7 +107,7 @@
         <aside class="order" id="order" data-empty="true" aria-label="Tu pedido">
           <button class="bar" id="bar" type="button" aria-expanded="false">
             <span><span class="legend" id="barCount">Tu pedido</span><br><b class="num" id="barTotal">$0</b></span>
-            <span class="btn btn-wa btn-sm">Ver pedido</span>
+            <span class="btn btn-wa btn-sm" id="barBtn">Ver pedido</span>
           </button>
           <h3 class="desk">Tu pedido</h3>
           <p class="hint desk" id="hint">Agrega productos de la lista para ver tu total.</p>
@@ -102,10 +133,14 @@
             <input id="ref" type="text" placeholder="Referencias (opcional): entre calles, color de la casa…">
           </div>
           <div class="field">
-            <label for="day">Día de entrega</label>
-            <select id="day"></select>
+            <span class="legend" id="dayLabel">Día de entrega</span>
+            <div class="calendar" id="calendar" role="group" aria-labelledby="dayLabel"></div>
           </div>
-          <p class="warn" id="warn" hidden>El 24 y el 31 solo entregamos en tienda. Cambiamos tu pedido a "Recojo en tienda".</p>
+          <p class="warn" id="warn" hidden>El 24 de diciembre y el 31 de diciembre solo entregamos en tienda. Cambiamos tu pedido a "Recojo en tienda".</p>
+          <div class="field">
+            <label for="nota">Alguna nota especial para sus productos</label>
+            <textarea id="nota" rows="2" placeholder="Ej. La ensalada de manzana sin apio"></textarea>
+          </div>
           <div class="total"><span class="legend">Total estimado</span><b class="num" id="total">$0</b></div>
           <p class="fine">Estimado con el peso que pediste. El total final se ajusta al peso real de cada producto. Pedidos hasta el <span data-cfg="limite"></span>; los del <span data-cfg="tardio"></span> quedan sujetos a disponibilidad.</p>
           <a class="btn btn-wa" id="send" href="#" target="_blank" rel="noopener">
@@ -131,16 +166,16 @@
         <div class="panel">
           <h3>Envío a domicilio</h3>
           <table class="num" id="zonesTable"></table>
-          <p class="note">No hay envíos el 24 ni el 31 de diciembre. Esos días se entrega solo en tienda.</p>
+          <p class="note">No hay envíos el 24 de diciembre ni el 31 de diciembre. Esos días se entrega solo en tienda.</p>
         </div>
         <div class="panel">
           <h3>Presentación</h3>
           <table class="num">
-            <tr><td>Acrílico, bolsa o tu propio recipiente</td><td>Sin costo</td></tr>
-            <tr><td>Charola de aluminio (chica / mediana / grande)</td><td>$25 · $30 · $35</td></tr>
-            <tr><td>Bolsa al vacío (chica / mediana / grande)</td><td>$25 · $30 · $35</td></tr>
+            <tr><td>Acrílico (pavos en bolsa o caja de cartón)</td><td>Sin costo</td></tr>
+            <tr><td>Charola de aluminio · chica / mediana / grande</td><td>$25 · $30 · $35</td></tr>
+            <tr><td>Bolsa al vacío · chica / mediana / grande</td><td>$25 · $30 · $35</td></tr>
           </table>
-          <p class="note">¿Le regalaron el pavo? Lo cocinamos por usted a $150 por kilo, y el relleno a $390 por kilo.</p>
+          <p class="note">Chica hasta 1 kg, mediana hasta 2.5 kg y grande hasta 4 kg. Si es más, va en varias: 6 kg de lomo son 2 charolas grandes. La página lo calcula sola.</p>
         </div>
       </div>
     </div>
@@ -193,6 +228,7 @@
   <div class="wrap">
     <span>© <span data-cfg="anio"></span> La Walkiria Alimentos · Quality Food</span>
     <span>Precios en pesos mexicanos. Sujetos a cambio sin previo aviso.</span>
+    <button class="snow-toggle" id="snowToggle" type="button" aria-pressed="true">Nieve: encendida</button>
   </div>
 </footer>
 <div class="toast" id="toast" hidden></div>

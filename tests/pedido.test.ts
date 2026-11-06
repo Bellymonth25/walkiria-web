@@ -1,55 +1,106 @@
 import { describe, expect, it } from "vitest";
-import type { Pedido } from "../src/types";
+import type { Linea, Pedido, Producto } from "../src/types";
 import { productos } from "../src/data/productos";
 import { temporada } from "../src/data/temporada";
-import { aumentar, disminuir, faltantes, mensaje, total } from "../src/lib/pedido";
+import {
+  aumentar, disminuir, empaquesDe, faltantes, importeLinea, mensaje, normalizarCantidad, normalizarKgPavo, nuevaLinea, total,
+} from "../src/lib/pedido";
 import { esPedidoTardio, nombreDia } from "../src/lib/fechas";
+import { estaAgotado, parsearAgotados } from "../src/lib/disponibilidad";
 
-const base: Pedido = { cantidades: {}, nombre: "", modo: "tienda", zona: 0, direccion: "", referencias: "", dia: 3 };
+const prod = (id: string): Producto => productos.find((p) => p.id === id)!;
+const lomo = prod("lomo-adobado");
+const pavoR = prod("pavo-relleno");
+const strudel = prod("strudel");
+const linea = (p: Producto, cambios: Partial<Linea> = {}): Linea => ({ ...nuevaLinea(p), ...cambios });
+const base: Pedido = { lineas: {}, nombre: "", modo: "tienda", zona: 0, direccion: "", referencias: "", nota: "", dia: 23 };
 const ctx = { catalogo: productos, zonas: temporada.zonas, nombreDia: "Miércoles 23 de diciembre", tardio: false };
 
+describe("líneas nuevas", () => {
+  it("los pavos empiezan completos, de 5 kg y en bolsa o caja", () => {
+    expect(nuevaLinea(pavoR)).toMatchObject({ cantidad: 1, tamano: "completo", kgPorPavo: 5, presentacion: "bolsa" });
+  });
+  it("lo demás empieza en acrílico", () => {
+    expect(nuevaLinea(lomo).presentacion).toBe("acrilico");
+  });
+});
+
 describe("cantidades", () => {
-  it("el primer toque agrega 1 y luego sube de medio kilo", () => {
-    expect(aumentar(0, "kg")).toBe(1);
-    expect(aumentar(1, "kg")).toBe(1.5);
-    expect(aumentar(2, "pza")).toBe(3);
+  it("+ y − de medio kilo; en piezas y pavos de uno en uno", () => {
+    expect(aumentar(lomo, 1)).toBe(1.5);
+    expect(aumentar(pavoR, 1)).toBe(2);
+    expect(disminuir(lomo, 0.5)).toBe(0);
+    expect(disminuir(strudel, 1)).toBe(0);
   });
-  it("al llegar a 0 el producto sale del pedido", () => {
-    expect(disminuir(0.5, "kg")).toBe(0);
-    expect(disminuir(1, "pza")).toBe(0);
-  });
-});
-
-describe("total", () => {
-  it("suma productos y envío solo si es a domicilio", () => {
-    const p: Pedido = { ...base, cantidades: { "pavo-relleno": 3, romeritos: 1 } };
-    expect(total(p, productos, temporada.zonas)).toBe(3 * 390 + 280);
-    expect(total({ ...p, modo: "domicilio", zona: 2 }, productos, temporada.zonas)).toBe(3 * 390 + 280 + 200);
+  it("lo escrito a mano se limpia", () => {
+    expect(normalizarCantidad(lomo, 1.333)).toBe(1.33);
+    expect(normalizarCantidad(lomo, 0.1)).toBe(0.25);
+    expect(normalizarCantidad(strudel, 2.6)).toBe(3);
+    expect(normalizarCantidad(lomo, -1)).toBeNull();
+    expect(normalizarKgPavo(4)).toBe(5);
+    expect(normalizarKgPavo(6.3)).toBe(6.5);
   });
 });
 
-describe("faltantes", () => {
-  it("pide dirección solo a domicilio", () => {
-    const p: Pedido = { ...base, cantidades: { bacalao: 1 }, nombre: "Ana" };
-    expect(faltantes(p, productos)).toEqual([]);
-    expect(faltantes({ ...p, modo: "domicilio" }, productos)).toEqual(["la dirección de entrega"]);
+describe("empaques", () => {
+  it("acrílico y bolsa no cuestan", () => {
+    expect(empaquesDe(lomo, linea(lomo, { cantidad: 3 }))).toEqual([]);
   });
-  it("un pedido vacío pide producto y nombre", () => {
-    expect(faltantes(base, productos)).toEqual(["al menos un producto", "tu nombre"]);
+  it("elige el tamaño por kilos y reparte si no cabe", () => {
+    expect(empaquesDe(lomo, linea(lomo, { cantidad: 1, presentacion: "charola" }))[0]).toMatchObject({ tamano: "chica", piezas: 1 });
+    expect(empaquesDe(lomo, linea(lomo, { cantidad: 2, presentacion: "charola" }))[0]).toMatchObject({ tamano: "mediana", piezas: 1 });
+    expect(empaquesDe(lomo, linea(lomo, { cantidad: 4, presentacion: "vacio" }))[0]).toMatchObject({ tamano: "grande", piezas: 1 });
+    // 6 kg → 2 charolas grandes de 3 kg
+    expect(empaquesDe(lomo, linea(lomo, { cantidad: 6, presentacion: "charola" }))[0]).toMatchObject({ tamano: "grande", piezas: 2 });
+    // 4.5 kg → 2 de 2.25 kg = medianas
+    expect(empaquesDe(lomo, linea(lomo, { cantidad: 4.5, presentacion: "charola" }))[0]).toMatchObject({ tamano: "mediana", piezas: 2 });
+  });
+  it("suma el empaque al importe", () => {
+    expect(importeLinea(lomo, linea(lomo, { cantidad: 6, presentacion: "charola" }))).toBe(6 * 430 + 2 * 35);
+  });
+});
+
+describe("pavos", () => {
+  it("completo usa los kilos por pavo; medio usa 3.5 kg de estimado", () => {
+    expect(importeLinea(pavoR, linea(pavoR, { cantidad: 2, kgPorPavo: 6 }))).toBe(2 * 6 * 390);
+    expect(importeLinea(pavoR, linea(pavoR, { tamano: "medio" }))).toBe(3.5 * 390);
+  });
+});
+
+describe("total y faltantes", () => {
+  it("suma envío solo a domicilio", () => {
+    const p: Pedido = { ...base, lineas: { "lomo-adobado": linea(lomo, { cantidad: 2 }) } };
+    expect(total(p, productos, temporada.zonas)).toBe(860);
+    expect(total({ ...p, modo: "domicilio", zona: 2 }, productos, temporada.zonas)).toBe(1060);
+  });
+  it("pide día y dirección cuando aplica", () => {
+    const p: Pedido = { ...base, lineas: { bacalao: linea(prod("bacalao")) }, nombre: "Ana", dia: null };
+    expect(faltantes(p, productos)).toEqual(["el día de entrega"]);
+    expect(faltantes({ ...p, dia: 22, modo: "domicilio" }, productos)).toEqual(["la dirección de entrega"]);
   });
 });
 
 describe("mensaje de WhatsApp", () => {
-  it("pone el nombre primero e incluye la dirección a domicilio", () => {
+  it("lleva nombre, presentación, nota y total", () => {
     const m = mensaje(
-      { ...base, cantidades: { "pavo-relleno": 1.5 }, nombre: " Ana López ", modo: "domicilio", zona: 0, direccion: "Calle 1", referencias: "" },
+      {
+        ...base,
+        nombre: " Ana López ",
+        nota: "Ensalada sin apio",
+        lineas: {
+          "pavo-relleno": linea(pavoR, { tamano: "medio" }),
+          "lomo-adobado": linea(lomo, { cantidad: 6, presentacion: "charola" }),
+        },
+      },
       ctx,
     );
     expect(m.split("\n")[1]).toBe("Nombre: Ana López");
-    expect(m).toContain("• 1,5 kg de Pavo Relleno ($585)");
-    expect(m).toContain("Dirección: Calle 1");
-    expect(m).not.toContain("Referencias");
-    expect(m).toContain("Total estimado: $685 (incluye envío $100)");
+    expect(m).toContain("• 1 medio pavo (3 a 4 kg c/u) de Pavo Relleno: $1,365");
+    expect(m).toContain("Presentación: Bolsa o caja de cartón (sin costo)");
+    expect(m).toContain("• 6 kg de Lomo Adobado: $2,580");
+    expect(m).toContain("Presentación: 2 charolas grandes (+$70)");
+    expect(m).toContain("Nota especial: Ensalada sin apio");
+    expect(m).toContain("Total estimado: $4,015");
   });
 });
 
@@ -61,5 +112,19 @@ describe("fechas", () => {
     expect(esPedidoTardio(new Date(2026, 11, 22, 18), 2026, 22)).toBe(false);
     expect(esPedidoTardio(new Date(2026, 11, 23, 9), 2026, 22)).toBe(true);
     expect(esPedidoTardio(new Date(2026, 11, 26), 2026, 22)).toBe(false);
+  });
+});
+
+describe("agotados", () => {
+  it("lee el documento de Firestore", () => {
+    const doc = { fields: { agotados: { arrayValue: { values: [{ stringValue: "PROD_001" }, { stringValue: "PROD_017" }] } } } };
+    expect([...parsearAgotados(doc)]).toEqual(["PROD_001", "PROD_017"]);
+    expect([...parsearAgotados({})]).toEqual([]);
+  });
+  it("un producto con varios ids solo se agota si todos lo están", () => {
+    const pechuga = prod("pechuga-pavo");
+    expect(estaAgotado(pechuga, new Set(["PROD_017"]))).toBe(false);
+    expect(estaAgotado(pechuga, new Set(["PROD_017", "PROD_018", "PROD_019"]))).toBe(true);
+    expect(estaAgotado(pavoR, new Set(["PROD_001"]))).toBe(true);
   });
 });

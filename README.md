@@ -14,6 +14,34 @@ Solo hay que tocar dos archivos:
 
 Los días de la semana se calculan solos a partir del año.
 
+En `temporada.ts` también están los precios de empaques (y su capacidad en kg), el servicio
+"¿Le regalaron el pavo?" y los datos del negocio.
+
+## Productos agotados
+
+La página lee `publicWeb/disponibilidad` de Firestore (sin SDK, con un `fetch`). Ese documento
+lo escribe la Cloud Function `onProductWritten` del repo de la app: cada vez que un producto
+cambia, guarda la lista de ids con `estaDisponible == false`. Un producto de la web está agotado
+cuando todos sus `firebaseIds` (en `productos.ts`) están en esa lista.
+
+Reglas de Firestore necesarias:
+
+```
+match /publicWeb/{doc} {
+  allow read: if true;
+  allow write: if false;
+}
+```
+
+Si no se puede leer el documento, la página muestra todo disponible.
+
+Para probar en local sin Firebase: `http://localhost:5173/?agotados=PROD_001,PROD_008`
+
+## Foto de la cena
+
+Si existe `public/img/cena.jpg` se muestra como banda debajo del servicio de maquila
+(proporción 21:8, se recorta al centro). Si no existe, no aparece nada.
+
 ## Desarrollo
 
 ```bash
