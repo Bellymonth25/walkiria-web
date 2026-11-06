@@ -4,7 +4,7 @@ import { fechaElegible, tipoDeFecha } from "../lib/entrega";
 import { $ } from "./dom";
 
 const SEMANA = ["L", "M", "M", "J", "V", "S", "D"];
-const ETIQUETA = { limite: "", sujeto: "Sujeto", tienda: "Tienda" } as const;
+const ETIQUETA = { limite: "Límite", sujeto: "Sujeto", tienda: "Tienda" } as const;
 
 export interface VistaCalendario {
   temporada: Temporada;
@@ -58,5 +58,5 @@ export function pintarCalendario(v: VistaCalendario): void {
       <button type="button" class="cal-nav" data-mes="1" aria-label="Mes siguiente"${puedeAdelante ? "" : " disabled"}>›</button>
     </div>
     <div class="cal-grid">${celdas.join("")}</div>
-    <div class="cal-legend"><span><i class="dot hoy"></i>Hoy</span><span><i class="dot tienda"></i>Solo en tienda</span><span><i class="dot sujeto"></i>Sujeto a disponibilidad</span></div>`;
+    <div class="cal-legend"><span><i class="dot hoy"></i>Hoy</span><span><i class="dot limite"></i>Último día para pedir</span><span><i class="dot tienda"></i>Solo en tienda</span><span><i class="dot sujeto"></i>Sujeto a disponibilidad</span></div>`;
 }

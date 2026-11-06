@@ -34,7 +34,10 @@ export function nombreDia(anio: number, dia: number): string {
   return nombreFecha(aIso(new Date(anio, 11, dia)));
 }
 
-/** true si `hoy` es después del día límite y antes de Navidad: el pedido llega como tardío. */
-export function esPedidoTardio(hoy: Date, anio: number, diaLimite: number): boolean {
-  return hoy >= new Date(anio, 11, diaLimite + 1) && hoy < new Date(anio, 11, 25);
+/**
+ * true si `hoy` cae después de un día límite y antes de la fecha que cubre (límite + 2):
+ * el 23 y 24 para Navidad, el 30 y 31 para Año Nuevo. El pedido llega como tardío.
+ */
+export function esPedidoTardio(hoy: Date, anio: number, limites: readonly number[]): boolean {
+  return limites.some((l) => hoy >= new Date(anio, 11, l + 1) && hoy < new Date(anio, 11, l + 3));
 }

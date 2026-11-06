@@ -1,12 +1,19 @@
 import type { DiaEspecial, TamanoEmpaque, ZonaEnvio } from "../types";
 
+export interface Corte {
+  para: string;
+  limite: number;
+  tardio: number;
+}
+
 export interface Temporada {
   anio: number;
   notaPrecios: string;
-  /** Último día de diciembre para pedidos en línea y por teléfono. */
-  diaLimite: number;
-  /** Día de pedidos tardíos: se reciben, sujetos a disponibilidad. */
-  diaTardio: number;
+  /**
+   * Fechas límite de diciembre para pedidos en línea y por teléfono (2 días antes de la entrega).
+   * El día siguiente al límite se reciben pedidos tardíos, sujetos a disponibilidad.
+   */
+  cortes: readonly Corte[];
   anticipo: string;
   /** Días de diciembre con regla especial (se marcan en el calendario). */
   diasEspeciales: readonly DiaEspecial[];
@@ -20,13 +27,16 @@ export interface Temporada {
 export const temporada: Temporada = {
   anio: 2026,
   notaPrecios: "Precios de la temporada 2025 mientras salen los de 2026.",
-  diaLimite: 22,
-  diaTardio: 23,
+  cortes: [
+    { para: "Navidad", limite: 22, tardio: 23 },
+    { para: "Año Nuevo", limite: 29, tardio: 30 },
+  ],
   anticipo: "50%",
   diasEspeciales: [
     { dia: 22, tipo: "limite" },
     { dia: 23, tipo: "sujeto" },
     { dia: 24, tipo: "tienda" },
+    { dia: 29, tipo: "limite" },
     { dia: 30, tipo: "sujeto" },
     { dia: 31, tipo: "tienda" },
   ],

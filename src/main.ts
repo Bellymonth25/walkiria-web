@@ -39,7 +39,7 @@ const ctx: ContextoOrden = {
   catalogo: productos,
   temporada,
   whatsapp: negocio.whatsapp,
-  tardio: esPedidoTardio(hoy, temporada.anio, temporada.diaLimite),
+  tardio: esPedidoTardio(hoy, temporada.anio, temporada.cortes.map((c) => c.limite)),
 };
 
 const vista = (): VistaMenu => ({
@@ -80,8 +80,12 @@ function actualizarInfo(id: string): void {
 // ---------- Textos y datos fijos ----------
 function llenarDatos(): void {
   llenar("anio", String(temporada.anio));
-  llenar("limite", `${temporada.diaLimite} de diciembre`);
-  llenar("tardio", `${temporada.diaTardio} de diciembre`);
+  llenar(
+    "cortes",
+    temporada.cortes
+      .map((c) => `Para ${c.para}, hasta el ${c.limite} de diciembre; el ${c.tardio} se reciben sujetos a disponibilidad.`)
+      .join(" "),
+  );
   llenar("anticipo", temporada.anticipo);
   llenar("notaPrecios", temporada.notaPrecios);
   llenar("whatsapp", negocio.whatsappVisible);
@@ -108,13 +112,15 @@ function llenarDatos(): void {
   $("#zonesTable").innerHTML = temporada.zonas.map((z) => `<tr><td>${z.nombre}</td><td>${dinero(z.costo)}</td></tr>`).join("");
 
   const textos = {
-    limite: ["due", "Último día para pedir en línea o por teléfono"],
+    limite: ["due", ""],
     sujeto: ["", "Sujeto a disponibilidad"],
     tienda: ["hot", "Solo entrega en tienda"],
   } as const;
   $("#cal").innerHTML = temporada.diasEspeciales
     .map((d) => {
-      const [clase, texto] = textos[d.tipo];
+      const corte = temporada.cortes.find((c) => c.limite === d.dia);
+      const [clase, base] = textos[d.tipo];
+      const texto = corte ? `Último día para pedir para ${corte.para}` : base;
       return `<div class="day ${clase}"><b class="num">${d.dia}</b><span class="mes">de diciembre</span><small>${texto}</small></div>`;
     })
     .join("");

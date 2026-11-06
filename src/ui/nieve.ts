@@ -10,6 +10,26 @@ interface Copo {
 
 const CLAVE = "walkiria-nieve";
 
+/** Copos claros sobre fondo oscuro; en el tema claro, rojo Walkiria para que se distingan. */
+const BLANCO = "214,222,236";
+const ROJO = "194,32,47";
+const oscuroSistema = window.matchMedia("(prefers-color-scheme: dark)");
+
+function temaClaro(): boolean {
+  const t = document.documentElement.dataset.theme;
+  return t ? t === "light" : !oscuroSistema.matches;
+}
+
+/** Rectángulos visibles de los elementos que cumplen el selector. */
+function zonas(selector: string): DOMRect[] {
+  return [...document.querySelectorAll(selector)]
+    .map((el) => el.getBoundingClientRect())
+    .filter((r) => r.bottom > 0 && r.top < window.innerHeight);
+}
+
+const dentro = (rs: DOMRect[], x: number, y: number) =>
+  rs.some((r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom);
+
 interface Grande {
   x: number;
   y: number;
@@ -35,11 +55,11 @@ function nuevoGrande(): Grande {
 }
 
 /** Copo de seis brazos con ramitas. */
-function dibujarCopo(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, giro: number, a: number): void {
+function dibujarCopo(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, giro: number, a: number, rgb: string): void {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(giro);
-  ctx.strokeStyle = `rgba(214,222,236,${a})`;
+  ctx.strokeStyle = `rgba(${rgb},${a})`;
   ctx.lineWidth = Math.max(1.2, r / 8);
   ctx.lineCap = "round";
   ctx.beginPath();
@@ -93,6 +113,12 @@ export function iniciarNieve(canvas: HTMLCanvasElement, boton: HTMLButtonElement
     const dt = Math.min(0.05, (t - (ultimo || t)) / 1000);
     ultimo = t;
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    const claro = temaClaro();
+    // Fondo vino (encabezado, portada, pie): blanca. Lo claro, incluido el boleto de la portada: roja.
+    const oscuras = claro ? zonas(".top, .hero, footer") : [];
+    const claras = claro ? zonas(".hero .ticket") : [];
+    const color = (x: number, y: number) =>
+      claro && (!dentro(oscuras, x, y) || dentro(claras, x, y)) ? ROJO : BLANCO;
     // De vez en cuando, un copo grande que cae girando (máximo 2 a la vez).
     if (t > proximoGrande && grandes.length < 2) {
       grandes.push(nuevoGrande());
@@ -103,7 +129,8 @@ export function iniciarNieve(canvas: HTMLCanvasElement, boton: HTMLButtonElement
       g.y += g.vy * dt;
       g.fase += dt * 0.6;
       g.giro += g.vg * dt;
-      dibujarCopo(ctx, g.x + Math.sin(g.fase) * 18, g.y, g.r, g.giro, g.a);
+      const gx = g.x + Math.sin(g.fase) * 18;
+      dibujarCopo(ctx, gx, g.y, g.r, g.giro, g.a, color(gx, g.y));
     }
     for (const c of copos) {
       c.y += c.vy * dt;
@@ -112,7 +139,7 @@ export function iniciarNieve(canvas: HTMLCanvasElement, boton: HTMLButtonElement
       if (c.y > window.innerHeight + 6) Object.assign(c, nuevo(false));
       ctx.beginPath();
       ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(214,222,236,${c.a})`;
+      ctx.fillStyle = `rgba(${color(c.x, c.y)},${claro ? c.a * 0.8 : c.a})`;
       ctx.fill();
     }
     raf = requestAnimationFrame(cuadro);

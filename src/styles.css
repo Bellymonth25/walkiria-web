@@ -330,8 +330,9 @@ button.cal-day:hover{border-color:var(--primary)}
 .cal-day.hoy small{color:var(--ok)}
 .cal-day.sujeto{border-style:dashed;border-color:var(--gold-ink)}
 .cal-day.sujeto small{color:var(--gold-ink)}
-.cal-day.limite{border-color:var(--gold-ink)}
+.cal-day.limite{border-color:var(--gold-ink);background:var(--gold-soft)}
 .dot.hoy{border-color:var(--ok)}
 .dot.sujeto{border-color:var(--gold-ink);border-style:dashed}
+.dot.limite{border-color:var(--gold-ink);background:var(--gold-soft)}
 @media (max-width:440px){.logo-text{display:none}}
 .dhint{font-size:.78rem;color:var(--muted);max-width:34ch}

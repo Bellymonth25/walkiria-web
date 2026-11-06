@@ -110,9 +110,12 @@ describe("fechas", () => {
     expect(nombreDia(2026, 24)).toBe("Jueves 24 de diciembre");
   });
   it("marca como tardío solo después del día límite y antes de Navidad", () => {
-    expect(esPedidoTardio(new Date(2026, 11, 22, 18), 2026, 22)).toBe(false);
-    expect(esPedidoTardio(new Date(2026, 11, 23, 9), 2026, 22)).toBe(true);
-    expect(esPedidoTardio(new Date(2026, 11, 26), 2026, 22)).toBe(false);
+    const limites = [22, 29];
+    expect(esPedidoTardio(new Date(2026, 11, 22, 18), 2026, limites)).toBe(false);
+    expect(esPedidoTardio(new Date(2026, 11, 23, 9), 2026, limites)).toBe(true);
+    expect(esPedidoTardio(new Date(2026, 11, 26), 2026, limites)).toBe(false);
+    expect(esPedidoTardio(new Date(2026, 11, 29, 20), 2026, limites)).toBe(false);
+    expect(esPedidoTardio(new Date(2026, 11, 30, 9), 2026, limites)).toBe(true);
   });
 });
 
