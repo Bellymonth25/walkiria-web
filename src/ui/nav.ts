@@ -33,12 +33,34 @@ export function iniciarNav(nav: HTMLElement, altoBarra: () => number): void {
       if (s.getBoundingClientRect().top <= linea) i = k;
     });
     // Al llegar al final de la página, la última sección.
-    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) i = secciones.length - 1;
+    // (solo si ya se ve buena parte de ella; en pantallas muy altas el final llega antes).
+    const ultima = secciones[secciones.length - 1];
+    const alFinal = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+    if (alFinal && ultima && ultima.getBoundingClientRect().top < window.innerHeight * 0.5) i = secciones.length - 1;
     mover(i >= 0 ? (enlaces[i] ?? null) : null);
   };
 
+  // Al tocar una sección, esa queda marcada mientras la página baja (no la que se asome después).
+  let fijada = false;
+  let finScroll = 0;
+  enlaces.forEach((a) =>
+    a.addEventListener("click", () => {
+      mover(a);
+      fijada = true;
+      // Si la página ya estaba ahí y no se mueve, se libera solo.
+      clearTimeout(finScroll);
+      finScroll = window.setTimeout(() => (fijada = false), 1000);
+    }),
+  );
+
   let pendiente = false;
   window.addEventListener("scroll", () => {
+    if (fijada) {
+      // Se libera un momento después de que la página deja de moverse.
+      clearTimeout(finScroll);
+      finScroll = window.setTimeout(() => (fijada = false), 200);
+      return;
+    }
     if (pendiente) return;
     pendiente = true;
     requestAnimationFrame(() => {

@@ -381,3 +381,5 @@ button.cal-day:hover{border-color:var(--primary)}
   transition:transform .55s cubic-bezier(.5,0,.2,1),width .55s cubic-bezier(.5,0,.2,1),opacity .3s}
 .nav-ind.on{opacity:1}
 .nav-ind{height:2px;bottom:2px;background:var(--gold);border-radius:2px}
+#fechas{padding-block:clamp(64px,8vh,96px);min-height:min(64vh,620px);display:flex;align-items:center}
+#fechas>.wrap{width:100%}
