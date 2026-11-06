@@ -1,5 +1,5 @@
 import type { Linea, Pedido, Presentacion, Producto, TamanoEmpaque, ZonaEnvio } from "../types";
-import { empaques, pavo } from "../data/temporada";
+import { empaques, maquila, pavo } from "../data/temporada";
 import { dinero, enLista, kilos } from "./formato";
 
 // ---------- Presentación ----------
@@ -13,7 +13,7 @@ export const nombrePresentacion: Record<Presentacion, string> = {
 
 /** Opciones de presentación que aplican a un producto. La primera es la de default (sin costo). */
 export function presentaciones(p: Producto): Presentacion[] {
-  if (p.unidad === "pza") return [];
+  if (p.unidad === "pza" || p.maquila) return [];
   return p.pavoEntero ? ["bolsa", "vacio", "charola"] : ["acrilico", "vacio", "charola"];
 }
 
@@ -36,7 +36,7 @@ export function tamanoPara(kg: number): TamanoEmpaque {
  * (6 kg → 2 grandes de 3 kg). Los pavos enteros van en un empaque grande por pavo.
  */
 export function empaquesDe(p: Producto, l: Linea): Empaque[] {
-  if (!tieneCosto(l.presentacion)) return [];
+  if (!presentaciones(p).length || !tieneCosto(l.presentacion)) return [];
   const precios = empaques.precio[l.presentacion];
   if (p.pavoEntero) return [{ tamano: "grande", piezas: l.cantidad, precio: precios.grande }];
   const kg = l.cantidad;
@@ -57,14 +57,33 @@ export function textoEmpaques(pr: Presentacion, es: readonly Empaque[]): string 
     .join(", ");
 }
 
+// ---------- Maquila ----------
+
+export const llevaRelleno = (l: Linea): boolean => l.tipoMaquila === maquila.tipoConRelleno;
+
+/** "Lomo Mechado", o lo que escribió el cliente en "Otro". */
+export function nombreMaquila(l: Linea): string {
+  if (l.tipoMaquila === "Otro") return l.otroMaquila.trim() || "Otro";
+  return l.tipoMaquila;
+}
+
+/** La maquila necesita saber qué carne trae el cliente. */
+export const maquilaIncompleta = (l: Linea): boolean =>
+  !l.tipoMaquila || (l.tipoMaquila === "Otro" && !l.otroMaquila.trim());
+
 // ---------- Cantidades ----------
 
 export function nuevaLinea(p: Producto): Linea {
   return {
-    cantidad: 1,
+    productoId: p.id,
+    cantidad: p.maquila ? pavo.kgMinimoCompleto : 1,
     tamano: "completo",
     kgPorPavo: pavo.kgMinimoCompleto,
     presentacion: presentaciones(p)[0] ?? "acrilico",
+    tipoMaquila: "",
+    otroMaquila: "",
+    kgRelleno: 1,
+    nota: "",
   };
 }
 
@@ -75,7 +94,9 @@ export function kgDe(p: Producto, l: Linea): number {
 }
 
 export function importeProducto(p: Producto, l: Linea): number {
-  return p.unidad === "pza" ? p.precio * l.cantidad : redondear2(p.precio * kgDe(p, l));
+  if (p.unidad === "pza") return p.precio * l.cantidad;
+  const relleno = p.maquila && llevaRelleno(l) ? maquila.precioRellenoKg * l.kgRelleno : 0;
+  return redondear2(p.precio * kgDe(p, l) + relleno);
 }
 
 export function importeEmpaques(p: Producto, l: Linea): number {
@@ -91,22 +112,35 @@ export function textoCantidad(p: Producto, l: Linea): string {
     if (l.tamano === "medio") return `${n} ${n === 1 ? "medio pavo" : "medios pavos"} (3 a 4 kg c/u)`;
     return `${n} ${n === 1 ? "pavo completo" : "pavos completos"} (aprox. ${kilos(l.kgPorPavo)} c/u)`;
   }
+  if (p.maquila) return `aprox. ${kilos(l.cantidad)}`;
   return p.unidad === "pza" ? `${l.cantidad} ${l.cantidad === 1 ? "pza" : "pzas"}` : kilos(l.cantidad);
 }
 
+/** Nombre del renglón en el pedido: "Pavo Relleno" o "Maquila de Lomo Mechado". */
+export const nombreLinea = (p: Producto, l: Linea): string =>
+  p.maquila ? `Maquila de ${nombreMaquila(l) || "carne"}` : p.nombre;
+
+const porKilo = (p: Producto): boolean => p.unidad === "kg" && !p.pavoEntero;
+
 /** Paso de los botones + y −. */
-export const paso = (p: Producto): number => (p.unidad === "kg" && !p.pavoEntero ? 0.5 : 1);
+export const paso = (p: Producto): number => (porKilo(p) ? 0.5 : 1);
 
 /** Limpia lo que el cliente escribe. Regresa null si no es un número válido. */
 export function normalizarCantidad(p: Producto, valor: number): number | null {
   if (!Number.isFinite(valor) || valor <= 0) return null;
-  if (p.unidad === "pza" || p.pavoEntero) return Math.max(1, Math.round(valor));
+  if (!porKilo(p)) return Math.max(1, Math.round(valor));
   return Math.max(0.25, Math.round(valor * 100) / 100);
 }
 
 export function normalizarKgPavo(valor: number): number {
   if (!Number.isFinite(valor)) return pavo.kgMinimoCompleto;
   return Math.max(pavo.kgMinimoCompleto, Math.round(valor * 2) / 2);
+}
+
+/** Kilos de relleno: 0 o más, en cuartos de kilo. */
+export function normalizarKgRelleno(valor: number): number {
+  if (!Number.isFinite(valor) || valor < 0) return 0;
+  return Math.round(valor * 4) / 4;
 }
 
 export function aumentar(p: Producto, actual: number): number {
@@ -116,7 +150,7 @@ export function aumentar(p: Producto, actual: number): number {
 /** Regresa 0 cuando ya no queda nada (el producto sale del pedido). */
 export function disminuir(p: Producto, actual: number): number {
   const n = redondear1(actual - paso(p));
-  return n < (p.unidad === "kg" && !p.pavoEntero ? 0.25 : 1) ? 0 : n;
+  return n < (porKilo(p) ? 0.25 : 1) ? 0 : n;
 }
 
 const redondear1 = (n: number): number => Math.round(n * 10) / 10;
@@ -125,18 +159,20 @@ const redondear2 = (n: number): number => Math.round(n * 100) / 100;
 // ---------- Pedido ----------
 
 export interface Renglon {
+  id: string;
   producto: Producto;
   linea: Linea;
   importe: number;
 }
 
+/** Renglones en el orden del catálogo (y de captura, para varias maquilas). */
 export function renglones(pedido: Pedido, catalogo: readonly Producto[]): Renglon[] {
-  return catalogo
-    .filter((p) => pedido.lineas[p.id])
-    .map((p) => {
-      const l = pedido.lineas[p.id]!;
-      return { producto: p, linea: l, importe: importeLinea(p, l) };
-    });
+  const entradas = Object.entries(pedido.lineas);
+  return catalogo.flatMap((p) =>
+    entradas
+      .filter(([, l]) => l.productoId === p.id)
+      .map(([id, l]) => ({ id, producto: p, linea: l, importe: importeLinea(p, l) })),
+  );
 }
 
 export function costoEnvio(pedido: Pedido, zonas: readonly ZonaEnvio[]): number {
@@ -150,9 +186,11 @@ export function total(pedido: Pedido, catalogo: readonly Producto[], zonas: read
 /** Lo que le falta al cliente para poder mandar el pedido. Vacío = listo. */
 export function faltantes(pedido: Pedido, catalogo: readonly Producto[]): string[] {
   const f: string[] = [];
-  if (renglones(pedido, catalogo).length === 0) f.push("al menos un producto");
+  const filas = renglones(pedido, catalogo);
+  if (filas.length === 0) f.push("al menos un producto");
+  if (filas.some((r) => r.producto.maquila && maquilaIncompleta(r.linea))) f.push("qué carne nos trae para la maquila");
   if (!pedido.nombre.trim()) f.push("tu nombre");
-  if (pedido.dia === null) f.push("el día de entrega");
+  if (pedido.fecha === null) f.push("el día de entrega");
   if (pedido.modo === "domicilio" && !pedido.direccion.trim()) f.push("la dirección de entrega");
   return f;
 }
@@ -164,6 +202,8 @@ export interface ContextoMensaje {
   zonas: readonly ZonaEnvio[];
   /** Ej. "Miércoles 23 de diciembre". */
   nombreDia: string;
+  /** Fecha sujeta a disponibilidad (23 y 30 de diciembre). */
+  diaSujeto?: boolean;
   tardio: boolean;
 }
 
@@ -179,17 +219,22 @@ export function mensaje(pedido: Pedido, ctx: ContextoMensaje): string {
     "",
   ];
   for (const r of filas) {
-    lineas.push(`• ${textoCantidad(r.producto, r.linea)} de ${r.producto.nombre}: ${dinero(importeProducto(r.producto, r.linea))}`);
-    const pr = presentaciones(r.producto);
-    if (pr.length) lineas.push(`   Presentación: ${textoEmpaques(r.linea.presentacion, empaquesDe(r.producto, r.linea))}`);
+    const { producto: p, linea: l } = r;
+    lineas.push(`• ${nombreLinea(p, l)}, ${textoCantidad(p, l)}: ${dinero(importeProducto(p, l))}`);
+    if (p.maquila && llevaRelleno(l)) lineas.push(`   Con ${kilos(l.kgRelleno)} de relleno`);
+    if (presentaciones(p).length) lineas.push(`   Presentación: ${textoEmpaques(l.presentacion, empaquesDe(p, l))}`);
+    if (l.nota.trim()) lineas.push(`   Nota: ${l.nota.trim()}`);
+  }
+  if (filas.some((r) => r.producto.maquila)) {
+    lineas.push("", `Llevaré la carne para la maquila a la tienda al menos ${maquila.diasAnticipacion} días antes de la entrega.`);
   }
   lineas.push("", `Entrega: ${pedido.modo === "tienda" ? "Recojo en tienda" : `A domicilio, ${ctx.zonas[pedido.zona]?.nombre ?? ""}`}`);
   if (pedido.modo === "domicilio") {
     lineas.push(`Dirección: ${pedido.direccion.trim()}`);
     if (pedido.referencias.trim()) lineas.push(`Referencias: ${pedido.referencias.trim()}`);
   }
-  lineas.push(`Día: ${ctx.nombreDia}`);
-  if (pedido.nota.trim()) lineas.push(`Nota especial: ${pedido.nota.trim()}`);
+  lineas.push(`Día: ${ctx.nombreDia}${ctx.diaSujeto ? " (sujeto a disponibilidad)" : ""}`);
+  if (pedido.nota.trim()) lineas.push(`Nota del pedido: ${pedido.nota.trim()}`);
   const t = total(pedido, ctx.catalogo, ctx.zonas);
   lineas.push(`Total estimado: ${dinero(t)}${envio ? ` (incluye envío ${dinero(envio)})` : ""}`);
   return lineas.join("\n");

@@ -10,12 +10,12 @@ Solo hay que tocar dos archivos:
 | Archivo | Qué tiene |
 |---|---|
 | `src/data/productos.ts` | Productos, descripciones y precios. No cambies los `id`. |
-| `src/data/temporada.ts` | Año, día límite, día de pedidos tardíos, anticipo, días de entrega, zonas de envío, teléfonos, dirección y horario. |
+| `src/data/temporada.ts` | Año, día límite, día de pedidos tardíos, anticipo, días especiales de diciembre (23 y 30 sujetos a disponibilidad, 24 y 31 solo tienda), días de aviso para envío a domicilio, zonas de envío, teléfonos, dirección y horario. |
 
-Los días de la semana se calculan solos a partir del año.
+El calendario arranca en el mes actual y deja elegir de hoy al 31 de diciembre.
 
 En `temporada.ts` también están los precios de empaques (y su capacidad en kg), el servicio
-"¿Le regalaron el pavo?" y los datos del negocio.
+la maquila (precio, relleno y la lista de "¿Qué nos trae?") y los datos del negocio.
 
 ## Productos agotados
 

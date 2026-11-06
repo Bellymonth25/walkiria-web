@@ -12,6 +12,7 @@ export const categorias: readonly Categoria[] = [
   { id: "trad", nombre: "Bacalao y romeritos" },
   { id: "guarn", nombre: "Guarniciones y pastas" },
   { id: "pan", nombre: "Postres" },
+  { id: "maquila", nombre: "Maquila: le cocinamos su carne" },
 ];
 
 export const productos: readonly Producto[] = [
@@ -36,5 +37,6 @@ export const productos: readonly Producto[] = [
   { id: "ravioles", nombre: "Ravioles de Queso", categoria: "guarn", unidad: "kg", precio: 320, firebaseIds: ["PROD_022"] },
 
   { id: "strudel", nombre: "Strudel de Manzana", categoria: "pan", unidad: "pza", precio: 500, descripcion: "Pasta hojaldrada rellena de manzana. Para 10 personas.", clasico: true, firebaseIds: ["PROD_025"] },
+  { id: "maquila", nombre: "Maquila", categoria: "maquila", unidad: "kg", precio: 75, descripcion: "Usted nos trae su pavo, lomo, pierna o la carne que guste y nosotros la cocinamos. Se cobra por kilo de lo que pese. Tráigalo a la tienda al menos 2 días antes de la entrega.", maquila: true, firebaseIds: ["PROD_013"] },
   { id: "strudel-individual", nombre: "Strudel Individual", categoria: "pan", unidad: "pza", precio: 40, descripcion: "Pasta hojaldrada rellena de manzana.", firebaseIds: ["PROD_035"] },
 ];

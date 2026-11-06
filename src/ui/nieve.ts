@@ -10,6 +10,55 @@ interface Copo {
 
 const CLAVE = "walkiria-nieve";
 
+interface Grande {
+  x: number;
+  y: number;
+  r: number;
+  vy: number;
+  fase: number;
+  giro: number;
+  vg: number;
+  a: number;
+}
+
+function nuevoGrande(): Grande {
+  return {
+    x: 30 + Math.random() * (window.innerWidth - 60),
+    y: -30,
+    r: 9 + Math.random() * 7,
+    vy: 22 + Math.random() * 14,
+    fase: Math.random() * Math.PI * 2,
+    giro: Math.random() * Math.PI,
+    vg: (Math.random() - 0.5) * 0.8,
+    a: 0.55 + Math.random() * 0.3,
+  };
+}
+
+/** Copo de seis brazos con ramitas. */
+function dibujarCopo(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, giro: number, a: number): void {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(giro);
+  ctx.strokeStyle = `rgba(214,222,236,${a})`;
+  ctx.lineWidth = Math.max(1.2, r / 8);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -r);
+    for (const k of [0.45, 0.72]) {
+      const largo = r * (k === 0.45 ? 0.32 : 0.24);
+      ctx.moveTo(0, -r * k);
+      ctx.lineTo(-largo, -r * k - largo);
+      ctx.moveTo(0, -r * k);
+      ctx.lineTo(largo, -r * k - largo);
+    }
+    ctx.rotate(Math.PI / 3);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
 export function iniciarNieve(canvas: HTMLCanvasElement, boton: HTMLButtonElement): void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -18,13 +67,16 @@ export function iniciarNieve(canvas: HTMLCanvasElement, boton: HTMLButtonElement
   let copos: Copo[] = [];
   let raf = 0;
   let ultimo = 0;
+  let grandes: Grande[] = [];
+  let proximoGrande = 0;
 
   const ajustar = () => {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = window.innerWidth * dpr;
     canvas.height = window.innerHeight * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const n = Math.round(Math.min(70, (window.innerWidth * window.innerHeight) / 22000));
+    // ~10% más que la primera versión
+    const n = Math.round(Math.min(77, (window.innerWidth * window.innerHeight) / 20000));
     copos = Array.from({ length: n }, () => nuevo(true));
   };
 
@@ -41,6 +93,18 @@ export function iniciarNieve(canvas: HTMLCanvasElement, boton: HTMLButtonElement
     const dt = Math.min(0.05, (t - (ultimo || t)) / 1000);
     ultimo = t;
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    // De vez en cuando, un copo grande que cae girando (máximo 2 a la vez).
+    if (t > proximoGrande && grandes.length < 2) {
+      grandes.push(nuevoGrande());
+      proximoGrande = t + 7000 + Math.random() * 9000;
+    }
+    grandes = grandes.filter((g) => g.y < window.innerHeight + 40);
+    for (const g of grandes) {
+      g.y += g.vy * dt;
+      g.fase += dt * 0.6;
+      g.giro += g.vg * dt;
+      dibujarCopo(ctx, g.x + Math.sin(g.fase) * 18, g.y, g.r, g.giro, g.a);
+    }
     for (const c of copos) {
       c.y += c.vy * dt;
       c.fase += dt * 0.8;
@@ -57,6 +121,8 @@ export function iniciarNieve(canvas: HTMLCanvasElement, boton: HTMLButtonElement
   const aplicar = () => {
     cancelAnimationFrame(raf);
     ultimo = 0;
+    grandes = [];
+    proximoGrande = performance.now() + 2500;
     canvas.hidden = !encendida;
     boton.setAttribute("aria-pressed", String(encendida));
     boton.textContent = encendida ? "Nieve: encendida" : "Nieve: apagada";

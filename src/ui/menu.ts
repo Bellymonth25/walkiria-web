@@ -1,7 +1,9 @@
 import type { Categoria, CategoriaId, Linea, Producto } from "../types";
 import { dinero, escapar, kilos, normalizar } from "../lib/formato";
-import { empaquesDe, importeLinea, nombrePresentacion, presentaciones, textoEmpaques } from "../lib/pedido";
-import { pavo } from "../data/temporada";
+import {
+  empaquesDe, importeLinea, llevaRelleno, nombrePresentacion, presentaciones, textoEmpaques,
+} from "../lib/pedido";
+import { maquila, pavo } from "../data/temporada";
 import { $ } from "./dom";
 
 export type Filtro = CategoriaId | "todo";
@@ -20,7 +22,7 @@ export function pintarChips(v: VistaMenu): void {
   $("#chips").innerHTML = [{ id: "todo" as Filtro, nombre: "Todo" }, ...v.categorias]
     .map(
       (c) =>
-        `<button class="chip" type="button" data-cat="${c.id}" aria-pressed="${v.filtro === c.id}">${escapar(c.nombre)}<span class="c">${cuenta(c.id)}</span></button>`,
+        `<button class="chip" type="button" data-cat="${c.id}" aria-pressed="${v.filtro === c.id}">${escapar(c.id === "maquila" ? "Maquila" : c.nombre)}<span class="c">${cuenta(c.id)}</span></button>`,
     )
     .join("");
 }
@@ -29,76 +31,105 @@ export function pintarChips(v: VistaMenu): void {
 export function textoDetalle(p: Producto, l: Linea): string {
   const partes: string[] = [];
   if (presentaciones(p).length) partes.push(textoEmpaques(l.presentacion, empaquesDe(p, l)));
+  if (p.maquila && llevaRelleno(l)) partes.push(`relleno ${kilos(l.kgRelleno)} (+${dinero(l.kgRelleno * maquila.precioRellenoKg)})`);
   partes.push(`Subtotal ${dinero(importeLinea(p, l))}`);
   return partes.join(" · ");
 }
 
 function seg(nombre: string, id: string, opciones: [string, string][], actual: string): string {
-  return `<div class="seg seg-${opciones.length}" role="group" aria-label="${nombre}">${opciones
+  return `<div class="seg" role="group" aria-label="${nombre}">${opciones
     .map(([valor, texto]) => `<button type="button" data-${nombre}="${id}:${valor}" aria-pressed="${actual === valor}">${texto}</button>`)
     .join("")}</div>`;
 }
 
-function detalle(p: Producto, l: Linea): string {
+function campoNumero(id: string, attr: string, valor: number, min: string, step: string, modo: string, etiqueta: string): string {
+  return `<input id="${attr}-${id}" class="num" type="number" inputmode="${modo}" min="${min}" step="${step}" value="${valor}" data-${attr}="${id}" aria-label="${etiqueta}">`;
+}
+
+function detalle(p: Producto, id: string, l: Linea): string {
   const n = escapar(p.nombre);
+  const porKilo = p.unidad === "kg" && !p.pavoEntero;
   const unidad = p.pavoEntero ? (l.cantidad === 1 ? "pavo" : "pavos") : p.unidad === "pza" ? "pzas" : "kg";
-  const paso = p.unidad === "kg" && !p.pavoEntero ? "0.25" : "1";
-  const modo = p.unidad === "kg" && !p.pavoEntero ? "decimal" : "numeric";
   const partes: string[] = [];
 
+  if (p.maquila) {
+    const opciones = maquila.tipos
+      .map((t) => `<option value="${escapar(t)}"${l.tipoMaquila === t ? " selected" : ""}>${t === "Otro" ? "Otro (especificar)" : escapar(t)}</option>`)
+      .join("");
+    partes.push(`<div class="dfield dwide"><label class="dlabel" for="tipo-${id}">¿Qué nos trae?</label>
+      <select id="tipo-${id}" data-tipo="${id}"><option value=""${l.tipoMaquila ? "" : " selected"} disabled>Elige una opción</option>${opciones}</select>
+      ${l.tipoMaquila === "Otro" ? `<input type="text" id="otro-${id}" data-otro="${id}" value="${escapar(l.otroMaquila)}" placeholder="Especificar: qué carne y cómo la quiere">` : ""}</div>`);
+  }
+
   if (p.pavoEntero) {
-    partes.push(`<div class="dfield"><span class="dlabel">Tamaño</span>${seg("size", p.id, [
+    partes.push(`<div class="dfield"><span class="dlabel">Tamaño</span>${seg("size", id, [
       ["completo", `Completo <small>desde ${pavo.kgMinimoCompleto} kg</small>`],
       ["medio", `Medio pavo <small>${pavo.kgMedio.min} a ${pavo.kgMedio.max} kg</small>`],
     ], l.tamano)}</div>`);
   }
 
-  partes.push(`<div class="dfield"><label class="dlabel" for="qty-${p.id}">Cantidad</label>
+  partes.push(`<div class="dfield"><label class="dlabel" for="qty-${id}">${p.maquila ? "Kilos aprox. de su carne" : "Cantidad"}</label>
     <div class="qty">
-      <button type="button" data-dec="${p.id}" aria-label="Quitar ${n}">−</button>
-      <input id="qty-${p.id}" class="num" type="number" inputmode="${modo}" min="${paso}" step="${paso}" value="${l.cantidad}" data-qty="${p.id}" aria-label="Cantidad de ${n}">
-      <button type="button" data-inc="${p.id}" aria-label="Agregar más ${n}">+</button>
+      <button type="button" data-dec="${id}" aria-label="Menos ${n}">−</button>
+      ${campoNumero(id, "qty", l.cantidad, porKilo ? "0.25" : "1", porKilo ? "0.25" : "1", porKilo ? "decimal" : "numeric", `Cantidad de ${n}`)}
+      <button type="button" data-inc="${id}" aria-label="Más ${n}">+</button>
       <span class="unit">${unidad}</span>
     </div></div>`);
 
   if (p.pavoEntero && l.tamano === "completo") {
-    partes.push(`<div class="dfield"><label class="dlabel" for="kgp-${p.id}">Kilos aprox. por pavo</label>
-      <div class="qty"><input id="kgp-${p.id}" class="num" type="number" inputmode="decimal" min="${pavo.kgMinimoCompleto}" step="0.5" value="${l.kgPorPavo}" data-kgpavo="${p.id}"><span class="unit">kg (mín. ${kilos(pavo.kgMinimoCompleto)})</span></div></div>`);
+    partes.push(`<div class="dfield"><label class="dlabel" for="kgpavo-${id}">Kilos aprox. por pavo</label>
+      <div class="qty">${campoNumero(id, "kgpavo", l.kgPorPavo, String(pavo.kgMinimoCompleto), "0.5", "decimal", "Kilos por pavo")}<span class="unit">kg (mín. ${pavo.kgMinimoCompleto})</span></div></div>`);
+  }
+
+  if (p.maquila && llevaRelleno(l)) {
+    partes.push(`<div class="dfield"><label class="dlabel" for="relleno-${id}">Kilos de relleno</label>
+      <div class="qty">${campoNumero(id, "relleno", l.kgRelleno, "0", "0.25", "decimal", "Kilos de relleno")}<span class="unit">kg · ${dinero(maquila.precioRellenoKg)}/kg</span></div></div>`);
   }
 
   const pres = presentaciones(p);
   if (pres.length) {
     partes.push(`<div class="dfield"><span class="dlabel">Presentación</span>${seg(
       "pres",
-      p.id,
+      id,
       pres.map((x) => [x, x === "acrilico" || x === "bolsa" ? `${nombrePresentacion[x]} <small>sin costo</small>` : nombrePresentacion[x]]),
       l.presentacion,
     )}</div>`);
   }
 
-  return `<div class="detail">${partes.join("")}
-    <div class="dfoot"><span class="dinfo" data-info="${p.id}">${escapar(textoDetalle(p, l))}</span>
-    <button type="button" class="del" data-del="${p.id}">Quitar</button></div></div>`;
+  if (p.maquila) {
+    partes.push(`<div class="dfield dwide"><label class="dlabel" for="nota-${id}">Indicaciones para esta maquila (opcional)</label>
+      <input type="text" id="nota-${id}" data-notalinea="${id}" value="${escapar(l.nota)}" placeholder="Ej. Con poca sal, partido en rebanadas"></div>`);
+  }
+
+  return `<div class="detail" data-line="${id}">${partes.join("")}
+    <div class="dfoot"><span class="dinfo" data-info="${id}">${escapar(textoDetalle(p, l))}</span>
+    <button type="button" class="del" data-del="${id}">Quitar</button></div></div>`;
 }
 
-export function renglon(p: Producto, l: Linea | undefined, agotado: boolean): string {
+export function renglon(p: Producto, lineas: readonly [string, Linea][], agotado: boolean): string {
   const n = escapar(p.nombre);
+  const enPedido = lineas.length > 0;
   const accion = agotado
     ? `<span class="soldout">Agotado</span>`
-    : l
-      ? `<span class="inorder">En tu pedido</span>`
-      : `<button type="button" class="add" data-add="${p.id}">Agregar</button>`;
-  return `<li class="row${l ? " in" : ""}${agotado ? " agotado" : ""}" data-row="${p.id}">
+    : p.maquila
+      ? `<button type="button" class="add" data-add="${p.id}">${enPedido ? "Agregar otra" : "Agregar"}</button>`
+      : enPedido
+        ? `<span class="inorder">En tu pedido</span>`
+        : `<button type="button" class="add" data-add="${p.id}">Agregar</button>`;
+  return `<li class="row${enPedido ? " in" : ""}${agotado ? " agotado" : ""}" data-row="${p.id}">
     <div class="name">${n}${p.clasico ? '<span class="tag">Clásico</span>' : ""}${p.descripcion ? `<span class="meta">${escapar(p.descripcion)}</span>` : ""}</div>
     <div class="price num"><b>${dinero(p.precio)}</b><span>/${p.unidad}</span></div>
     <div class="action">${accion}</div>
-    ${l && !agotado ? detalle(p, l) : ""}</li>`;
+    ${agotado ? "" : lineas.map(([id, l]) => detalle(p, id, l)).join("")}</li>`;
 }
 
-export function pintarRenglon(v: VistaMenu, id: string): void {
-  const p = v.catalogo.find((x) => x.id === id);
-  const el = document.querySelector(`[data-row="${id}"]`);
-  if (p && el) el.outerHTML = renglon(p, v.lineas[id], v.agotados(p));
+const lineasDe = (v: VistaMenu, p: Producto): [string, Linea][] =>
+  Object.entries(v.lineas).filter(([, l]) => l.productoId === p.id);
+
+export function pintarRenglon(v: VistaMenu, productoId: string): void {
+  const p = v.catalogo.find((x) => x.id === productoId);
+  const el = document.querySelector(`[data-row="${productoId}"]`);
+  if (p && el) el.outerHTML = renglon(p, lineasDe(v, p), v.agotados(p));
 }
 
 export function pintarMenu(v: VistaMenu): void {
@@ -115,8 +146,8 @@ export function pintarMenu(v: VistaMenu): void {
     .map((c) => {
       const items = visibles.filter((p) => p.categoria === c.id);
       if (!items.length) return "";
-      return `<div class="cat"><h3>${escapar(c.nombre)}<small>${items.length} ${items.length === 1 ? "producto" : "productos"}</small></h3>
-        <ul class="rows">${items.map((p) => renglon(p, v.lineas[p.id], v.agotados(p))).join("")}</ul></div>`;
+      return `<div class="cat${c.id === "maquila" ? " cat-maquila" : ""}" id="cat-${c.id}"><h3>${escapar(c.nombre)}<small>${items.length} ${items.length === 1 ? "producto" : "productos"}</small></h3>
+        <ul class="rows">${items.map((p) => renglon(p, lineasDe(v, p), v.agotados(p))).join("")}</ul></div>`;
     })
     .join("");
 }

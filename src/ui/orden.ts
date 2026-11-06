@@ -2,10 +2,11 @@ import type { Pedido, Producto } from "../types";
 import type { Temporada } from "../data/temporada";
 import { dinero, escapar } from "../lib/formato";
 import {
-  costoEnvio, empaquesDe, enlaceWhatsApp, faltantes, mensaje, presentaciones, renglones, textoCantidad, textoEmpaques,
-  textoFaltantes, total,
+  costoEnvio, empaquesDe, enlaceWhatsApp, faltantes, mensaje, nombreLinea, presentaciones, renglones, textoCantidad,
+  textoEmpaques, textoFaltantes, total,
 } from "../lib/pedido";
-import { nombreDia } from "../lib/fechas";
+import { nombreFecha } from "../lib/fechas";
+import { tipoDeFecha } from "../lib/entrega";
 import { $ } from "./dom";
 
 export interface ContextoOrden {
@@ -19,7 +20,8 @@ export function textoPedido(pedido: Pedido, ctx: ContextoOrden): string {
   return mensaje(pedido, {
     catalogo: ctx.catalogo,
     zonas: ctx.temporada.zonas,
-    nombreDia: pedido.dia === null ? "" : nombreDia(ctx.temporada.anio, pedido.dia),
+    nombreDia: pedido.fecha === null ? "" : nombreFecha(pedido.fecha),
+    diaSujeto: pedido.fecha !== null && tipoDeFecha(pedido.fecha, ctx.temporada) === "sujeto",
     tardio: ctx.tardio,
   });
 }
@@ -38,7 +40,7 @@ export function pintarOrden(pedido: Pedido, ctx: ContextoOrden): void {
         const pres = presentaciones(r.producto).length
           ? `<small>${escapar(textoEmpaques(r.linea.presentacion, empaquesDe(r.producto, r.linea)))}</small>`
           : "";
-        return `<li><span><span class="q">${escapar(textoCantidad(r.producto, r.linea))}</span> ${escapar(r.producto.nombre)}${pres}</span><span class="num">${dinero(r.importe)}</span></li>`;
+        return `<li><span>${escapar(nombreLinea(r.producto, r.linea))} <span class="q">· ${escapar(textoCantidad(r.producto, r.linea))}</span>${pres}</span><span class="num">${dinero(r.importe)}</span></li>`;
       })
       .join("") +
     (envio ? `<li><span>Envío ${escapar(ctx.temporada.zonas[pedido.zona]!.nombre)}</span><span class="num">${dinero(envio)}</span></li>` : "");
@@ -60,5 +62,6 @@ export function pintarOrden(pedido: Pedido, ctx: ContextoOrden): void {
     b.setAttribute("aria-pressed", String(b.dataset.mode === pedido.modo)),
   );
   $("#zoneField").hidden = !domicilio;
+  $("#domNote").hidden = !domicilio;
   $("#addrField").hidden = !domicilio;
 }

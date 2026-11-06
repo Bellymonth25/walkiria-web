@@ -7,13 +7,14 @@ import {
 } from "../src/lib/pedido";
 import { esPedidoTardio, nombreDia } from "../src/lib/fechas";
 import { estaAgotado, parsearAgotados } from "../src/lib/disponibilidad";
+import { fechaElegible, sinDomicilio, tipoDeFecha } from "../src/lib/entrega";
 
 const prod = (id: string): Producto => productos.find((p) => p.id === id)!;
 const lomo = prod("lomo-adobado");
 const pavoR = prod("pavo-relleno");
 const strudel = prod("strudel");
 const linea = (p: Producto, cambios: Partial<Linea> = {}): Linea => ({ ...nuevaLinea(p), ...cambios });
-const base: Pedido = { lineas: {}, nombre: "", modo: "tienda", zona: 0, direccion: "", referencias: "", nota: "", dia: 23 };
+const base: Pedido = { lineas: {}, nombre: "", modo: "tienda", zona: 0, direccion: "", referencias: "", nota: "", fecha: "2026-12-23" };
 const ctx = { catalogo: productos, zonas: temporada.zonas, nombreDia: "Miércoles 23 de diciembre", tardio: false };
 
 describe("líneas nuevas", () => {
@@ -74,9 +75,9 @@ describe("total y faltantes", () => {
     expect(total({ ...p, modo: "domicilio", zona: 2 }, productos, temporada.zonas)).toBe(1060);
   });
   it("pide día y dirección cuando aplica", () => {
-    const p: Pedido = { ...base, lineas: { bacalao: linea(prod("bacalao")) }, nombre: "Ana", dia: null };
+    const p: Pedido = { ...base, lineas: { bacalao: linea(prod("bacalao")) }, nombre: "Ana", fecha: null };
     expect(faltantes(p, productos)).toEqual(["el día de entrega"]);
-    expect(faltantes({ ...p, dia: 22, modo: "domicilio" }, productos)).toEqual(["la dirección de entrega"]);
+    expect(faltantes({ ...p, fecha: "2026-12-22", modo: "domicilio" }, productos)).toEqual(["la dirección de entrega"]);
   });
 });
 
@@ -95,11 +96,11 @@ describe("mensaje de WhatsApp", () => {
       ctx,
     );
     expect(m.split("\n")[1]).toBe("Nombre: Ana López");
-    expect(m).toContain("• 1 medio pavo (3 a 4 kg c/u) de Pavo Relleno: $1,365");
+    expect(m).toContain("• Pavo Relleno, 1 medio pavo (3 a 4 kg c/u): $1,365");
     expect(m).toContain("Presentación: Bolsa o caja de cartón (sin costo)");
-    expect(m).toContain("• 6 kg de Lomo Adobado: $2,580");
+    expect(m).toContain("• Lomo Adobado, 6 kg: $2,580");
     expect(m).toContain("Presentación: 2 charolas grandes (+$70)");
-    expect(m).toContain("Nota especial: Ensalada sin apio");
+    expect(m).toContain("Nota del pedido: Ensalada sin apio");
     expect(m).toContain("Total estimado: $4,015");
   });
 });
@@ -126,5 +127,63 @@ describe("agotados", () => {
     expect(estaAgotado(pechuga, new Set(["PROD_017"]))).toBe(false);
     expect(estaAgotado(pechuga, new Set(["PROD_017", "PROD_018", "PROD_019"]))).toBe(true);
     expect(estaAgotado(pavoR, new Set(["PROD_001"]))).toBe(true);
+  });
+});
+
+describe("maquila", () => {
+  const maq = prod("maquila");
+  it("se cobra por kilo y el pavo relleno suma su relleno", () => {
+    expect(importeLinea(maq, linea(maq, { cantidad: 4, tipoMaquila: "Lomo Mechado" }))).toBe(4 * 75);
+    expect(importeLinea(maq, linea(maq, { cantidad: 6, tipoMaquila: "Pavo Relleno", kgRelleno: 1.5 }))).toBe(6 * 75 + 1.5 * 390);
+  });
+  it("pide qué carne trae, y en Otro que lo especifique", () => {
+    const p: Pedido = { ...base, nombre: "Ana", lineas: { "maquila-1": linea(maq) } };
+    expect(faltantes(p, productos)).toEqual(["qué carne nos trae para la maquila"]);
+    const otro: Pedido = { ...p, lineas: { "maquila-1": linea(maq, { tipoMaquila: "Otro" }) } };
+    expect(faltantes(otro, productos)).toEqual(["qué carne nos trae para la maquila"]);
+    const listo: Pedido = { ...p, lineas: { "maquila-1": linea(maq, { tipoMaquila: "Otro", otroMaquila: "Cabrito" }) } };
+    expect(faltantes(listo, productos)).toEqual([]);
+  });
+  it("varias maquilas con su nota en el mensaje", () => {
+    const m = mensaje(
+      {
+        ...base,
+        nombre: "Ana",
+        fecha: "2026-12-30",
+        lineas: {
+          "maquila-1": linea(maq, { cantidad: 6, tipoMaquila: "Pavo Relleno", kgRelleno: 1, nota: "Poca sal" }),
+          "maquila-2": linea(maq, { cantidad: 3, tipoMaquila: "Otro", otroMaquila: "Cabrito" }),
+        },
+      },
+      { ...ctx, nombreDia: "Miércoles 30 de diciembre", diaSujeto: true },
+    );
+    expect(m).toContain("• Maquila de Pavo Relleno, aprox. 6 kg: $840");
+    expect(m).toContain("   Con 1 kg de relleno");
+    expect(m).toContain("   Nota: Poca sal");
+    expect(m).toContain("• Maquila de Cabrito, aprox. 3 kg: $225");
+    expect(m).toContain("Llevaré la carne para la maquila a la tienda al menos 2 días antes de la entrega.");
+    expect(m).toContain("Día: Miércoles 30 de diciembre (sujeto a disponibilidad)");
+    expect(m).not.toContain("Presentación");
+  });
+});
+
+describe("reglas de entrega", () => {
+  const hoy = new Date(2026, 10, 6, 20); // 6 de noviembre, 8 pm
+  it("marca los días especiales de diciembre", () => {
+    expect(tipoDeFecha("2026-12-23", temporada)).toBe("sujeto");
+    expect(tipoDeFecha("2026-12-30", temporada)).toBe("sujeto");
+    expect(tipoDeFecha("2026-12-31", temporada)).toBe("tienda");
+    expect(tipoDeFecha("2026-11-23", temporada)).toBeUndefined();
+  });
+  it("se puede elegir de hoy al 31 de diciembre", () => {
+    expect(fechaElegible("2026-11-05", hoy, temporada)).toBe(false);
+    expect(fechaElegible("2026-11-06", hoy, temporada)).toBe(true);
+    expect(fechaElegible("2026-12-31", hoy, temporada)).toBe(true);
+    expect(fechaElegible("2027-01-01", hoy, temporada)).toBe(false);
+  });
+  it("a domicilio: no el 24 ni el 31, y con 2 días de aviso", () => {
+    expect(sinDomicilio("2026-12-24", hoy, temporada)).toBe("tienda");
+    expect(sinDomicilio("2026-11-07", hoy, temporada)).toBe("aviso");
+    expect(sinDomicilio("2026-11-08", hoy, temporada)).toBeNull();
   });
 });

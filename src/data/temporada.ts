@@ -1,4 +1,4 @@
-import type { DiaEntrega, TamanoEmpaque, ZonaEnvio } from "../types";
+import type { DiaEspecial, TamanoEmpaque, ZonaEnvio } from "../types";
 
 export interface Temporada {
   anio: number;
@@ -8,7 +8,12 @@ export interface Temporada {
   /** Día de pedidos tardíos: se reciben, sujetos a disponibilidad. */
   diaTardio: number;
   anticipo: string;
-  diasEntrega: readonly DiaEntrega[];
+  /** Días de diciembre con regla especial (se marcan en el calendario). */
+  diasEspeciales: readonly DiaEspecial[];
+  /** Último día que se puede elegir en el calendario (diciembre). */
+  ultimoDia: number;
+  /** Días de anticipación para envío a domicilio. */
+  diasAvisoDomicilio: number;
   zonas: readonly ZonaEnvio[];
 }
 
@@ -18,12 +23,15 @@ export const temporada: Temporada = {
   diaLimite: 22,
   diaTardio: 23,
   anticipo: "50%",
-  diasEntrega: [
-    { dia: 20 }, { dia: 21 }, { dia: 22 }, { dia: 23 },
-    { dia: 24, soloTienda: true },
-    { dia: 30 },
-    { dia: 31, soloTienda: true },
+  diasEspeciales: [
+    { dia: 22, tipo: "limite" },
+    { dia: 23, tipo: "sujeto" },
+    { dia: 24, tipo: "tienda" },
+    { dia: 30, tipo: "sujeto" },
+    { dia: 31, tipo: "tienda" },
   ],
+  ultimoDia: 31,
+  diasAvisoDomicilio: 2,
   zonas: [
     { nombre: "Zona Sur", costo: 100 },
     { nombre: "Zona Centro", costo: 150 },
@@ -58,6 +66,16 @@ export const maquila = {
   precioRellenoKg: 390,
   /** Días antes de la entrega para traer el producto a la tienda. */
   diasAnticipacion: 2,
+  /** Opciones de "¿qué nos trae?". "Otro" pide especificar. */
+  tipos: [
+    "Pavo Relleno", "Pavo Adobado", "Pavo Ahumado",
+    "Lomo Horneado", "Lomo Mechado", "Lomo Adobado", "Lomo a la Ciruela",
+    "Pechuga de Pavo Adobada", "Pechuga de Pavo Horneada", "Pechuga de Pavo Mechada",
+    "Pierna Adobada", "Pierna Horneada", "Pierna Mechada",
+    "Pato", "Costillas", "Otro",
+  ],
+  /** El tipo que lleva relleno (se cobra aparte por kilo de relleno). */
+  tipoConRelleno: "Pavo Relleno",
 } as const;
 
 export const negocio = {

@@ -1,37 +1,62 @@
-import type { DiaEntrega } from "../types";
+import type { Temporada } from "../data/temporada";
+import { aIso, inicioDelDia, tituloMes } from "../lib/fechas";
+import { fechaElegible, tipoDeFecha } from "../lib/entrega";
 import { $ } from "./dom";
 
 const SEMANA = ["L", "M", "M", "J", "V", "S", "D"];
+const ETIQUETA = { limite: "", sujeto: "Sujeto", tienda: "Tienda" } as const;
 
 export interface VistaCalendario {
+  temporada: Temporada;
+  /** Mes que se está viendo. */
   anio: number;
-  dias: readonly DiaEntrega[];
-  diaTardio: number;
-  seleccionado: number | null;
+  mes: number;
+  seleccionado: string | null;
   hoy: Date;
 }
 
-/** Calendario de diciembre: solo se pueden tocar los días de entrega que no han pasado. */
+/** Primer y último mes que se pueden ver: el mes de hoy y diciembre de la temporada. */
+export function rangoMeses(t: Temporada, hoy: Date): { desde: [number, number]; hasta: [number, number] } {
+  return { desde: [hoy.getFullYear(), hoy.getMonth()], hasta: [t.anio, 11] };
+}
+
+const indice = (a: number, m: number) => a * 12 + m;
+
 export function pintarCalendario(v: VistaCalendario): void {
-  const primero = new Date(v.anio, 11, 1);
+  const { desde, hasta } = rangoMeses(v.temporada, v.hoy);
+  const actual = indice(v.anio, v.mes);
+  const puedeAtras = actual > indice(...desde);
+  const puedeAdelante = actual < indice(...hasta);
+  const hoyIso = aIso(inicioDelDia(v.hoy));
+
+  const primero = new Date(v.anio, v.mes, 1);
   const hueco = (primero.getDay() + 6) % 7; // lunes primero
-  const inicioHoy = new Date(v.hoy.getFullYear(), v.hoy.getMonth(), v.hoy.getDate());
+  const diasMes = new Date(v.anio, v.mes + 1, 0).getDate();
   const celdas: string[] = SEMANA.map((d) => `<span class="cal-wd" aria-hidden="true">${d}</span>`);
   for (let i = 0; i < hueco; i++) celdas.push(`<span></span>`);
-  for (let d = 1; d <= 31; d++) {
-    const info = v.dias.find((x) => x.dia === d);
-    const pasado = new Date(v.anio, 11, d) < inicioHoy;
-    if (!info || pasado) {
+
+  for (let d = 1; d <= diasMes; d++) {
+    const iso = aIso(new Date(v.anio, v.mes, d));
+    const esHoy = iso === hoyIso;
+    if (!fechaElegible(iso, v.hoy, v.temporada)) {
       celdas.push(`<span class="cal-day off" aria-hidden="true">${d}</span>`);
       continue;
     }
-    const marca = info.soloTienda ? "Tienda" : d === v.diaTardio ? "Tardío" : "";
-    const clases = ["cal-day", info.soloTienda ? "tienda" : "", d === v.diaTardio ? "tardio" : "", v.seleccionado === d ? "sel" : ""].join(" ");
-    const etiqueta = `${d} de diciembre${info.soloTienda ? ", solo entrega en tienda" : ""}${d === v.diaTardio ? ", pedido tardío sujeto a disponibilidad" : ""}`;
+    const tipo = tipoDeFecha(iso, v.temporada);
+    const marca = tipo ? ETIQUETA[tipo] : esHoy ? "Hoy" : "";
+    const sel = v.seleccionado === iso;
+    const clases = ["cal-day", tipo ?? "", esHoy ? "hoy" : "", sel ? "sel" : ""].filter(Boolean).join(" ");
+    const extra = tipo === "tienda" ? ", solo entrega en tienda" : tipo === "sujeto" ? ", sujeto a disponibilidad" : esHoy ? ", hoy" : "";
     celdas.push(
-      `<button type="button" class="${clases.trim()}" data-day="${d}" aria-pressed="${v.seleccionado === d}" aria-label="${etiqueta}">${d}${marca ? `<small>${marca}</small>` : ""}</button>`,
+      `<button type="button" class="${clases}" data-fecha="${iso}" aria-pressed="${sel}" aria-label="${d}${extra}">${d}${marca ? `<small>${marca}</small>` : ""}</button>`,
     );
   }
-  $("#calendar").innerHTML = `<div class="cal-head">Diciembre ${v.anio}</div><div class="cal-grid">${celdas.join("")}</div>
-    <div class="cal-legend"><span><i class="dot tienda"></i>Solo en tienda</span><span><i class="dot tardio"></i>Sujeto a disponibilidad</span></div>`;
+
+  $("#calendar").innerHTML = `<div class="cal-head">
+      <button type="button" class="cal-nav" data-mes="-1" aria-label="Mes anterior"${puedeAtras ? "" : " disabled"}>‹</button>
+      <span>${tituloMes(v.anio, v.mes)}</span>
+      <button type="button" class="cal-nav" data-mes="1" aria-label="Mes siguiente"${puedeAdelante ? "" : " disabled"}>›</button>
+    </div>
+    <div class="cal-grid">${celdas.join("")}</div>
+    <div class="cal-legend"><span><i class="dot hoy"></i>Hoy</span><span><i class="dot tienda"></i>Solo en tienda</span><span><i class="dot sujeto"></i>Sujeto a disponibilidad</span></div>`;
 }
