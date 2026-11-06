@@ -33,10 +33,8 @@ export function iniciarNav(nav: HTMLElement, altoBarra: () => number): void {
       if (s.getBoundingClientRect().top <= linea) i = k;
     });
     // Al llegar al final de la página, la última sección.
-    // (solo si ya se ve buena parte de ella; en pantallas muy altas el final llega antes).
-    const ultima = secciones[secciones.length - 1];
-    const alFinal = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
-    if (alFinal && ultima && ultima.getBoundingClientRect().top < window.innerHeight * 0.5) i = secciones.length - 1;
+    // (Si el visitante tocó otra sección en el menú, esa se respeta: ver "fijada" abajo).
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) i = secciones.length - 1;
     mover(i >= 0 ? (enlaces[i] ?? null) : null);
   };
 
