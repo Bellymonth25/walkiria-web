@@ -380,4 +380,10 @@ pintarDias();
 pintarOrden(pedido, ctx);
 iniciarNieve($<HTMLCanvasElement>("#snow"), $<HTMLButtonElement>("#snowToggle"));
 iniciarLuces($(".lights"));
+
+// Lo que mide la barra de arriba (con luces), para que la búsqueda y el pedido se peguen justo debajo.
+const barra = $("header.top");
+new ResizeObserver(() => {
+  document.documentElement.style.setProperty("--alto-top", `${barra.getBoundingClientRect().bottom}px`);
+}).observe(barra);
 void cargarDisponibilidad();

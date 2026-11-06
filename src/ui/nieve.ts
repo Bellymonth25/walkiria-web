@@ -1,4 +1,4 @@
-/** Nieve ligera en un canvas. Se apaga con prefers-reduced-motion y con el botón del pie de página. */
+/** Nieve ligera en un canvas. Se apaga con el botón del pie de página y la página recuerda la elección. */
 interface Copo {
   x: number;
   y: number;
@@ -82,8 +82,8 @@ function dibujarCopo(ctx: CanvasRenderingContext2D, x: number, y: number, r: num
 export function iniciarNieve(canvas: HTMLCanvasElement, boton: HTMLButtonElement): void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  const reducir = window.matchMedia("(prefers-reduced-motion: reduce)");
-  let encendida = leer() && !reducir.matches;
+  // Encendida por defecto en todas las computadoras; solo se apaga si el visitante la apagó (se recuerda).
+  let encendida = leer();
   let copos: Copo[] = [];
   let raf = 0;
   let ultimo = 0;
@@ -168,10 +168,6 @@ export function iniciarNieve(canvas: HTMLCanvasElement, boton: HTMLButtonElement
   });
   window.addEventListener("resize", () => encendida && ajustar());
   document.addEventListener("visibilitychange", aplicar);
-  reducir.addEventListener("change", () => {
-    if (reducir.matches) encendida = false;
-    aplicar();
-  });
   aplicar();
 }
 

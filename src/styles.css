@@ -102,7 +102,7 @@ section{scroll-margin-top:72px}
 .shop{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
 @media (max-width:980px){.shop{grid-template-columns:1fr}}
 .shop>div{min-width:0}
-.tools{display:flex;flex-direction:column;gap:12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);z-index:5;background:var(--bg);padding-block:10px;margin-block:-10px 8px}
+.tools{display:flex;flex-direction:column;gap:12px;position:sticky;top:var(--alto-top,72px);z-index:5;background:var(--bg);padding-block:14px 10px;margin-block:-14px 8px}
 .search{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:0 16px}
 .search:focus-within{border-color:var(--primary)}
 .search input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:500 1rem var(--font-body);padding:12px 0;outline:none}
@@ -138,7 +138,7 @@ section{scroll-margin-top:72px}
 .empty{padding:28px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);margin-top:20px}
 
 /* Pedido (nota) */
-.order{position:sticky;top:calc(env(safe-area-inset-top,0px) + 72px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - 90px - env(safe-area-inset-top,0px));overflow:auto}
+.order{position:sticky;top:calc(var(--alto-top,72px) + 14px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - var(--alto-top,72px) - 28px);overflow:auto}
 .order h3{font-size:1.5rem}
 .order .hint{color:var(--muted);font-size:.9rem;margin:-6px 0 0}
 .lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto}
@@ -358,7 +358,7 @@ button.cal-day:hover{border-color:var(--primary)}
 .day-ico{position:absolute;top:50%;right:0;height:115%;width:auto;transform:translate(30%,-50%);color:var(--brand);opacity:.34;z-index:0}
 .day small.sujeto{font-weight:500;font-size:.78rem;color:var(--muted)!important;margin-top:2px}
 .seg button small.precio{display:block;font-weight:600}
-.aviso-tel{font-size:.9rem;background:var(--gold-soft);border-left:3px solid var(--gold-ink);border-radius:8px;padding:10px 12px;margin:0}
+.aviso-tel{font-size:.9rem;background:color-mix(in srgb,var(--gold-soft) 45%,var(--surface));border:1.5px dashed var(--gold-ink);border-radius:12px;padding:12px 14px;margin:0;text-align:center}
 .aviso-tel .tel{font-weight:700;color:var(--brand);white-space:nowrap}
 .stack{display:grid;gap:20px}
 .pres-panel .pres-fotos{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -366,3 +366,4 @@ button.cal-day:hover{border-color:var(--primary)}
 .envio-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:8px 32px;align-items:start}
 @media (max-width:760px){.envio-panel{grid-template-columns:1fr}}
 .day-ico.arbol{height:100%;transform:translate(30%,-44%)}
+.regalo-pregunta{display:block;font-style:normal;font-weight:700;color:var(--fg)}
