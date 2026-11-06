@@ -1,7 +1,7 @@
-import type { Categoria, CategoriaId, Linea, Producto } from "../types";
+import type { Categoria, CategoriaId, Linea, Presentacion, Producto } from "../types";
 import { dinero, escapar, kilos, normalizar } from "../lib/formato";
 import {
-  empaquesDe, importeLinea, variasLineas, llevaRelleno, nombrePresentacion, presentaciones, textoEmpaques,
+  empaquesDe, importeLinea, tieneCosto, variasLineas, llevaRelleno, nombrePresentacion, presentaciones, textoEmpaques,
 } from "../lib/pedido";
 import { maquila, pavo } from "../data/temporada";
 import { $ } from "./dom";
@@ -34,6 +34,23 @@ export function textoDetalle(p: Producto, l: Linea): string {
   if (p.maquila && llevaRelleno(l)) partes.push(`relleno ${kilos(l.kgRelleno)} (+${dinero(l.kgRelleno * maquila.precioRellenoKg)})`);
   partes.push(`Subtotal ${dinero(importeLinea(p, l))}`);
   return partes.join(" · ");
+}
+
+/** Lo que cuesta una presentación para esta línea: "mediana +$30", "2 grandes +$70". */
+export function precioPresentacion(p: Producto, l: Linea, pr: Presentacion): string {
+  if (!tieneCosto(pr)) return "sin costo";
+  const es = empaquesDe(p, { ...l, presentacion: pr });
+  const total = es.reduce((a, e) => a + e.piezas * e.precio, 0);
+  const tam = es.map((e) => (e.piezas > 1 ? `${e.piezas} ${e.tamano}s` : e.tamano)).join(", ");
+  return `${tam} +${dinero(total)}`;
+}
+
+/** Al escribir una cantidad, el precio de cada botón de presentación se actualiza sin repintar. */
+export function actualizarPreciosPresentacion(p: Producto, id: string, l: Linea): void {
+  for (const pr of presentaciones(p)) {
+    const el = document.querySelector(`[data-presprecio="${id}:${pr}"]`);
+    if (el) el.textContent = precioPresentacion(p, l, pr);
+  }
 }
 
 function seg(nombre: string, id: string, opciones: [string, string][], actual: string): string {
@@ -97,7 +114,7 @@ function detalle(p: Producto, id: string, l: Linea, numero: number): string {
     partes.push(`<div class="dfield"><span class="dlabel">Presentación</span>${seg(
       "pres",
       id,
-      pres.map((x) => [x, x === "acrilico" || x === "bolsa" ? `${nombrePresentacion[x]} <small>sin costo</small>` : nombrePresentacion[x]]),
+      pres.map((x) => [x, `${nombrePresentacion[x]} <small data-presprecio="${id}:${x}">${escapar(precioPresentacion(p, l, x))}</small>`]),
       l.presentacion,
     )}</div>`);
   }

@@ -53,8 +53,10 @@ a{color:inherit}
 .logo{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:1.45rem;text-decoration:none;letter-spacing:.01em;white-space:nowrap}
 .logo img{width:44px;height:auto;display:block}
 .logo span{color:var(--gold)}
-.nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
-.nav a{text-decoration:none;font-weight:500;font-size:.95rem;padding:8px 12px;border-radius:999px;opacity:.9}
+.nav{display:flex;gap:10px;margin-left:auto;position:relative;padding-bottom:6px}
+.nav a{text-decoration:none;font-weight:500;font-size:.95rem;padding:7px 12px;border-radius:8px;opacity:.85;position:relative;transition:color .3s,opacity .3s}
+.nav a+a::before{content:"";position:absolute;left:-6px;top:28%;height:44%;width:1px;background:color-mix(in srgb,var(--hero-fg) 35%,transparent)}
+.nav a[aria-current="true"]{color:var(--gold);opacity:1;font-weight:600}
 .nav a:hover{background:color-mix(in srgb,var(--hero-fg) 12%,transparent);opacity:1}
 @media (max-width:760px){.nav{display:none}}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 1rem/1 var(--font-body);border:0;border-radius:999px;padding:14px 22px;cursor:pointer;text-decoration:none;white-space:nowrap}
@@ -102,7 +104,7 @@ section{scroll-margin-top:72px}
 .shop{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
 @media (max-width:980px){.shop{grid-template-columns:1fr}}
 .shop>div{min-width:0}
-.tools{display:flex;flex-direction:column;gap:12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);z-index:5;background:var(--bg);padding-block:10px;margin-block:-10px 8px}
+.tools{display:flex;flex-direction:column;gap:12px;position:sticky;top:var(--alto-top,72px);z-index:5;background:var(--bg);padding-block:14px 10px;margin-block:-14px 8px}
 .search{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:0 16px}
 .search:focus-within{border-color:var(--primary)}
 .search input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:500 1rem var(--font-body);padding:12px 0;outline:none}
@@ -138,7 +140,7 @@ section{scroll-margin-top:72px}
 .empty{padding:28px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);margin-top:20px}
 
 /* Pedido (nota) */
-.order{position:sticky;top:calc(env(safe-area-inset-top,0px) + 72px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - 90px - env(safe-area-inset-top,0px));overflow:auto}
+.order{position:sticky;top:calc(var(--alto-top,72px) + 14px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - var(--alto-top,72px) - 28px);overflow:auto}
 .order h3{font-size:1.5rem}
 .order .hint{color:var(--muted);font-size:.9rem;margin:-6px 0 0}
 .lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto}
@@ -197,9 +199,9 @@ td:last-child{text-align:right;font-weight:700}
 
 /* Calendario */
 .cal{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
-.day{flex:1 1 110px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.day b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.9rem;line-height:1}
-.day small{display:block;color:var(--muted);font-weight:600;margin-top:4px}
+.day{flex:1 1 140px;min-width:0;min-height:190px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 18px}
+.day b{display:block;font-family:var(--font-display);font-weight:400;font-size:2.6rem;line-height:1}
+.day small{display:block;color:var(--muted);font-weight:600;margin-top:8px;font-size:.95rem}
 .day.hot{border-color:var(--brand);background:color-mix(in srgb,var(--primary-soft) 55%,var(--surface))}
 .day.hot small{color:var(--brand)}
 .day.due{border-color:var(--gold-ink);background:color-mix(in srgb,var(--gold-soft) 55%,var(--surface))}
@@ -212,7 +214,7 @@ td:last-child{text-align:right;font-weight:700}
 .cline:first-of-type{border-top:0}
 .cline .k{font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .cline .v{font-weight:600;font-size:1.1rem}
-footer{background:var(--hero);color:var(--hero-fg);margin-top:20px}
+footer{background:var(--hero);color:var(--hero-fg)}
 footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:.9rem}
 .toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:.92rem;z-index:40}
 .map{display:grid;grid-template-columns:1.4fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
@@ -247,14 +249,12 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 #send[aria-disabled="true"]{opacity:.5}
 
 /* Luces navideñas bajo la barra */
-.lights{height:14px;margin-top:-2px;background:
-  radial-gradient(circle at 12px 9px,var(--bulb-a) 3.2px,transparent 4px) 0 0/72px 14px,
-  radial-gradient(circle at 36px 9px,var(--bulb-b) 3.2px,transparent 4px) 0 0/72px 14px,
-  radial-gradient(circle at 60px 9px,var(--bulb-c) 3.2px,transparent 4px) 0 0/72px 14px,
-  linear-gradient(transparent 4px,color-mix(in srgb,var(--hero-fg) 25%,transparent) 4px 5px,transparent 5px);
-  filter:drop-shadow(0 0 3px rgba(255,220,140,.55));animation:twinkle 2.6s ease-in-out infinite alternate}
+.lights{height:14px;margin-top:-2px;position:relative;overflow:hidden;
+  background:linear-gradient(transparent 4px,color-mix(in srgb,var(--hero-fg) 25%,transparent) 4px 5px,transparent 5px)}
 :root{--bulb-a:#FFD36E;--bulb-b:#FF6B6B;--bulb-c:#7BD88F}
-@keyframes twinkle{from{opacity:.65}to{opacity:1}}
+.lights i{position:absolute;top:5.8px;width:6.4px;height:6.4px;border-radius:50%;background:var(--c);
+  box-shadow:0 0 6px 1px var(--c);transition:opacity .35s ease,box-shadow .35s ease}
+.lights i.off{opacity:.22;box-shadow:none}
 #snow{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:15}
 .snow-toggle{background:none;border:1px solid color-mix(in srgb,var(--hero-fg) 40%,transparent);color:inherit;font:600 .82rem var(--font-body);padding:6px 12px;border-radius:999px;cursor:pointer}
 
@@ -262,16 +262,18 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 
 /* ¿Le regalaron el pavo? */
 .regalo-sec{padding-block:8px 8px}
-.regalo{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.6fr) auto;gap:24px;align-items:center;padding:24px 26px;border-radius:var(--r);
+.regalo{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr) minmax(0,1.3fr);gap:28px;align-items:center;padding:24px 26px;border-radius:var(--r);
   background:color-mix(in srgb,var(--gold-soft) 60%,var(--surface));border:2px dashed var(--gold-ink)}
 @media (max-width:980px){.regalo{grid-template-columns:1fr}}
 .regalo-tag{display:inline-block;font:700 .7rem/1 var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:var(--surface);background:var(--gold-ink);padding:5px 8px;border-radius:4px}
 .regalo h2{font-size:clamp(1.7rem,3vw,2.2rem);margin:10px 0 6px}
 .regalo-head p{margin:0;color:var(--muted)}
 .regalo-facts{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.regalo-facts li{display:grid;grid-template-columns:7.5rem minmax(0,1fr);gap:12px;align-items:baseline}
-.regalo-facts b{font-family:var(--font-display);font-weight:400;font-size:1.35rem;color:var(--brand)}
-.regalo-facts span{font-size:.95rem}
+.regalo-facts li{display:grid;grid-template-columns:6.5rem minmax(0,1fr);gap:12px;align-items:baseline}
+.regalo-facts .k{font:700 .78rem/1.3 var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--gold-ink)}
+.regalo-facts b{font-weight:700;color:var(--fg)}
+.regalo-facts span{font-size:.9rem;color:var(--muted)}
+.regalo-facts span.k{color:var(--gold-ink)}
 @media (max-width:560px){.regalo-facts li{grid-template-columns:1fr;gap:2px}}
 
 .foto{margin:24px auto 0;max-width:1180px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -298,7 +300,7 @@ button.cal-day:hover{border-color:var(--primary)}
 .dot{width:10px;height:10px;border-radius:3px;border:2px solid var(--brand);display:inline-block}
 .dot.tardio{border-color:var(--gold-ink);border-style:dashed}
 .day .mes{display:block;font-size:.8rem;color:var(--muted);font-weight:600}
-@media (prefers-reduced-motion:reduce){.lights{animation:none}}
+@media (prefers-reduced-motion:reduce){.lights i{transition:none}}
 
 /* ---------- Feedback 2 ---------- */
 /* Tema claro/oscuro */
@@ -337,3 +339,47 @@ button.cal-day:hover{border-color:var(--primary)}
 @media (max-width:440px){.logo-text{display:none}}
 .dhint{font-size:.78rem;color:var(--muted);max-width:34ch}
 .dnum{font-weight:700;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;color:var(--brand)}
+
+/* Feedback 3 (reunión) */
+.facts .subr{text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:3px;font-weight:600}
+.facts .corte,.facts .aparte{display:block;margin-top:8px}
+.facts .aparte{font-size:.92em;color:var(--muted)}
+.regalo-aviso{font-size:.85rem;font-weight:600;color:var(--brand)!important;margin-top:6px!important}
+.regalo-nota{display:block;font-size:.85rem;color:var(--muted);margin-top:6px}
+.porciones{margin:10px 0 0;display:grid;gap:2px;font-size:.92rem}
+.porciones>div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:4px 0}
+.porciones b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pres-fotos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px}
+.pres-fotos figure{margin:0}
+.pres-img{aspect-ratio:16/10;border-radius:10px;border:1.5px dashed var(--line);background:var(--surface-2) center/cover no-repeat;display:grid;place-items:center;color:var(--muted);font-size:.8rem;text-align:center;padding:6px}
+.pres-img.con-foto{border-style:solid}
+.pres-img.con-foto span{display:none}
+.pres-fotos figcaption{font-weight:600;font-size:.9rem;margin-top:6px}
+.pres-fotos figcaption small{display:block;color:var(--muted);font-weight:500}
+.day{position:relative}
+.day.hot{border-width:2px;overflow:hidden;isolation:isolate}
+.day.hot>*:not(.day-ico){position:relative;z-index:1}
+.day-ico{position:absolute;top:50%;right:0;height:115%;width:auto;transform:translate(30%,-50%);color:var(--brand);opacity:.34;z-index:0}
+.day small.sujeto{font-weight:500;font-size:.78rem;color:var(--muted)!important;margin-top:2px}
+.seg button small.precio{display:block;font-weight:600}
+.aviso-tel{font-size:.9rem;background:color-mix(in srgb,var(--gold-soft) 45%,var(--surface));border:1.5px dashed var(--gold-ink);border-radius:12px;padding:12px 14px;margin:0;text-align:center}
+.aviso-tel .tel{font-weight:700;color:var(--brand);white-space:nowrap}
+.stack{display:grid;gap:20px}
+.pres-panel .pres-fotos{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:760px){.pres-panel .pres-fotos{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.envio-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:8px 32px;align-items:start}
+@media (max-width:760px){.envio-panel{grid-template-columns:1fr}}
+.day-ico.arbol{height:100%;transform:translate(30%,-44%)}
+.regalo-pregunta{display:block;font-style:normal;font-weight:700;color:var(--fg)}
+.regalo-precio{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:8px 20px;border-inline:1.5px dashed color-mix(in srgb,var(--gold-ink) 45%,transparent)}
+.regalo-precio b{font-family:var(--font-display);font-weight:400;font-size:clamp(3rem,6vw,4.2rem);line-height:1;color:var(--brand)}
+.regalo-precio>span{font-weight:600;max-width:16ch}
+.regalo-precio .btn{margin-top:12px}
+@media (max-width:980px){.regalo-precio{border-inline:0;border-block:1.5px dashed color-mix(in srgb,var(--gold-ink) 45%,transparent);padding:16px 0}}
+/* Indicador de la sección actual en la barra */
+.nav-ind{position:absolute;bottom:0;left:0;width:0;height:6px;pointer-events:none;opacity:0;
+  transition:transform .55s cubic-bezier(.5,0,.2,1),width .55s cubic-bezier(.5,0,.2,1),opacity .3s}
+.nav-ind.on{opacity:1}
+.nav-ind{height:2px;bottom:2px;background:var(--gold);border-radius:2px}
+#fechas{padding-block:clamp(64px,8vh,96px);min-height:min(64vh,620px);display:flex;align-items:center}
+#fechas>.wrap{width:100%}

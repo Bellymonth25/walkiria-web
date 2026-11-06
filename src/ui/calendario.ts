@@ -39,14 +39,14 @@ export function pintarCalendario(v: VistaCalendario): void {
     const iso = aIso(new Date(v.anio, v.mes, d));
     const esHoy = iso === hoyIso;
     if (!fechaElegible(iso, v.hoy, v.temporada)) {
-      celdas.push(`<span class="cal-day off" aria-hidden="true">${d}</span>`);
+      celdas.push(`<span class="cal-day off${esHoy ? " hoy" : ""}" aria-hidden="true">${d}${esHoy ? "<small>Hoy</small>" : ""}</span>`);
       continue;
     }
     const tipo = tipoDeFecha(iso, v.temporada);
     const marca = tipo ? ETIQUETA[tipo] : esHoy ? "Hoy" : "";
     const sel = v.seleccionado === iso;
     const clases = ["cal-day", tipo ?? "", esHoy ? "hoy" : "", sel ? "sel" : ""].filter(Boolean).join(" ");
-    const extra = tipo === "tienda" ? ", solo entrega en tienda" : tipo === "sujeto" ? ", sujeto a disponibilidad" : esHoy ? ", hoy" : "";
+    const extra = tipo === "tienda" ? ", sólo entrega en tienda" : tipo === "sujeto" ? ", sujeto a disponibilidad" : esHoy ? ", hoy" : "";
     celdas.push(
       `<button type="button" class="${clases}" data-fecha="${iso}" aria-pressed="${sel}" aria-label="${d}${extra}">${d}${marca ? `<small>${marca}</small>` : ""}</button>`,
     );
@@ -58,5 +58,5 @@ export function pintarCalendario(v: VistaCalendario): void {
       <button type="button" class="cal-nav" data-mes="1" aria-label="Mes siguiente"${puedeAdelante ? "" : " disabled"}>›</button>
     </div>
     <div class="cal-grid">${celdas.join("")}</div>
-    <div class="cal-legend"><span><i class="dot hoy"></i>Hoy</span><span><i class="dot limite"></i>Último día para pedir</span><span><i class="dot tienda"></i>Solo en tienda</span><span><i class="dot sujeto"></i>Sujeto a disponibilidad</span></div>`;
+    <div class="cal-legend"><span><i class="dot hoy"></i>Hoy</span><span><i class="dot limite"></i>Último día para pedir</span><span><i class="dot tienda"></i>Sólo en tienda</span><span><i class="dot sujeto"></i>Sujeto a disponibilidad</span></div>`;
 }
