@@ -170,7 +170,8 @@ select{font:500 1rem var(--font-body);padding:11px 12px;border-radius:10px;borde
     box-shadow:0 -10px 30px rgba(0,0,0,.18);transform:translateY(calc(100% - 78px - env(safe-area-inset-bottom,0px)));transition:transform .25s ease}
   .order.open{transform:none}
   .order[data-empty="true"]{transform:translateY(110%)}
-  body{padding-bottom:90px}
+  /* El espacio para la barra "Tu pedido" va dentro del pie (mismo color), y solo cuando la barra se ve. */
+  body:has(.order[data-empty="false"]) footer .wrap{padding-bottom:calc(28px + 84px + env(safe-area-inset-bottom,0px))}
 }
 .bar{display:none}
 @media (max-width:980px){.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:none;border:0;color:var(--fg);font:inherit;padding:4px 0 10px;cursor:pointer;width:100%;text-align:left}
@@ -215,7 +216,7 @@ td:last-child{text-align:right;font-weight:700}
 .cline .k{font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .cline .v{font-weight:600;font-size:1.1rem}
 footer{background:var(--hero);color:var(--hero-fg)}
-footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:.9rem}
+footer .wrap{padding-block:28px calc(28px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:.9rem}
 .toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:.92rem;z-index:40}
 .map{display:grid;grid-template-columns:1.4fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 @media (max-width:760px){.map{grid-template-columns:1fr}}
