@@ -223,6 +223,7 @@ describe("varios pavos y patos", () => {
     const pato = prod("pato-naranja");
     const l = linea(pato, { cantidad: 2 });
     expect(importeLinea(pato, l)).toBe(2 * 2 * 500);
+    expect(l.presentacion).toBe("bolsa");
     expect(aumentar(pato, 2)).toBe(3);
     expect(normalizarCantidad(pato, 1.4)).toBe(1);
     expect(empaquesDe(pato, linea(pato, { cantidad: 2, presentacion: "charola" }))).toEqual([{ tamano: "mediana", piezas: 2, precio: 30 }]);

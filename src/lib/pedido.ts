@@ -14,7 +14,7 @@ export const nombrePresentacion: Record<Presentacion, string> = {
 /** Opciones de presentación que aplican a un producto. La primera es la de default (sin costo). */
 export function presentaciones(p: Producto): Presentacion[] {
   if (p.unidad === "pza" || p.maquila) return [];
-  return p.pavoEntero ? ["bolsa", "vacio", "charola"] : ["acrilico", "vacio", "charola"];
+  return p.pavoEntero || p.pieza ? ["bolsa", "vacio", "charola"] : ["acrilico", "vacio", "charola"];
 }
 
 export const tieneCosto = (pr: Presentacion): pr is "vacio" | "charola" => pr === "vacio" || pr === "charola";
