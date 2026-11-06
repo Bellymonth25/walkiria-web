@@ -336,3 +336,4 @@ button.cal-day:hover{border-color:var(--primary)}
 .dot.limite{border-color:var(--gold-ink);background:var(--gold-soft)}
 @media (max-width:440px){.logo-text{display:none}}
 .dhint{font-size:.78rem;color:var(--muted);max-width:34ch}
+.dnum{font-weight:700;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;color:var(--brand)}

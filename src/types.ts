@@ -21,6 +21,8 @@ export interface Producto {
   clasico?: boolean;
   /** Pavo entero: se pide completo o medio, no por kilo. */
   pavoEntero?: boolean;
+  /** Se pide por pieza (ej. patos) pero se cobra por kilo con un peso aproximado por pieza. */
+  pieza?: PiezaPorPeso;
   /** Maquila: el cliente trae su carne y se cobra por kilo cocinado. Se puede agregar varias veces. */
   maquila?: boolean;
   /**
@@ -28,6 +30,15 @@ export interface Producto {
    * la web lo muestra como AGOTADO.
    */
   firebaseIds: readonly string[];
+}
+
+export interface PiezaPorPeso {
+  nombre: string;
+  plural: string;
+  kgMin: number;
+  kgMax: number;
+  /** Peso que se usa para el estimado. */
+  kgEstimado: number;
 }
 
 export type TamanoPavo = "completo" | "medio";
@@ -39,7 +50,7 @@ export type TamanoEmpaque = "chica" | "mediana" | "grande";
 
 export interface Linea {
   productoId: string;
-  /** kg (o número de piezas). En pavos enteros: número de pavos. */
+  /** kg o número de piezas. En pavos enteros siempre 1: cada pavo es su propia línea. */
   cantidad: number;
   tamano: TamanoPavo;
   /** Solo pavo completo: kilos aproximados por pavo (mínimo 5). */
@@ -73,7 +84,7 @@ export interface DiaEspecial {
 export type ModoEntrega = "tienda" | "domicilio";
 
 export interface Pedido {
-  /** Llave = id de la línea. Es el id del producto, salvo en maquila (maquila-1, maquila-2…). */
+  /** Llave = id de la línea. Es el id del producto, salvo en maquila y pavos enteros (maquila-1, pavo-relleno-2…). */
   lineas: Readonly<Record<string, Linea>>;
   nombre: string;
   modo: ModoEntrega;
