@@ -247,14 +247,12 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 #send[aria-disabled="true"]{opacity:.5}
 
 /* Luces navideñas bajo la barra */
-.lights{height:14px;margin-top:-2px;background:
-  radial-gradient(circle at 12px 9px,var(--bulb-a) 3.2px,transparent 4px) 0 0/72px 14px,
-  radial-gradient(circle at 36px 9px,var(--bulb-b) 3.2px,transparent 4px) 0 0/72px 14px,
-  radial-gradient(circle at 60px 9px,var(--bulb-c) 3.2px,transparent 4px) 0 0/72px 14px,
-  linear-gradient(transparent 4px,color-mix(in srgb,var(--hero-fg) 25%,transparent) 4px 5px,transparent 5px);
-  filter:drop-shadow(0 0 3px rgba(255,220,140,.55));animation:twinkle 2.6s ease-in-out infinite alternate}
+.lights{height:14px;margin-top:-2px;position:relative;overflow:hidden;
+  background:linear-gradient(transparent 4px,color-mix(in srgb,var(--hero-fg) 25%,transparent) 4px 5px,transparent 5px)}
 :root{--bulb-a:#FFD36E;--bulb-b:#FF6B6B;--bulb-c:#7BD88F}
-@keyframes twinkle{from{opacity:.65}to{opacity:1}}
+.lights i{position:absolute;top:5.8px;width:6.4px;height:6.4px;border-radius:50%;background:var(--c);
+  box-shadow:0 0 6px 1px var(--c);transition:opacity .35s ease,box-shadow .35s ease}
+.lights i.off{opacity:.22;box-shadow:none}
 #snow{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:15}
 .snow-toggle{background:none;border:1px solid color-mix(in srgb,var(--hero-fg) 40%,transparent);color:inherit;font:600 .82rem var(--font-body);padding:6px 12px;border-radius:999px;cursor:pointer}
 
@@ -298,7 +296,7 @@ button.cal-day:hover{border-color:var(--primary)}
 .dot{width:10px;height:10px;border-radius:3px;border:2px solid var(--brand);display:inline-block}
 .dot.tardio{border-color:var(--gold-ink);border-style:dashed}
 .day .mes{display:block;font-size:.8rem;color:var(--muted);font-weight:600}
-@media (prefers-reduced-motion:reduce){.lights{animation:none}}
+@media (prefers-reduced-motion:reduce){.lights i{transition:none}}
 
 /* ---------- Feedback 2 ---------- */
 /* Tema claro/oscuro */
@@ -337,3 +335,25 @@ button.cal-day:hover{border-color:var(--primary)}
 @media (max-width:440px){.logo-text{display:none}}
 .dhint{font-size:.78rem;color:var(--muted);max-width:34ch}
 .dnum{font-weight:700;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;color:var(--brand)}
+
+/* Feedback 3 (reunión) */
+.facts .subr{text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:3px;font-weight:600}
+.facts .corte,.facts .aparte{display:block;margin-top:8px}
+.facts .aparte{font-size:.92em;color:var(--muted)}
+.regalo-aviso{font-size:.85rem;font-weight:600;color:var(--brand)!important;margin-top:6px!important}
+.regalo-nota{display:block;font-size:.85rem;color:var(--muted);margin-top:6px}
+.porciones{margin:10px 0 0;display:grid;gap:2px;font-size:.92rem}
+.porciones>div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:4px 0}
+.porciones b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pres-fotos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px}
+.pres-fotos figure{margin:0}
+.pres-img{aspect-ratio:16/10;border-radius:10px;border:1.5px dashed var(--line);background:var(--surface-2) center/cover no-repeat;display:grid;place-items:center;color:var(--muted);font-size:.8rem;text-align:center;padding:6px}
+.pres-img.con-foto{border-style:solid}
+.pres-img.con-foto span{display:none}
+.pres-fotos figcaption{font-weight:600;font-size:.9rem;margin-top:6px}
+.pres-fotos figcaption small{display:block;color:var(--muted);font-weight:500}
+.day{position:relative}
+.day.hot{border-width:2px;padding-right:58px}
+.day-ico{position:absolute;top:10px;right:10px;width:44px;height:44px;color:var(--brand)}
+.day small.sujeto{font-weight:500;font-size:.78rem;color:var(--muted)!important;margin-top:2px}
+.seg button small.precio{display:block;font-weight:600}

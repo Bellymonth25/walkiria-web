@@ -21,8 +21,11 @@ export function sinDomicilio(iso: string, hoy: Date, t: Temporada): MotivoSinDom
   return null;
 }
 
-/** Fechas que se pueden elegir: de hoy al último día de diciembre de la temporada. */
+/**
+ * Fechas que se pueden elegir en la página: desde dentro de N días (anticipación de pedidos
+ * en línea) hasta el último día de diciembre. Para antes, se pide por teléfono fijo o en tienda.
+ */
 export function fechaElegible(iso: string, hoy: Date, t: Temporada): boolean {
   const d = deIso(iso);
-  return d >= inicioDelDia(hoy) && d <= new Date(t.anio, 11, t.ultimoDia);
+  return d >= sumarDias(inicioDelDia(hoy), t.diasAnticipacionPedido) && d <= new Date(t.anio, 11, t.ultimoDia);
 }

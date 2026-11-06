@@ -11,10 +11,11 @@ import {
   normalizarKgRelleno, nuevaLinea, textoFaltantes, variasLineas,
 } from "./lib/pedido";
 import { $, aviso, llenar } from "./ui/dom";
-import { pintarChips, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
+import { actualizarPreciosPresentacion, pintarChips, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
 import { pintarOrden, textoPedido, type ContextoOrden } from "./ui/orden";
 import { pintarCalendario, rangoMeses } from "./ui/calendario";
 import { iniciarNieve } from "./ui/nieve";
+import { iniciarLuces } from "./ui/luces";
 import { iniciarTema } from "./ui/tema";
 
 // ---------- Estado ----------
@@ -75,10 +76,13 @@ function actualizarInfo(id: string): void {
   const x = deLinea(id);
   const info = document.querySelector(`[data-info="${id}"]`);
   if (x && info) info.textContent = textoDetalle(x.p, x.l);
+  if (x) actualizarPreciosPresentacion(x.p, id, x.l);
   pintarOrden(pedido, ctx);
 }
 
 // ---------- Textos y datos fijos ----------
+const ICONO_ARBOL = `<svg class="day-ico" viewBox="0 0 48 56" aria-hidden="true"><path d="M24 4 34 18h-5l9 12h-6l10 13H6l10-13h-6l9-12h-5Z" fill="currentColor"/><rect x="20" y="43" width="8" height="9" rx="1" fill="currentColor" opacity=".75"/><circle cx="24" cy="4" r="3" fill="var(--gold)"/></svg>`;
+const ICONO_ESTRELLA = `<svg class="day-ico" viewBox="0 0 48 48" aria-hidden="true"><path d="m24 3 6.2 13.6L45 18.3 34 28.4l3 14.8L24 35.8l-13 7.4 3-14.8L3 18.3l14.8-1.7Z" fill="currentColor"/></svg>`;
 function llenarDatos(): void {
   llenar("anio", String(temporada.anio));
   llenar(
@@ -87,6 +91,12 @@ function llenarDatos(): void {
       .map((c) => `Para ${c.para}, hasta el ${c.limite} de diciembre; el ${c.tardio} se reciben sujetos a disponibilidad.`)
       .join(" "),
   );
+  // En "Antes de pedir" cada corte va en su propio renglón para que no se vea cargado.
+  document.querySelectorAll<HTMLElement>('[data-cfg="cortesLineas"]').forEach((el) => {
+    el.innerHTML = temporada.cortes
+      .map((c) => `<span class="corte">Para ${c.para}, hasta el <b>${c.limite} de diciembre</b>; el ${c.tardio} se reciben sujetos a disponibilidad.</span>`)
+      .join("");
+  });
   llenar("anticipo", temporada.anticipo);
   llenar("notaPrecios", temporada.notaPrecios);
   llenar("whatsapp", negocio.whatsappVisible);
@@ -97,6 +107,7 @@ function llenarDatos(): void {
   llenar("precioRelleno", dinero(maquila.precioRellenoKg));
   llenar("diasAnticipacion", String(maquila.diasAnticipacion));
   llenar("diasAviso", String(temporada.diasAvisoDomicilio));
+  llenar("diasPedido", String(temporada.diasAnticipacionPedido));
 
   const general = enlaceWhatsApp(negocio.whatsapp, "Hola, quiero información de las cenas navideñas.");
   $<HTMLAnchorElement>("#topWa").href = general;
@@ -115,14 +126,17 @@ function llenarDatos(): void {
   const textos = {
     limite: ["due", ""],
     sujeto: ["", "Sujeto a disponibilidad"],
-    tienda: ["hot", "Solo entrega en tienda"],
+    tienda: ["hot", "Sólo entrega en tienda"],
   } as const;
   $("#cal").innerHTML = temporada.diasEspeciales
     .map((d) => {
       const corte = temporada.cortes.find((c) => c.limite === d.dia);
       const [clase, base] = textos[d.tipo];
-      const texto = corte ? `Último día para pedir para ${corte.para}` : base;
-      return `<div class="day ${clase}"><b class="num">${d.dia}</b><span class="mes">de diciembre</span><small>${texto}</small></div>`;
+      const texto = corte ? `Último día para pedir en línea la cena de ${corte.para}` : base;
+      const extra = d.tipo === "tienda" ? `<small class="sujeto">*Sujeto a disponibilidad</small>` : "";
+      // 24: árbol de Navidad; 31: estrella de Año Nuevo.
+      const icono = d.tipo === "tienda" ? (d.dia === 24 ? ICONO_ARBOL : ICONO_ESTRELLA) : "";
+      return `<div class="day ${clase}">${icono}<b class="num">${d.dia}</b><span class="mes">de diciembre</span><small>${texto}</small>${extra}</div>`;
     })
     .join("");
 
@@ -130,6 +144,17 @@ function llenarDatos(): void {
   const foto = $<HTMLImageElement>("#fotoImg");
   foto.addEventListener("load", () => ($("#foto").hidden = false));
   foto.src = `${import.meta.env.BASE_URL}img/cena.jpg`;
+
+  // Fotos de presentación: public/img/presentaciones/<tipo>.jpg. Mientras no existan, se ve el recuadro de muestra.
+  document.querySelectorAll<HTMLElement>("[data-foto]").forEach((el) => {
+    const url = `${import.meta.env.BASE_URL}img/presentaciones/${el.dataset.foto}.jpg`;
+    const img = new Image();
+    img.onload = () => {
+      el.style.backgroundImage = `url("${url}")`;
+      el.classList.add("con-foto");
+    };
+    img.src = url;
+  });
 }
 
 // ---------- Fecha y entrega ----------
@@ -151,7 +176,7 @@ function revisarDia(): void {
   warn.hidden = motivo === null;
   warn.textContent =
     motivo === "tienda"
-      ? "El 24 de diciembre y el 31 de diciembre solo entregamos en tienda."
+      ? "El 24 de diciembre y el 31 de diciembre sólo entregamos en tienda."
       : motivo === "aviso"
         ? `Para envío a domicilio pide con al menos ${temporada.diasAvisoDomicilio} días de anticipación. Para esta fecha solo podemos entregarte en tienda.`
         : "";
@@ -347,4 +372,5 @@ pintarMenu(vista());
 pintarDias();
 pintarOrden(pedido, ctx);
 iniciarNieve($<HTMLCanvasElement>("#snow"), $<HTMLButtonElement>("#snowToggle"));
+iniciarLuces($(".lights"));
 void cargarDisponibilidad();

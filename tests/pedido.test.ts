@@ -193,7 +193,10 @@ describe("reglas de entrega", () => {
   });
   it("se puede elegir de hoy al 31 de diciembre", () => {
     expect(fechaElegible("2026-11-05", hoy, temporada)).toBe(false);
-    expect(fechaElegible("2026-11-06", hoy, temporada)).toBe(true);
+    // Pedidos en línea con 2 días de anticipación
+    expect(fechaElegible("2026-11-06", hoy, temporada)).toBe(false);
+    expect(fechaElegible("2026-11-07", hoy, temporada)).toBe(false);
+    expect(fechaElegible("2026-11-08", hoy, temporada)).toBe(true);
     expect(fechaElegible("2026-12-31", hoy, temporada)).toBe(true);
     expect(fechaElegible("2027-01-01", hoy, temporada)).toBe(false);
   });
