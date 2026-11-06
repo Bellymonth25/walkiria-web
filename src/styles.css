@@ -167,12 +167,13 @@ select{font:500 1rem var(--font-body);padding:11px 12px;border-radius:10px;borde
 @media (max-width:980px){
   .order{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:30;border-radius:18px 18px 0 0;border-bottom:0;max-height:85vh;overflow:auto;
     padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
-    box-shadow:0 -10px 30px rgba(0,0,0,.18);transform:translateY(calc(100% - 78px - env(safe-area-inset-bottom,0px)));transition:transform .25s ease}
+    box-shadow:0 -10px 30px rgba(0,0,0,.18);transform:translateY(calc(100% - 106px - env(safe-area-inset-bottom,0px)));transition:transform .25s ease}
   .order.open{transform:none}
   .order[data-empty="true"]{transform:translateY(110%)}
-  body{padding-bottom:90px}
+  /* El espacio para la barra "Tu pedido" va dentro del pie (mismo color), y solo cuando la barra se ve. */
+  body:has(.order[data-empty="false"]) footer .wrap{padding-bottom:calc(28px + 112px + env(safe-area-inset-bottom,0px))}
 }
-.bar{display:none}
+.bar,.grip{display:none}
 @media (max-width:980px){.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:none;border:0;color:var(--fg);font:inherit;padding:4px 0 10px;cursor:pointer;width:100%;text-align:left}
   .bar .legend{white-space:nowrap}
   .bar b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
@@ -215,7 +216,7 @@ td:last-child{text-align:right;font-weight:700}
 .cline .k{font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .cline .v{font-weight:600;font-size:1.1rem}
 footer{background:var(--hero);color:var(--hero-fg)}
-footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:.9rem}
+footer .wrap{padding-block:28px calc(28px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:.9rem}
 .toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:.92rem;z-index:40}
 .map{display:grid;grid-template-columns:1.4fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 @media (max-width:760px){.map{grid-template-columns:1fr}}
@@ -383,3 +384,11 @@ button.cal-day:hover{border-color:var(--primary)}
 .nav-ind{height:2px;bottom:2px;background:var(--gold);border-radius:2px}
 #fechas{padding-block:clamp(64px,8vh,96px);min-height:min(64vh,620px);display:flex;align-items:center}
 #fechas>.wrap{width:100%}
+/* Bottom sheet de "Tu pedido" en celular */
+@media (max-width:980px){
+  .order{overscroll-behavior:contain;padding-top:8px}
+  .order:not(.open){overflow:hidden}
+  .order.arrastrando{transition:none}
+  .grip{display:block;width:44px;height:5px;border-radius:999px;background:color-mix(in srgb,var(--fg) 25%,transparent);margin:0 auto -10px;touch-action:none;cursor:grab;padding:0;box-sizing:content-box;border:8px solid transparent;border-width:6px 30px;background-clip:content-box}
+  .bar{touch-action:none}
+}
