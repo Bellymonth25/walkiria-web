@@ -353,7 +353,15 @@ button.cal-day:hover{border-color:var(--primary)}
 .pres-fotos figcaption{font-weight:600;font-size:.9rem;margin-top:6px}
 .pres-fotos figcaption small{display:block;color:var(--muted);font-weight:500}
 .day{position:relative}
-.day.hot{border-width:2px;padding-right:58px}
-.day-ico{position:absolute;top:10px;right:10px;width:44px;height:44px;color:var(--brand)}
+.day.hot{border-width:2px;overflow:hidden;isolation:isolate}
+.day.hot>*:not(.day-ico){position:relative;z-index:1}
+.day-ico{position:absolute;top:50%;right:0;height:115%;width:auto;transform:translate(30%,-50%);color:var(--brand);opacity:.34;z-index:0}
 .day small.sujeto{font-weight:500;font-size:.78rem;color:var(--muted)!important;margin-top:2px}
 .seg button small.precio{display:block;font-weight:600}
+.aviso-tel{font-size:.9rem;background:var(--gold-soft);border-left:3px solid var(--gold-ink);border-radius:8px;padding:10px 12px;margin:0}
+.aviso-tel .tel{font-weight:700;color:var(--brand);white-space:nowrap}
+.stack{display:grid;gap:20px}
+.pres-panel .pres-fotos{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:760px){.pres-panel .pres-fotos{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.envio-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:8px 32px;align-items:start}
+@media (max-width:760px){.envio-panel{grid-template-columns:1fr}}

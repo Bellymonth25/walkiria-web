@@ -81,8 +81,9 @@ function actualizarInfo(id: string): void {
 }
 
 // ---------- Textos y datos fijos ----------
-const ICONO_ARBOL = `<svg class="day-ico" viewBox="0 0 48 56" aria-hidden="true"><path d="M24 4 34 18h-5l9 12h-6l10 13H6l10-13h-6l9-12h-5Z" fill="currentColor"/><rect x="20" y="43" width="8" height="9" rx="1" fill="currentColor" opacity=".75"/><circle cx="24" cy="4" r="3" fill="var(--gold)"/></svg>`;
-const ICONO_ESTRELLA = `<svg class="day-ico" viewBox="0 0 48 48" aria-hidden="true"><path d="m24 3 6.2 13.6L45 18.3 34 28.4l3 14.8L24 35.8l-13 7.4 3-14.8L3 18.3l14.8-1.7Z" fill="currentColor"/></svg>`;
+// Medio árbol (24) y estrella de Belén (31) de fondo en la tarjeta, cortados por la orilla derecha.
+const ICONO_ARBOL = `<svg class="day-ico" viewBox="0 0 80 120" aria-hidden="true"><path d="M40 6c4 10 12 18 20 22-4 1-8 1-12 0 7 10 15 17 24 21-6 2-13 2-19 0 8 11 17 19 27 23-12 4-27 5-40 5s-28-1-40-5c10-4 19-12 27-23-6 2-13 2-19 0 9-4 17-11 24-21-4 1-8 1-12 0 8-4 16-12 20-22Z" fill="currentColor"/><rect x="34" y="78" width="12" height="16" rx="2" fill="currentColor"/><path d="m40 0 2.4 5 5.4.6-4 3.7 1.1 5.4L40 12l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6Z" fill="currentColor"/></svg>`;
+const ICONO_ESTRELLA = `<svg class="day-ico" viewBox="0 0 100 120" aria-hidden="true"><path d="M50 0Q54 56 90 60Q54 64 50 120Q46 64 10 60Q46 56 50 0Z" fill="currentColor"/><path d="M31 41 69 79M69 41 31 79" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><circle cx="50" cy="60" r="6" fill="currentColor"/></svg>`;
 function llenarDatos(): void {
   llenar("anio", String(temporada.anio));
   llenar(
@@ -101,6 +102,11 @@ function llenarDatos(): void {
   llenar("notaPrecios", temporada.notaPrecios);
   llenar("whatsapp", negocio.whatsappVisible);
   llenar("telefonos", negocio.telefonos);
+  document.querySelectorAll<HTMLElement>('[data-cfg="telLinks"]').forEach((el) => {
+    el.innerHTML = negocio.telefonosMarcar
+      .map((n) => `<a class="tel" href="tel:+52${n}">${n.slice(0, 2)} ${n.slice(2, 6)} ${n.slice(6)}</a>`)
+      .join(" · ");
+  });
   llenar("direccion", negocio.direccion);
   llenar("horario", negocio.horario);
   llenar("precioCocinar", dinero(maquila.precioCocinarKg));

@@ -84,6 +84,7 @@ export const maquila = {
     "Pavo Relleno", "Pavo Adobado", "Pavo Ahumado",
     "Lomo Horneado", "Lomo Mechado", "Lomo Adobado", "Lomo a la Ciruela",
     "Pechuga de Pavo Adobada", "Pechuga de Pavo Horneada", "Pechuga de Pavo Mechada",
+    "Pierna de Pavo Adobada", "Pierna de Pavo Horneada", "Pierna de Pavo Mechada",
     "Pato", "Costillas", "Otro",
   ],
   /** El tipo que lleva relleno (se cobra aparte por kilo de relleno). */
@@ -101,6 +102,8 @@ export const negocio = {
   whatsapp: "525538776743",
   whatsappVisible: "55 3877 6743",
   telefonos: "55 5573 1277 · 55 5573 1479",
+  /** Para los enlaces tel: (marcar con un toque). */
+  telefonosMarcar: ["5555731277", "5555731479"],
   direccion: "Clavel Norte 3, San Pedro Mártir, Tlalpan, C.P. 14650",
   /** Dirección para Google Maps y Waze. */
   direccionMapas: "Clavel Norte 3, San Pedro Mártir, Tlalpan, 14650 Ciudad de México",
