@@ -17,6 +17,7 @@ import { pintarCalendario, rangoMeses } from "./ui/calendario";
 import { iniciarNieve } from "./ui/nieve";
 import { iniciarLuces } from "./ui/luces";
 import { iniciarNav } from "./ui/nav";
+import { iniciarHoja } from "./ui/hoja";
 import { iniciarTema } from "./ui/tema";
 
 // ---------- Estado ----------
@@ -279,10 +280,6 @@ document.addEventListener("click", (e) => {
     pintarMenu(vista());
     agregar("maquila");
     document.querySelector('[data-row="maquila"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
-  } else if (t.id === "bar") {
-    const abierto = $("#order").classList.toggle("open");
-    t.setAttribute("aria-expanded", String(abierto));
-    $("#barBtn").textContent = abierto ? "Ocultar" : "Ver pedido";
   } else if (t.id === "send" && t.getAttribute("aria-disabled") === "true") {
     e.preventDefault();
     const falta = faltantes(pedido, productos);
@@ -381,6 +378,7 @@ pintarDias();
 pintarOrden(pedido, ctx);
 iniciarNieve($<HTMLCanvasElement>("#snow"), $<HTMLButtonElement>("#snowToggle"));
 iniciarLuces($(".lights"));
+iniciarHoja($("#order"), $<HTMLButtonElement>("#bar"), $("#barBtn"));
 
 // Lo que mide la barra de arriba (con luces), para que la búsqueda y el pedido se peguen justo debajo.
 const barra = $("header.top");
