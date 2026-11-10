@@ -84,4 +84,7 @@ $("#volanteMini").addEventListener("click", abrirVolante);
 
 // Las secciones aparecen con una animación al bajar, solo la primera vez.
 iniciarApariciones();
+// ?mascara=1..4 en la dirección cambia qué tan rojo se ve el video, para compararlas.
+const mascara = new URLSearchParams(location.search).get("mascara");
+if (mascara && /^[1-4]$/.test(mascara)) document.querySelector<HTMLElement>(".hero")?.setAttribute("data-mascara", mascara);
 iniciarFondoVideo();

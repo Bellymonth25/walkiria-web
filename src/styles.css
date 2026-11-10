@@ -598,12 +598,20 @@ button.cal-day:hover{border-color:var(--primary)}
 /* Portada con videos de fondo bajo una máscara roja */
 .hero{isolation:isolate}
 .hero-fondo{position:absolute;inset:0;z-index:-1;overflow:hidden;background:var(--hero) center/cover no-repeat}
-.hero-fondo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s ease}
+.hero-fondo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s ease;transform:translateZ(0)}
 .hero-fondo video.activo{opacity:1}
-/* Máscara: se ve el video, pero el rojo manda y el texto se lee bien */
-.hero-fondo::after{content:"";position:absolute;inset:0;z-index:1;
-  background:linear-gradient(90deg,color-mix(in srgb,var(--hero) 58%,transparent) 0%,color-mix(in srgb,var(--hero) 72%,transparent) 55%,color-mix(in srgb,var(--hero) 86%,transparent) 100%)}
-@media (max-width:860px){.hero-fondo::after{background:linear-gradient(color-mix(in srgb,var(--hero) 82%,transparent),color-mix(in srgb,var(--hero) 74%,transparent) 60%,color-mix(in srgb,var(--hero) 84%,transparent))}}
+.hero-fondo video.arriba{z-index:1}
+/* Máscara roja. Niveles para comparar con ?mascara=1, 2, 3 o 4 en la dirección (2 es el de siempre). */
+.hero{--m-izq:72%;--m-centro:80%;--m-der:88%}
+.hero[data-mascara="1"]{--m-izq:64%;--m-centro:74%;--m-der:84%}
+.hero[data-mascara="3"]{--m-izq:80%;--m-centro:86%;--m-der:92%}
+.hero[data-mascara="4"]{--m-izq:87%;--m-centro:91%;--m-der:95%}
+.hero-fondo::after{content:"";position:absolute;inset:0;z-index:2;transform:translateZ(0);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--hero) var(--m-izq),transparent) 0%,color-mix(in srgb,var(--hero) var(--m-centro),transparent) 55%,color-mix(in srgb,var(--hero) var(--m-der),transparent) 100%)}
+@media (max-width:860px){.hero-fondo::after{background:linear-gradient(color-mix(in srgb,var(--hero) var(--m-der),transparent),color-mix(in srgb,var(--hero) var(--m-centro),transparent) 60%,color-mix(in srgb,var(--hero) var(--m-der),transparent))}}
+/* Un poco de sombra para que el texto se lea sobre el video */
+.hero-texto{text-shadow:0 2px 14px rgba(0,0,0,.35)}
+.hero-texto .eyebrow{text-shadow:0 1px 6px rgba(0,0,0,.6)}
 
 /* Galería más grande, en columnas escalonadas, con un telón rojo que se abre al entrar */
 @media (min-width:861px){.hero .wrap{grid-template-columns:1.3fr 1fr;gap:clamp(32px,5vw,80px)}}
@@ -655,3 +663,27 @@ button.cal-day:hover{border-color:var(--primary)}
   .galeria[data-estilo="polaroid"] .gal-foto.con-foto .gal-nombre{bottom:-38px;font-size:.74rem;line-height:1.1;padding:4px 2px;height:36px;display:grid;place-items:center}
   .galeria[data-estilo="polaroid"] .gal-foto::after{inset:-6px -6px -40px}
 }
+
+/* Grupos de la lista (lomos, costillas, pechuga, pierna, espagueti): se elige la versión abajo */
+.price small{font-size:.72rem;font-weight:500;color:var(--muted)}
+.versiones{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px dashed var(--line);animation:versiones-entra .3s ease}
+@keyframes versiones-entra{from{opacity:0;transform:translateY(-6px)}}
+.vchips{display:flex;flex-wrap:wrap;gap:8px}
+.vchip{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--primary);background:var(--surface);color:var(--primary);font:600 .95rem var(--font-body);cursor:pointer;transition:background-color .2s,color .2s}
+.vchip small{font-weight:500;opacity:.8}
+.vchip:hover{background:color-mix(in srgb,var(--primary-soft) 45%,var(--surface))}
+.vchip[aria-pressed="true"]{background:var(--primary);color:var(--surface)}
+.vchip:disabled{opacity:.45;cursor:not-allowed;border-style:dashed}
+
+/* Calculadora ya usada: la tarjeta se marca y abajo aparece "Retirar del carrito" */
+.calc-check{display:none;flex:none;margin-left:auto;font-size:.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ok-ink,#0F2E11);background:var(--ok);border-radius:999px;padding:4px 10px}
+.calc-caja.usada{border-style:solid;border-color:var(--ok);margin-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0}
+.calc-caja.usada .calc-check{display:inline-block}
+.calc-caja.usada summary::after{content:"Calcular de nuevo"}
+.calc-caja.usada[open] summary::after{content:"Cerrar"}
+.calc-usada{display:flex;align-items:center;gap:12px 18px;flex-wrap:wrap;margin-bottom:26px;padding:12px 20px;border:1.5px solid var(--ok);border-top:1px dashed var(--line);border-radius:0 0 var(--r) var(--r);background:color-mix(in srgb,var(--ok) 12%,var(--surface))}
+.calc-usada[hidden]{display:none}
+.calc-usada p{margin:0;flex:1 1 260px;font-size:.92rem}
+.btn-ghost-red{background:transparent;color:var(--brand);box-shadow:inset 0 0 0 1.5px currentColor}
+:root[data-theme="dark"] .btn-ghost-red{color:var(--brand)}
+@media (max-width:560px){.calc-usada{padding:12px}.calc-usada .btn{width:100%}}

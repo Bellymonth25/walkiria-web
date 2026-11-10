@@ -53,10 +53,14 @@
         </div>
       </div>
       <details class="calc-caja" id="calcCaja">
-        <summary><span><b>¿No sabes cuánto pedir?</b> Calcúlalo por número de personas</span></summary>
+        <summary><span><b>¿No sabes cuánto pedir?</b> Calcúlalo por número de personas</span><span class="calc-check">✓ Usada</span></summary>
         <p class="calc-reco">Nosotros recomendamos una cena con un poco de todo: <b>carne, pasta, ensalada, un extra</b> (romeritos o bacalao), <b>panecillo y postre</b>. Dinos cuántos son y lo agregamos a tu pedido.</p>
         <div class="calc" id="calc"></div>
       </details>
+      <div class="calc-usada" id="calcUsada" hidden>
+        <p id="calcUsadaTxt"></p>
+        <button class="btn btn-ghost-red" type="button" id="calcRetirar">Retirar del carrito</button>
+      </div>
       <div class="shop">
         <div>
           <div class="tools">
