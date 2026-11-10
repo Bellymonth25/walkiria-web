@@ -234,7 +234,7 @@ describe("varios pavos y patos", () => {
   });
 });
 
-import { calcularCena, pavosPara, redondearKg } from "../src/lib/calculadora";
+import { calcularCena, pavosPara, redondearKg, repartirCarne } from "../src/lib/calculadora";
 
 describe("calculadora de cena", () => {
   it("redondea hacia arriba al cuarto de kilo", () => {
@@ -242,18 +242,27 @@ describe("calculadora de cena", () => {
     expect(redondearKg(1.5)).toBe(1.5);
     expect(redondearKg(1.51)).toBe(1.75);
   });
-  it("niños comen menos y adolescentes más", () => {
-    const c = calcularCena({ ninos: 2, adolescentes: 2, adultos: 4, mayores: 2 });
+  it("los adolescentes comen más", () => {
+    const c = calcularCena({ personas: 8, adolescentes: 2 });
     expect(c.personas).toBe(10);
-    expect(c.equivalentes).toBe(2 * 0.5 + 2 * 1.25 + 4 + 2 * 0.75);
-    expect(c.carne).toBe(1.5); // 9 × 150 g = 1.35 kg
-    expect(c.romeritos).toBe(0.5); // 9 × 50 g = 0.45 kg
+    expect(c.equivalentes).toBe(8 + 2 * 1.25);
+    expect(c.carne).toBe(1.75); // 10.5 × 150 g = 1.575 kg
+    expect(c.romeritos).toBe(0.75); // 10.5 × 50 g = 0.525 kg
     expect(c.panes).toBe(10);
     expect([c.strudelGrande, c.strudelIndividual]).toEqual([1, 0]);
   });
+  it("cena para 4: 600 g de carne", () => {
+    expect(calcularCena({ personas: 4, adolescentes: 0 })).toMatchObject({ carne: 0.75, pasta: 0.75, strudelGrande: 0, strudelIndividual: 4 });
+  });
   it("postre: strudel grande por cada 10, el resto individual", () => {
-    expect(calcularCena({ ninos: 0, adolescentes: 0, adultos: 13, mayores: 0 })).toMatchObject({ strudelGrande: 1, strudelIndividual: 3 });
-    expect(calcularCena({ ninos: 0, adolescentes: 0, adultos: 8, mayores: 0 })).toMatchObject({ strudelGrande: 1, strudelIndividual: 0 });
+    expect(calcularCena({ personas: 13, adolescentes: 0 })).toMatchObject({ strudelGrande: 1, strudelIndividual: 3 });
+    expect(calcularCena({ personas: 8, adolescentes: 0 })).toMatchObject({ strudelGrande: 1, strudelIndividual: 0 });
+  });
+  it("reparte la carne en partes iguales de al menos 250 g", () => {
+    expect(repartirCarne(1.5, 2)).toEqual([0.75, 0.75]);
+    expect(repartirCarne(1, 3)).toEqual([0.5, 0.5, 0.5]);
+    expect(repartirCarne(0.25, 2)).toEqual([0.25, 0.25]);
+    expect(repartirCarne(0, 2)).toEqual([]);
   });
   it("reparte la carne en pavos de máximo 10 kg", () => {
     expect(pavosPara(3)).toEqual([{ tamano: "medio", kgPorPavo: 5 }]);

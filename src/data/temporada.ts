@@ -122,7 +122,15 @@ export const firebase = {
  */
 export const calculadora = {
   porcionAdultoKg: { carne: 0.15, pasta: 0.15, ensalada: 0.15, romeritos: 0.05, bacalao: 0.05 },
-  factor: { ninos: 0.5, adolescentes: 1.25, adultos: 1, mayores: 0.75 },
+  /** "Personas" incluye niños, adultos y personas mayores; los adolescentes suelen comer más. */
+  factor: { personas: 1, adolescentes: 1.25 },
+  /** Botones de tamaño de cena. La primera es la que se ve al abrir. */
+  sugeridas: [4, 6, 10],
+  /** Hasta este número de personas se recomienda pechuga en lugar de pavo entero. */
+  hastaPechuga: 4,
+  /** Desde este número de personas se puede repartir la carne en varias (mitad y mitad). */
+  desdeVariasCarnes: 6,
+  maxCarnes: 3,
   /** Un Strudel de Manzana grande alcanza para 10 personas. */
   personasPorStrudel: 10,
 } as const;
