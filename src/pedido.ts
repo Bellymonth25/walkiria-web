@@ -66,6 +66,7 @@ const CLAVE = "walkiria-pedido";
 const CLAVE_SUGERIDO = "walkiria-sugerido";
 function pintarPedido(): void {
   pintarOrden(pedido, ctx);
+  $("#vaciar").hidden = Object.keys(pedido.lineas).length === 0;
   pintarSugerido();
   try {
     sessionStorage.setItem(CLAVE, JSON.stringify(pedido));
@@ -304,6 +305,16 @@ document.addEventListener("click", (e) => {
       ponerLinea(id, null);
       repintar(p.id);
     } else agregar(pid, version);
+  } else if (t.id === "vaciar") {
+    // Empezar de cero: se quitan todos los productos. Nombre, fecha y dirección se quedan.
+    if (!confirm("¿Vaciar tu pedido? Se quitan todos los productos.")) return;
+    pedido.lineas = {};
+    sugerido = null;
+    for (const k of Object.keys(siguiente)) delete siguiente[k];
+    abiertos.clear();
+    pintarMenu(vista());
+    pintarPedido();
+    aviso("Listo, tu pedido quedó vacío.");
   } else if (t.id === "calcRetirar") {
     quitarSugerido();
     pintarMenu(vista());
