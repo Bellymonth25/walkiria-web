@@ -42,6 +42,10 @@ const visor = iniciarVisor();
 const recuadros = [...document.querySelectorAll<HTMLElement>("[data-gal]")];
 const conFoto = new Set<string>();
 const urlFoto = (id: string) => `${import.meta.env.BASE_URL}img/galeria/${id}.jpg`;
+// Fondo de la portada: las fotos van pasando despacio detrás del rojo, como un video.
+document.querySelectorAll<HTMLElement>("[data-fondo]").forEach((el) => {
+  el.style.backgroundImage = `url("${urlFoto(el.dataset.fondo!)}")`;
+});
 recuadros.forEach((el, n) => {
   const id = el.dataset.gal!;
   const img = new Image();
