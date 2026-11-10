@@ -142,8 +142,12 @@
         <rect x="392" y="180" width="196" height="122" rx="10" fill="#2a1a12" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
         <rect class="brasa" x="394" y="182" width="192" height="118" rx="9" fill="#FF7A1A"/>
         <g class="charolita">
-          <ellipse cx="490" cy="258" rx="48" ry="24" fill="#7A3E1D" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-          <path d="M428 266 H552 L544 288 H436 Z" fill="#B9BEC4" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+          <!-- charola cubierta con papel aluminio -->
+          <path d="M432 268 C432 238 458 222 490 222 C522 222 548 238 548 268 Z" fill="#DADFE4" stroke="#3B2314" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M446 262 L456 244 L468 254 L478 234 L492 248 L504 232 L516 250 L528 240 L536 262" fill="none" stroke="#9AA2AB" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M452 240 C462 230 476 226 488 227" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".85"/>
+          <path d="M424 268 L432 262 L440 268 L448 262 L456 268 L464 262 L472 268 L480 262 L488 268 L496 262 L504 268 L512 262 L520 268 L528 262 L536 268 L544 262 L552 268 L556 272 H424 Z" fill="#C9CED4" stroke="#3B2314" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M428 272 H552 L544 290 H436 Z" fill="#B9BEC4" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
         </g>
         <path d="M400 190 L440 190 L412 230 Z" fill="#fff" opacity=".1"/>
         <rect x="420" y="170" width="140" height="8" rx="4" fill="#CEA54B" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-width="2"/>
@@ -158,10 +162,40 @@
       </g>
       <g class="esc" data-esc="5">
         <g class="vapor" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" opacity=".55"><path d="M460 196 q-12 -16 0 -32 q12 -16 0 -32"/><path d="M490 190 q-12 -16 0 -32 q12 -16 0 -32"/><path d="M520 196 q-12 -16 0 -32 q12 -16 0 -32"/></g>
-        <ellipse cx="490" cy="262" rx="76" ry="40" fill="#7A3E1D" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-        <path d="M560 246 C582 230 598 226 604 236 C610 248 592 254 568 266 Z" fill="#7A3E1D" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-        <circle cx="606" cy="234" r="8" fill="#FFF8EC" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-        <path d="M444 242 C460 230 484 228 504 232" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".3"/>
+        <defs>
+          <radialGradient id="pielPavo" cx="42%" cy="30%" r="75%">
+            <stop offset="0" stop-color="#E9A04A"/><stop offset=".45" stop-color="#C46E27"/><stop offset="1" stop-color="#7E3F17"/>
+          </radialGradient>
+          <radialGradient id="pielPierna" cx="35%" cy="30%" r="80%">
+            <stop offset="0" stop-color="#E39A45"/><stop offset=".6" stop-color="#B8611F"/><stop offset="1" stop-color="#7A3A14"/>
+          </radialGradient>
+        </defs>
+        <g class="pavo-asado" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+          <!-- pierna de atrás -->
+          <g transform="translate(-6 -18) rotate(-46 540 268)">
+            <path d="M574 263 H598 V273 H574 Z" fill="#F1E2C4"/>
+            <path d="M597 256 H607 L614 259 L608 262 L614 265 L608 268 L614 271 L608 274 L614 277 L607 280 H597 Z" fill="#FFF8EC" stroke-width="2.2"/>
+            <path d="M500 268 C500 247 521 239 541 244 C557 248 566 258 577 262 L577 274 C566 278 557 288 541 292 C521 297 500 289 500 268 Z" fill="url(#pielPierna)"/>
+            <path d="M512 258 C522 250 536 248 548 252" fill="none" stroke="#fff" stroke-width="3.5" opacity=".45"/>
+          </g>
+          <!-- cuerpo: pechuga redonda y dorada -->
+          <path d="M414 290 C404 258 428 222 476 216 C522 210 562 230 568 262 C572 282 560 296 540 298 L430 298 C422 298 416 295 414 290 Z" fill="url(#pielPavo)"/>
+          <path d="M478 220 C474 246 476 270 486 296" fill="none" stroke="#7E3F17" stroke-width="2" opacity=".55"/>
+          <!-- ala doblada -->
+          <path d="M426 272 C418 258 426 242 442 242 C452 250 456 266 450 282 C442 290 430 284 426 272 Z" fill="#A9561D"/>
+          <path d="M432 262 C436 256 442 254 446 256" fill="none" stroke="#7E3F17" stroke-width="2"/>
+          <!-- pierna de enfrente: muslo, hueso y adorno de papel -->
+          <g transform="rotate(-24 540 268)">
+            <path d="M574 263 H598 V273 H574 Z" fill="#F1E2C4"/>
+            <path d="M597 256 H607 L614 259 L608 262 L614 265 L608 268 L614 271 L608 274 L614 277 L607 280 H597 Z" fill="#FFF8EC" stroke-width="2.2"/>
+            <path d="M500 268 C500 247 521 239 541 244 C557 248 566 258 577 262 L577 274 C566 278 557 288 541 292 C521 297 500 289 500 268 Z" fill="url(#pielPierna)"/>
+            <path d="M512 258 C522 250 536 248 548 252" fill="none" stroke="#fff" stroke-width="3.5" opacity=".45"/>
+          </g>
+          <!-- brillo y gravy -->
+          <path d="M440 238 C458 224 484 220 506 224" fill="none" stroke="#fff" stroke-width="5" opacity=".42"/>
+          <path d="M430 258 C440 240 456 232 470 230" fill="none" stroke="#FFE2B0" stroke-width="3" opacity=".5"/>
+          <g fill="#7E3F17" stroke="none" opacity=".35"><circle cx="452" cy="262" r="2"/><circle cx="500" cy="250" r="2"/><circle cx="520" cy="236" r="1.8"/><circle cx="470" cy="276" r="2"/><circle cx="534" cy="282" r="1.8"/></g>
+        </g>
         <g fill="#2E7D32" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-width="2"><circle cx="408" cy="290" r="10"/><circle cx="426" cy="296" r="9"/></g><circle cx="574" cy="294" r="9" fill="#C2202F" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-width="2"/>
         <ellipse cx="490" cy="304" rx="124" ry="16" fill="#FFF8EC" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
         <g class="campana">
