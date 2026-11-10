@@ -598,7 +598,8 @@ button.cal-day:hover{border-color:var(--primary)}
 /* Portada con videos de fondo bajo una máscara roja */
 .hero{isolation:isolate}
 .hero-fondo{position:absolute;inset:0;z-index:-1;overflow:hidden;background:var(--hero) center/cover no-repeat}
-.hero-fondo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s ease;transform:translateZ(0)}
+/* Un desenfoque ligero suaviza los cuadritos de compresión del video en las partes oscuras. */
+.hero-fondo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s ease;transform:translateZ(0) scale(1.04);filter:blur(2px)}
 .hero-fondo video.activo{opacity:1}
 .hero-fondo video.arriba{z-index:1}
 /* Máscara roja: un solo color parejo (un degradado tan suave se veía en franjas o "columnas").
@@ -686,3 +687,6 @@ button.cal-day:hover{border-color:var(--primary)}
 .btn-ghost-red{background:transparent;color:var(--brand);box-shadow:inset 0 0 0 1.5px currentColor}
 :root[data-theme="dark"] .btn-ghost-red{color:var(--brand)}
 @media (max-width:560px){.calc-usada{padding:12px}.calc-usada .btn{width:100%}}
+.vaciar{align-self:flex-end;margin:6px 0 2px;padding:6px 2px;border:0;background:none;color:var(--brand);font:600 .85rem var(--font-body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.vaciar[hidden]{display:none}
+.vaciar:hover{color:var(--fg)}
