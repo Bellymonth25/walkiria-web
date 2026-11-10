@@ -64,6 +64,28 @@ const PASOS: Paso[] = [
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 
+/** El árbol de Navidad crece hasta el borde de arriba de la escena, sea cual sea el tamaño de la pantalla. */
+function ajustarArbol(): void {
+  const arbol = document.getElementById("arbol");
+  const svg = arbol?.closest("svg");
+  const escena = svg?.parentElement;
+  if (!arbol || !svg || !escena) return;
+  const ajustar = () => {
+    const r = svg.getBoundingClientRect();
+    if (!r.width) return;
+    const escala = r.width / 640;
+    // Espacio visible arriba del dibujo (en compu la escena es más alta que el dibujo).
+    const hueco = Math.max(0, (r.top - escena.getBoundingClientRect().top) / escala);
+    const arriba = 4 - hueco;
+    const sy = (304 - arriba) / 272;
+    const sx = Math.min(1.55, sy * 1.3);
+    arbol.setAttribute("transform", `translate(${(535 - sx * 578).toFixed(1)} ${(arriba - sy * 30).toFixed(1)}) scale(${sx.toFixed(3)} ${sy.toFixed(3)})`);
+  };
+  ajustar();
+  if ("ResizeObserver" in window) new ResizeObserver(ajustar).observe(escena);
+  else addEventListener("resize", ajustar);
+}
+
 function iniciarExplicacion(): void {
   const caja = $("#expl");
   const paso = $("#explPaso");
@@ -176,4 +198,5 @@ function iniciarInstructivo(): void {
 iniciarComun();
 $<HTMLAnchorElement>("#topWa").href = enlaceWhatsApp(negocio.whatsapp, "Hola, tengo una duda sobre cómo preparar el gravy.");
 iniciarExplicacion();
+ajustarArbol();
 iniciarInstructivo();
