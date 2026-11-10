@@ -164,19 +164,6 @@
                   <path d="M596 36 v8"/><path d="M584 44 h24 v26 q0 16 -12 20 q-14 2 -16 -10 q8 -2 8 -10 h-4 z" fill="#1F6B3A"/>
                 </g>
               </g>
-              <g class="deco" data-deco="4">
-                <g transform="translate(560 38)" stroke="#3B2314" stroke-width="2.4" stroke-linejoin="round">
-                  <rect width="60" height="66" rx="6" fill="#FFF8EC"/><path d="M0 6 a6 6 0 0 1 6 -6 h48 a6 6 0 0 1 6 6 v14 h-60 z" fill="#C2202F"/>
-                  <path d="M16 -6 v12 M44 -6 v12" stroke-linecap="round"/>
-                  <text x="30" y="16" text-anchor="middle" font-family="Figtree,sans-serif" font-weight="800" font-size="11" fill="#FFF8EC" stroke="none">DIC</text>
-                  <text x="30" y="54" text-anchor="middle" font-family="Gloock,serif" font-size="30" fill="#3B2314" stroke="none">24</text>
-                </g>
-                <g class="reloj-arena" transform="translate(396 62)" stroke="#3B2314" stroke-width="2.4" stroke-linejoin="round">
-                  <rect x="-18" y="-30" width="36" height="6" rx="2" fill="#8A5530"/><rect x="-18" y="24" width="36" height="6" rx="2" fill="#8A5530"/>
-                  <path d="M-12 -24 h24 c0 14 -10 18 -10 24 c0 6 10 10 10 24 h-24 c0 -14 10 -18 10 -24 c0 -6 -10 -10 -10 -24 z" fill="#E8F2FA"/>
-                  <path d="M-8 -18 h16 c-2 8 -6 12 -8 14 c-2 -2 -6 -6 -8 -14 z M-9 22 c2 -8 6 -10 9 -10 c3 0 7 2 9 10 z" fill="#E7C873" stroke="none"/>
-                </g>
-              </g>
                           </g>
             <ellipse cx="320" cy="324" rx="300" ry="10" fill="currentColor" opacity=".08"/>
             <g class="pavo-g" transform="translate(-70 95) scale(1.3)"><g class="pavo-cuerpo">
@@ -278,12 +265,25 @@
         <rect x="420" y="170" width="140" height="8" rx="4" fill="#CEA54B" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-width="2"/>
       </g>
       <g class="esc" data-esc="4">
-        <circle cx="490" cy="214" r="92" fill="#FFF8EC" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-width="5"/>
-        <g stroke="#3B2314" stroke-width="4" stroke-linecap="round"><path d="M490 134v14M490 280v14M410 214h14M556 214h14"/></g>
-        <path class="sector" d="M490 214 L490 140 A74 74 0 0 1 554 251 Z" fill="#C2202F" opacity=".25"/>
-        <g transform="translate(490 214)"><path class="manecilla" d="M0 0 V-66" stroke="#C2202F" stroke-width="6" stroke-linecap="round"/></g>
-        <circle cx="490" cy="214" r="8" fill="#3B2314"/>
-        <g class="voltear" fill="none" stroke="#3B2314" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-width="5"><path d="M586 150 A116 116 0 0 1 586 278"/><path d="M572 270 L586 280 L596 264"/></g>
+        <g class="despertador">
+          <path d="M430 286 L414 312 M550 286 L566 312" stroke="#3B2314" stroke-width="7" stroke-linecap="round"/>
+          <g stroke="#3B2314" stroke-width="3" stroke-linejoin="round">
+            <path d="M490 122 V108" stroke-width="4" stroke-linecap="round"/>
+            <path d="M404 156 A34 34 0 0 1 456 112 Z" fill="#CEA54B"/>
+            <path d="M524 112 A34 34 0 0 1 576 156 Z" fill="#CEA54B"/>
+            <g class="martillo"><path d="M490 108 V98" stroke-width="4" stroke-linecap="round"/><circle cx="490" cy="94" r="6" fill="#C2202F"/></g>
+          </g>
+          <circle cx="490" cy="214" r="92" fill="#C2202F" stroke="#3B2314" stroke-width="5"/>
+          <circle cx="490" cy="214" r="78" fill="#FFF8EC" stroke="#3B2314" stroke-width="3"/>
+          <circle class="sector" cx="490" cy="214" r="34" fill="none" stroke="#C2202F" stroke-width="68" pathLength="100" stroke-dasharray="0 100" opacity=".22" transform="rotate(-90 490 214)"/>
+          <g stroke="#3B2314" stroke-linecap="round"><path d="M490 142v12M490 274v12M418 214h12M550 214h12" stroke-width="4"/><path d="M526 152l-3 5M552 178l-5 3M552 250l-5 -3M526 276l-3 -5M454 276l3 -5M428 250l5 -3M428 178l5 3M454 152l3 5" stroke-width="2.5"/></g>
+          <g transform="translate(490 214)"><path class="minutero" d="M0 0 V-40" stroke="#3B2314" stroke-width="7" stroke-linecap="round"/><path class="manecilla" d="M0 0 V-64" stroke="#C2202F" stroke-width="5" stroke-linecap="round"/></g>
+          <circle cx="490" cy="214" r="8" fill="#3B2314"/>
+          <g class="voltea-txt"><rect x="436" y="238" width="108" height="32" rx="16" fill="#C2202F" stroke="#3B2314" stroke-width="2.5"/><text x="490" y="260" text-anchor="middle" font-family="Gloock,serif" font-size="17" fill="#FFF8EC">¡Voltéalo!</text></g>
+          <path d="M432 184 C440 166 456 152 474 146" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+        </g>
+        <g class="ring" fill="none" stroke="#C2202F" stroke-width="4" stroke-linecap="round"><path d="M392 120 l-14 -8 M386 142 h-16 M594 142 h16 M588 120 l14 -8"/></g>
+        <g class="voltear" fill="none" stroke="#3B2314" stroke-linejoin="round" stroke-linecap="round" stroke-width="5"><path d="M604 170 A120 120 0 0 1 604 262"/><path d="M590 256 L604 266 L614 250"/></g>
       </g>
       <g class="esc" data-esc="5">
         <g class="vapor" fill="none" stroke="#B59D80" stroke-width="5" stroke-linecap="round" opacity=".55"><path d="M460 196 q-12 -16 0 -32 q12 -16 0 -32"/><path d="M490 190 q-12 -16 0 -32 q12 -16 0 -32"/><path d="M520 196 q-12 -16 0 -32 q12 -16 0 -32"/></g>

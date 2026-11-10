@@ -58,15 +58,15 @@
 @keyframes chispa{from{transform:scale(.3);opacity:.2}}
 
 /* 1 · Diluir */
-.botella{animation:botella 7s ease-in-out both;transform:rotate(-20deg) translate(70px,-10px)}
+.botella{animation:botella 7s ease-in-out infinite both;transform:rotate(-20deg) translate(70px,-10px)}
 @keyframes botella{0%,12%{transform:rotate(-20deg) translate(70px,-10px)}24%,62%{transform:rotate(-128deg)}76%,100%{transform:rotate(-20deg) translate(70px,-10px)}}
-.chorro{opacity:0;animation:chorro 7s linear both}
+.chorro{opacity:0;animation:chorro 7s linear infinite both}
 @keyframes chorro{0%,24%{opacity:0}27%,60%{opacity:1}63%,100%{opacity:0}}
-.jugo{animation:jugo 7s linear both}
-@keyframes jugo{0%,26%{transform:translateY(48px)}62%,100%{transform:none}}
-.mezcla{animation:mezcla 7s linear both}
-@keyframes mezcla{0%,74%{opacity:0}90%,100%{opacity:1}}
-.mitad{animation:aparece 7s linear both}
+.jugo{animation:jugo 7s linear infinite both}
+@keyframes jugo{0%,26%{transform:translateY(48px)}62%,95%{transform:none}96%,100%{transform:translateY(48px)}}
+.mezcla{animation:mezcla 7s linear infinite both}
+@keyframes mezcla{0%,74%{opacity:0}86%,96%{opacity:1}100%{opacity:0}}
+.mitad{animation:aparece 7s linear infinite both}
 @keyframes aparece{0%,10%{opacity:0}20%,70%{opacity:1}82%,100%{opacity:0}}
 .esc[data-esc="1"] .mitad{opacity:0}
 
@@ -80,21 +80,31 @@
 @keyframes glaseado{0%,18%{opacity:0;transform:translateY(-14px)}70%,100%{opacity:1;transform:none}}
 
 /* 3 · Horno */
-.t-200{animation:t200 7s steps(1) both}
-.t-max{opacity:0;animation:tmax 7s steps(1) both}
+.t-200{animation:t200 7s steps(1) infinite both}
+.t-max{opacity:0;animation:tmax 7s steps(1) infinite both}
 @keyframes tmax{0%{opacity:1}50%,100%{opacity:0}}
 @keyframes t200{0%{opacity:0}50%,100%{opacity:1}}
-.brasa{opacity:.45;animation:brasa 7s ease-in-out both,brasa-late 1.6s ease-in-out 7s infinite alternate}
-@keyframes brasa{0%{opacity:.1}40%{opacity:.85}55%,100%{opacity:.45}}
-@keyframes brasa-late{to{opacity:.6}}
-.charolita{animation:charolita 7s ease-out both}
-@keyframes charolita{0%,55%{transform:translateY(120px);opacity:0}60%{opacity:1}80%,100%{transform:none;opacity:1}}
+.brasa{opacity:.45;animation:brasa 7s ease-in-out infinite both}
+@keyframes brasa{0%{opacity:.1}40%{opacity:.85}55%{opacity:.45}70%{opacity:.6}85%{opacity:.45}100%{opacity:.1}}
+.charolita{animation:charolita 7s ease-out infinite both}
+@keyframes charolita{0%,55%{transform:translateY(120px);opacity:0}60%{opacity:1}80%,94%{transform:none;opacity:1}100%{transform:none;opacity:0}}
 
-/* 4 · Tiempos */
+/* 4 · Tiempos: despertador que da la vuelta, avisa a la mitad que hay que voltear y suena al final */
 .manecilla{animation:manecilla 6s linear infinite}
+.minutero{animation:manecilla 72s linear infinite}
 @keyframes manecilla{to{transform:rotate(360deg)}}
-.voltear{transform-origin:490px 214px;animation:voltear 3s ease-in-out infinite}
-@keyframes voltear{0%,20%{transform:rotate(-30deg);opacity:0}40%{opacity:1}80%{transform:rotate(20deg);opacity:1}100%{transform:rotate(20deg);opacity:0}}
+.sector{animation:sector 6s linear infinite}
+@keyframes sector{from{stroke-dasharray:0 100}to{stroke-dasharray:100 0}}
+.despertador{transform-origin:490px 300px;animation:sacude 6s linear infinite}
+@keyframes sacude{0%,88%,100%{transform:none}90%,94%,98%{transform:rotate(-4deg)}92%,96%{transform:rotate(4deg)}}
+.martillo{transform-origin:490px 108px;animation:martillo 6s linear infinite}
+@keyframes martillo{0%,88%,100%{transform:none}89%,93%,97%{transform:rotate(-35deg)}91%,95%,99%{transform:rotate(35deg)}}
+.ring{opacity:0;animation:ring 6s linear infinite}
+@keyframes ring{0%,87%{opacity:0}89%,99%{opacity:1}100%{opacity:0}}
+.voltea-txt{opacity:0;transform-box:fill-box;transform-origin:center;animation:voltea 6s ease-in-out infinite}
+@keyframes voltea{0%,44%{opacity:0;transform:scale(.6)}50%,66%{opacity:1;transform:scale(1)}72%,100%{opacity:0;transform:scale(1)}}
+.voltear{transform-origin:490px 214px;opacity:0;animation:voltear 6s ease-in-out infinite}
+@keyframes voltear{0%,44%{transform:rotate(-30deg);opacity:0}52%{opacity:1}66%{transform:rotate(14deg);opacity:1}74%,100%{transform:rotate(14deg);opacity:0}}
 
 /* 5 · Lista */
 .campana{transform:translateY(-150px) rotate(14deg);transform-origin:604px 300px;opacity:0;animation:campana 2.4s ease-in-out both}
@@ -133,12 +143,5 @@
 @keyframes foco{from{opacity:.35}}
 .copos{animation:copos 6s linear infinite}
 @keyframes copos{to{transform:translateY(70px)}}
-.llama{transform-box:fill-box;transform-origin:50% 100%;animation:llama .5s ease-in-out infinite alternate}
-.llama+.llama{animation-delay:-.25s}
-@keyframes llama{to{transform:scale(.85,1.12) rotate(3deg)}}
-.halo{animation:halo 1.4s ease-in-out infinite alternate}
-@keyframes halo{to{opacity:.6}}
-.reloj-arena{animation:arena 3s ease-in-out infinite}
-@keyframes arena{0%,80%{transform:translate(396px,62px)}100%{transform:translate(396px,62px) rotate(180deg)}}
 .hierbas{transform-origin:400px 49px;animation:hierbas 3s ease-in-out infinite alternate}
 @keyframes hierbas{to{transform:rotate(4deg)}}

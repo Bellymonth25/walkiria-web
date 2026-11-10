@@ -95,6 +95,18 @@ function ajustarArbol(): void {
   else addEventListener("resize", ajustar);
 }
 
+/** Arranca desde cero las animaciones de la escena que se acaba de mostrar, en cualquier navegador. */
+function reiniciarEscena(n: number): void {
+  requestAnimationFrame(() => {
+    const esc = document.querySelector(`.esc[data-esc="${n}"]`);
+    esc?.querySelectorAll<SVGElement>("*").forEach((el) =>
+      el.getAnimations?.().forEach((a) => {
+        a.currentTime = 0;
+      }),
+    );
+  });
+}
+
 function iniciarExplicacion(): void {
   const caja = $("#expl");
   const paso = $("#explPaso");
@@ -142,6 +154,7 @@ function iniciarExplicacion(): void {
     if (caja.dataset.estado === "fin") caja.dataset.estado = "pausa";
     const p = PASOS[actual]!;
     caja.dataset.paso = String(actual);
+    reiniciarEscena(actual);
     paso.textContent = p.titulo;
     texto.textContent = p.texto;
     datos.hidden = !p.datos;
