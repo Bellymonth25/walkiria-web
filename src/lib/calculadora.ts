@@ -6,7 +6,7 @@ export type Personas = Record<Grupo, number>;
 
 export interface Cena {
   personas: number;
-  /** Personas "adulto" equivalentes (niños cuentan menos, adolescentes más). */
+  /** Personas "adulto" equivalentes (los adolescentes cuentan más). */
   equivalentes: number;
   carne: number;
   pasta: number;
@@ -55,4 +55,11 @@ export function pavosPara(kg: number): Array<{ tamano: "completo" | "medio"; kgP
   const n = Math.ceil(kg / 10);
   const cada = Math.max(pavo.kgMinimoCompleto, Math.ceil((kg / n) * 2) / 2);
   return Array.from({ length: n }, () => ({ tamano: "completo" as const, kgPorPavo: cada }));
+}
+
+/** Reparte los kilos de carne en partes iguales, cada una de al menos un cuarto de kilo. */
+export function repartirCarne(kg: number, partes: number): number[] {
+  if (kg <= 0 || partes < 1) return [];
+  const cada = Math.max(0.25, redondearKg(kg / partes));
+  return Array.from({ length: partes }, () => cada);
 }

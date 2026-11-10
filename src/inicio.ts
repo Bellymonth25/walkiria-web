@@ -4,6 +4,7 @@ import { enlaceWhatsApp } from "./lib/pedido";
 import { iniciarComun } from "./comun";
 import { $ } from "./ui/dom";
 import { iniciarVisor } from "./ui/visor";
+import { iniciarApariciones } from "./ui/aparecer";
 
 // Medio árbol (24) y estrella de Belén (31) de fondo en la tarjeta, cortados por la orilla derecha.
 const ICONO_ARBOL = `<svg class="day-ico arbol" viewBox="0 0 80 120" aria-hidden="true"><path d="M40 6c4 10 12 18 20 22-4 1-8 1-12 0 7 10 15 17 24 21-6 2-13 2-19 0 8 11 17 19 27 23-12 4-27 5-40 5s-28-1-40-5c10-4 19-12 27-23-6 2-13 2-19 0 9-4 17-11 24-21-4 1-8 1-12 0 8-4 16-12 20-22Z" fill="currentColor"/><rect x="34" y="78" width="12" height="16" rx="2" fill="currentColor"/><path d="m40 0 2.4 5 5.4.6-4 3.7 1.1 5.4L40 12l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6Z" fill="currentColor"/></svg>`;
@@ -67,7 +68,7 @@ const base = `${import.meta.env.BASE_URL}volante/`;
 const abrirVolante = () =>
   visor.abrir([
     {
-      titulo: `Volante ${temporada.anio}`,
+      titulo: `Menú ${temporada.anio}`,
       alt: `Volante Cenas de fin de año ${temporada.anio} de La Walkiria`,
       media: `${base}volante-2600.webp`,
       grande: `${base}volante-walkiria-2026.png`,
@@ -79,3 +80,6 @@ const abrirVolante = () =>
   ]);
 $("#volanteVer").addEventListener("click", abrirVolante);
 $("#volanteMini").addEventListener("click", abrirVolante);
+
+// Las secciones aparecen con una animación al bajar, solo la primera vez.
+iniciarApariciones();
