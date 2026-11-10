@@ -1,6 +1,6 @@
 // Fondo de la portada: los videos de cenas navideñas pasan uno tras otro, en orden al azar,
 // con un fundido entre cada uno. Se pausan cuando la portada no se ve.
-const videos = [1, 2, 3, 4].map((n) => `${import.meta.env.BASE_URL}video/cena-${n}.mp4`);
+const videos = [1, 2, 3, 4, 5, 6].map((n) => `${import.meta.env.BASE_URL}video/cena-${n}.mp4`);
 
 function siguienteAlAzar(anterior: string | null): string {
   const opciones = videos.filter((v) => v !== anterior);
