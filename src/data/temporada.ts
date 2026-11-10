@@ -28,7 +28,7 @@ export interface Temporada {
 
 export const temporada: Temporada = {
   anio: 2026,
-  notaPrecios: "Precios de la temporada 2025 mientras salen los de 2026.",
+  notaPrecios: "Precios de la temporada 2026.",
   cortes: [
     { para: "Navidad", limite: 22, tardio: 23 },
     { para: "Año Nuevo", limite: 29, tardio: 30 },
@@ -43,7 +43,7 @@ export const temporada: Temporada = {
     { dia: 31, tipo: "tienda" },
   ],
   ultimoDia: 31,
-  diasAvisoDomicilio: 2,
+  diasAvisoDomicilio: 3,
   diasAnticipacionPedido: 2,
   zonas: [
     { nombre: "Zona Sur", costo: 100 },
@@ -75,8 +75,8 @@ export const empaques = {
 
 /** Servicio "¿Le regalaron el pavo?". */
 export const maquila = {
-  precioCocinarKg: 75,
-  precioRellenoKg: 390,
+  precioCocinarKg: 170,
+  precioRellenoKg: 400,
   /** Días antes de la entrega para traer el producto a la tienda. */
   diasAnticipacion: 2,
   /** Opciones de "¿qué nos trae?". "Otro" pide especificar. */
