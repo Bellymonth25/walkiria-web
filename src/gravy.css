@@ -1,0 +1,111 @@
+/* Página "Cómo preparar el gravy" */
+.gravy h1{font-size:clamp(2.2rem,5vw,3.2rem);margin:8px 0 0}
+.gravy .sec-head .eyebrow{color:var(--gold-ink)}
+.gravy-wrap{max-width:780px}
+.nav a[href="gravy.html"][aria-current="true"]{box-shadow:inset 0 -2px 0 var(--gold)}
+
+.expl{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.expl-escena{position:relative;background:linear-gradient(var(--gold-soft),var(--surface-2));color:var(--fg)}
+.expl-escena svg{display:block;width:100%;height:auto}
+.expl-play{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);box-shadow:0 8px 22px rgba(0,0,0,.25)}
+.expl:not([data-estado="portada"]) .expl-play{display:none}
+.expl-globo{position:relative;margin:0 16px;padding:16px 18px;background:var(--bg);border:2px solid var(--fg);border-radius:16px;min-height:9.5rem;top:-14px}
+.expl-globo::before{content:"";position:absolute;left:18%;top:-13px;width:22px;height:22px;background:var(--bg);border:2px solid var(--fg);border-right:0;border-bottom:0;transform:rotate(45deg)}
+.expl-paso{font-family:var(--font-display);font-size:1.45rem;line-height:1.15;color:var(--brand)}
+.expl-globo p{margin:6px 0 0;font-size:1.08rem}
+.expl-datos{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px}
+.expl-datos li{padding:8px 12px;border-radius:10px;background:var(--surface-2);font-size:.98rem}
+.expl-datos b{color:var(--brand)}
+.expl-ctrl{display:flex;align-items:center;gap:10px;padding:0 16px 16px}
+.expl[data-estado="portada"] .expl-ctrl{visibility:hidden}
+.expl-ctrl>button{width:44px;height:44px;flex:none;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);font-size:1.2rem;line-height:1;cursor:pointer}
+.expl-ctrl>button:hover{border-color:var(--fg)}
+.expl-puntos{flex:1;display:flex;gap:6px}
+.expl-puntos button{flex:1;height:20px;padding:0;border:0;background:none;cursor:pointer;position:relative}
+.expl-puntos button::before,.expl-puntos button::after{content:"";position:absolute;left:0;top:7px;height:6px;border-radius:3px}
+.expl-puntos button::before{right:0;background:var(--line)}
+.expl-puntos button::after{width:0;background:var(--brand)}
+.expl-puntos button:has(~[aria-current="true"])::after{width:100%}
+.expl-puntos button[aria-current="true"]::after{width:100%}
+.expl[data-estado="corriendo"] .expl-puntos button[aria-current="true"]::after{animation:expl-avance var(--dura,8s) linear both}
+@keyframes expl-avance{from{width:0}}
+
+/* Escenas: sólo se ve la del paso actual. El estado base es el final, para que sin animación también se entienda. */
+.esc{display:none}
+.expl[data-paso="0"] .esc[data-esc="0"],.expl[data-paso="1"] .esc[data-esc="1"],.expl[data-paso="2"] .esc[data-esc="2"],
+.expl[data-paso="3"] .esc[data-esc="3"],.expl[data-paso="4"] .esc[data-esc="4"],.expl[data-paso="5"] .esc[data-esc="5"]{display:block}
+.expl[data-estado="pausa"] .expl-escena *{animation-play-state:paused}
+
+/* El pavo */
+.pavo-cuerpo{animation:pavo-respira 2.4s ease-in-out infinite;transform-origin:170px 175px}
+.cabeza{transform-origin:170px 110px}
+.pico{transform-origin:170px 78px}
+.ala-der{transform-origin:200px 122px}
+.expl:not([data-estado="portada"]) .cabeza{animation:pavo-cabeza 1.3s ease-in-out infinite}
+.expl:not([data-estado="portada"]) .pico{animation:pavo-habla .32s ease-in-out infinite alternate}
+.expl:not([data-estado="portada"]) .ala-der{animation:pavo-senala 1.6s ease-in-out infinite alternate}
+.expl[data-estado="portada"] .ala-der{animation:pavo-saluda .7s ease-in-out infinite alternate}
+@keyframes pavo-respira{50%{transform:scaleY(1.02)}}
+@keyframes pavo-cabeza{50%{transform:rotate(4deg)}}
+@keyframes pavo-habla{to{transform:scaleY(1.5)}}
+@keyframes pavo-senala{from{transform:rotate(-78deg)}to{transform:rotate(-96deg)}}
+@keyframes pavo-saluda{from{transform:rotate(-120deg)}to{transform:rotate(-150deg)}}
+
+/* 0 · Tarro */
+.tarro{transform-origin:470px 320px;animation:tarro-llega .9s cubic-bezier(.3,1.5,.5,1) both,tarro-baila 1.8s ease-in-out .9s infinite}
+@keyframes tarro-llega{from{transform:translateY(-260px) rotate(-12deg)}}
+@keyframes tarro-baila{50%{transform:rotate(3deg) scale(1.03)}}
+.chispas path{transform-box:fill-box;transform-origin:center;animation:chispa 1.4s ease-in-out infinite alternate}
+.chispas path:nth-child(2){animation-delay:.4s}.chispas path:nth-child(3){animation-delay:.8s}
+@keyframes chispa{from{transform:scale(.3);opacity:.2}}
+
+/* 1 · Diluir */
+.botella{animation:botella 7s ease-in-out both;transform:rotate(-20deg) translate(70px,-10px)}
+@keyframes botella{0%,12%{transform:rotate(-20deg) translate(70px,-10px)}24%,62%{transform:rotate(-128deg)}76%,100%{transform:rotate(-20deg) translate(70px,-10px)}}
+.chorro{opacity:0;animation:chorro 7s linear both}
+@keyframes chorro{0%,24%{opacity:0}27%,60%{opacity:1}63%,100%{opacity:0}}
+.jugo{animation:jugo 7s linear both}
+@keyframes jugo{0%,26%{transform:translateY(48px)}62%,100%{transform:none}}
+.mezcla{animation:mezcla 7s linear both}
+@keyframes mezcla{0%,74%{opacity:0}90%,100%{opacity:1}}
+.mitad{animation:aparece 7s linear both}
+@keyframes aparece{0%,10%{opacity:0}20%,70%{opacity:1}82%,100%{opacity:0}}
+.esc[data-esc="1"] .mitad{opacity:0}
+
+/* 2 · Bañar */
+.cucharon{animation:cucharon 3s ease-in-out infinite}
+@keyframes cucharon{0%,100%{transform:rotate(8deg)}45%,70%{transform:rotate(-24deg)}}
+.gotas circle{animation:gota 3s ease-in infinite;opacity:0}
+.gotas circle:nth-child(2){animation-delay:.15s}.gotas circle:nth-child(3){animation-delay:.3s}
+@keyframes gota{0%,40%{transform:translateY(0);opacity:0}45%{opacity:1}68%{transform:translateY(58px);opacity:1}72%,100%{transform:translateY(58px);opacity:0}}
+.glaseado{animation:glaseado 6s ease-out both}
+@keyframes glaseado{0%,18%{opacity:0;transform:translateY(-14px)}70%,100%{opacity:1;transform:none}}
+
+/* 3 · Horno */
+.t-200{animation:t200 7s steps(1) both}
+.t-max{opacity:0;animation:tmax 7s steps(1) both}
+@keyframes tmax{0%{opacity:1}50%,100%{opacity:0}}
+@keyframes t200{0%{opacity:0}50%,100%{opacity:1}}
+.brasa{opacity:.45;animation:brasa 7s ease-in-out both,brasa-late 1.6s ease-in-out 7s infinite alternate}
+@keyframes brasa{0%{opacity:.1}40%{opacity:.85}55%,100%{opacity:.45}}
+@keyframes brasa-late{to{opacity:.6}}
+.charolita{animation:charolita 7s ease-out both}
+@keyframes charolita{0%,55%{transform:translateY(120px);opacity:0}60%{opacity:1}80%,100%{transform:none;opacity:1}}
+
+/* 4 · Tiempos */
+.manecilla{animation:manecilla 6s linear infinite}
+@keyframes manecilla{to{transform:rotate(360deg)}}
+.voltear{transform-origin:490px 214px;animation:voltear 3s ease-in-out infinite}
+@keyframes voltear{0%,20%{transform:rotate(-30deg);opacity:0}40%{opacity:1}80%{transform:rotate(20deg);opacity:1}100%{transform:rotate(20deg);opacity:0}}
+
+/* 5 · Lista */
+.campana{transform:translateY(-150px) rotate(14deg);transform-origin:604px 300px;opacity:0;animation:campana 2.4s ease-in-out both}
+@keyframes campana{0%,25%{transform:none;opacity:1}80%{opacity:1}100%{transform:translateY(-150px) rotate(14deg);opacity:0}}
+.vapor path{animation:vapor 2.2s ease-in-out 2s infinite both}
+.vapor path:nth-child(2){animation-delay:2.4s}.vapor path:nth-child(3){animation-delay:2.8s}
+@keyframes vapor{0%{transform:translateY(14px);opacity:0}40%{opacity:1}100%{transform:translateY(-18px);opacity:0}}
+
+/* Instructivo */
+.inst-mini{transform:none;max-width:460px;margin-inline:auto}
+@media (max-width:760px){.inst-mini{max-width:340px}.expl-globo{min-height:13rem}.expl-paso{font-size:1.3rem}.expl-globo p{font-size:1rem}}
+@media (min-width:761px){.expl-globo{min-height:13.5rem}.expl-datos{grid-template-columns:1fr 1fr}.expl-datos li:only-child{grid-column:1/-1}}
