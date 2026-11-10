@@ -1,6 +1,7 @@
 /**
- * Visor de imágenes en grande: se abre encima de la página (se ve el fondo), con zoom al tocar,
- * flechas cuando hay varias imágenes y cierre al picar fuera.
+ * Visor de imágenes en grande: se abre encima de la página (se ve el fondo), con botones de zoom
+ * (− / + / ajustar), la manita para mover la imagen ya acercada, flechas cuando hay varias imágenes
+ * y cierre al picar fuera.
  */
 export interface Lamina {
   titulo: string;
@@ -33,10 +34,82 @@ export function iniciarVisor(): Visor {
   let laminas: readonly Lamina[] = [];
   let i = 0;
 
+  // ---------- Zoom con botones ----------
+  const NIVELES = [1, 1.5, 2, 3, 4];
+  let nivel = 0;
+  let anchoBase = 0;
+  const zoom = document.createElement("div");
+  zoom.className = "visor-zoom";
+  zoom.setAttribute("role", "group");
+  zoom.setAttribute("aria-label", "Zoom");
+  zoom.innerHTML = `<button type="button" data-z="-1" aria-label="Alejar">−</button>
+    <output aria-live="polite">100%</output>
+    <button type="button" data-z="1" aria-label="Acercar">+</button>
+    <button type="button" data-z="0" aria-label="Ajustar a la pantalla"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>`;
+  visor.append(zoom);
+  const porcentaje = zoom.querySelector("output")!;
+  const [menos, mas, ajustar] = [...zoom.querySelectorAll<HTMLButtonElement>("button")] as [HTMLButtonElement, HTMLButtonElement, HTMLButtonElement];
+  img.draggable = false;
+
+  /** Cambia el zoom manteniendo el mismo punto al centro de la pantalla. */
+  const ponerZoom = (n: number) => {
+    const l = laminas[i];
+    if (!l?.media) return;
+    if (nivel === 0) anchoBase = img.getBoundingClientRect().width;
+    const centroX = (lienzo.scrollLeft + lienzo.clientWidth / 2) / Math.max(1, lienzo.scrollWidth);
+    const centroY = (lienzo.scrollTop + lienzo.clientHeight / 2) / Math.max(1, lienzo.scrollHeight);
+    nivel = Math.max(0, Math.min(NIVELES.length - 1, n));
+    const factor = NIVELES[nivel]!;
+    if (nivel > 0 && l.grande && !img.src.endsWith(l.grande)) img.src = l.grande;
+    lienzo.classList.toggle("zoom", nivel > 0);
+    img.style.width = nivel > 0 ? `${Math.round(anchoBase * factor)}px` : "";
+    porcentaje.textContent = `${Math.round(factor * 100)}%`;
+    menos.disabled = ajustar.disabled = nivel === 0;
+    mas.disabled = nivel === NIVELES.length - 1;
+    if (nivel > 0) {
+      lienzo.scrollLeft = centroX * lienzo.scrollWidth - lienzo.clientWidth / 2;
+      lienzo.scrollTop = centroY * lienzo.scrollHeight - lienzo.clientHeight / 2;
+    } else lienzo.scrollTo(0, 0);
+  };
+  zoom.addEventListener("click", (e) => {
+    const b = (e.target as Element).closest<HTMLButtonElement>("button");
+    if (!b) return;
+    const z = Number(b.dataset.z);
+    ponerZoom(z === 0 ? 0 : nivel + z);
+  });
+
+  // ---------- La manita: arrastrar para mover la imagen acercada (con el dedo se usa el scroll normal) ----------
+  let arrastre: { x: number; y: number; sl: number; st: number; movio: boolean } | null = null;
+  let ignorarClic = false;
+  lienzo.addEventListener("pointerdown", (e) => {
+    if (nivel === 0 || e.pointerType === "touch" || e.button !== 0) return;
+    arrastre = { x: e.clientX, y: e.clientY, sl: lienzo.scrollLeft, st: lienzo.scrollTop, movio: false };
+    lienzo.setPointerCapture(e.pointerId);
+    lienzo.classList.add("arrastrando");
+  });
+  lienzo.addEventListener("pointermove", (e) => {
+    if (!arrastre) return;
+    const dx = e.clientX - arrastre.x;
+    const dy = e.clientY - arrastre.y;
+    if (Math.abs(dx) + Math.abs(dy) > 4) arrastre.movio = true;
+    lienzo.scrollLeft = arrastre.sl - dx;
+    lienzo.scrollTop = arrastre.st - dy;
+  });
+  const soltar = () => {
+    if (!arrastre) return;
+    ignorarClic = arrastre.movio;
+    arrastre = null;
+    lienzo.classList.remove("arrastrando");
+  };
+  lienzo.addEventListener("pointerup", soltar);
+  lienzo.addEventListener("pointercancel", soltar);
+
   const mostrar = (n: number) => {
     i = (n + laminas.length) % laminas.length;
     const l = laminas[i]!;
+    nivel = 0;
     lienzo.classList.remove("zoom");
+    img.style.width = "";
     lienzo.classList.toggle("alta", !!l.alta);
     lienzo.scrollTo(0, 0);
     titulo.textContent = laminas.length > 1 ? `${l.titulo} · ${i + 1} de ${laminas.length}` : l.titulo;
@@ -48,11 +121,15 @@ export function iniciarVisor(): Visor {
     } else {
       vacio.textContent = `Pronto: foto de ${l.titulo}`;
     }
+    zoom.hidden = !l.media;
+    porcentaje.textContent = "100%";
+    menos.disabled = ajustar.disabled = true;
+    mas.disabled = false;
     ayuda.textContent = !l.media
       ? "Usa las flechas para ver las demás fotos."
       : laminas.length > 1
-        ? "Toca la imagen para acercar. Cambia de foto con las flechas."
-        : "Toca la imagen para acercar o alejar.";
+        ? "Acerca con + y mueve la imagen arrastrándola. Cambia de foto con las flechas."
+        : "Acerca con + y mueve la imagen arrastrándola.";
     descargas.replaceChildren(
       ...(l.descargas ?? []).map((d, n) => {
         const a = document.createElement("a");
@@ -69,29 +146,19 @@ export function iniciarVisor(): Visor {
   ant.addEventListener("click", () => mostrar(i - 1));
   sig.addEventListener("click", () => mostrar(i + 1));
   visor.addEventListener("keydown", (e) => {
+    if (e.key === "+" || e.key === "=") return ponerZoom(nivel + 1);
+    if (e.key === "-") return ponerZoom(nivel - 1);
     if (laminas.length < 2) return;
     if (e.key === "ArrowLeft") mostrar(i - 1);
     else if (e.key === "ArrowRight") mostrar(i + 1);
   });
   // Picar fuera del visor (en el fondo oscuro) o en el espacio vacío junto a la imagen lo cierra.
   visor.addEventListener("click", (e) => {
-    if (e.target === visor || e.target === lienzo) visor.close();
-  });
-
-  // Tocar acerca al punto tocado; volver a tocar aleja.
-  img.addEventListener("click", (e) => {
-    const l = laminas[i]!;
-    const r = img.getBoundingClientRect();
-    const fx = (e.clientX - r.left) / r.width;
-    const fy = (e.clientY - r.top) / r.height;
-    const acercar = lienzo.classList.toggle("zoom");
-    if (acercar && l.grande && !img.src.endsWith(l.grande)) img.src = l.grande;
-    if (acercar) {
-      lienzo.scrollLeft = fx * img.offsetWidth - lienzo.clientWidth / 2;
-      lienzo.scrollTop = fy * img.offsetHeight - lienzo.clientHeight / 2;
-    } else {
-      lienzo.scrollTo(0, 0);
+    if (ignorarClic) {
+      ignorarClic = false;
+      return;
     }
+    if (e.target === visor || e.target === lienzo) visor.close();
   });
 
   return {

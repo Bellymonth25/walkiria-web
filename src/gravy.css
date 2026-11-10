@@ -118,3 +118,27 @@
   .expl-ctrl{padding:0 20px 20px 22px}
 }
 .expl[data-estado="fin"] .expl-play{bottom:auto;top:18px}
+
+/* Fondos que cambian según el paso: cocina (1–4) y comedor (portada y final) */
+.expl-escena{color:#3B2314;background:#FCE7CC}
+.expl-escena svg{overflow:visible}
+.fondo,.deco{opacity:0;transition:opacity .7s ease}
+.expl[data-paso="1"] .fondo-cocina,.expl[data-paso="2"] .fondo-cocina,.expl[data-paso="3"] .fondo-cocina,.expl[data-paso="4"] .fondo-cocina,
+.expl[data-paso="0"] .fondo-comedor,.expl[data-paso="5"] .fondo-comedor,
+.expl[data-paso="0"] .deco[data-deco="0"],.expl[data-paso="1"] .deco[data-deco="1"],.expl[data-paso="2"] .deco[data-deco="2"],
+.expl[data-paso="3"] .deco[data-deco="3"],.expl[data-paso="4"] .deco[data-deco="4"],.expl[data-paso="5"] .deco[data-deco="5"]{opacity:1}
+.focos circle,.focos-arbol circle{animation:foco 1.8s ease-in-out infinite alternate}
+.focos circle:nth-child(3n+1),.focos-arbol circle:nth-child(3n+1){animation-delay:-.6s}
+.focos circle:nth-child(3n+2),.focos-arbol circle:nth-child(3n+2){animation-delay:-1.2s}
+@keyframes foco{from{opacity:.35}}
+.copos{animation:copos 6s linear infinite}
+@keyframes copos{to{transform:translateY(70px)}}
+.llama{transform-box:fill-box;transform-origin:50% 100%;animation:llama .5s ease-in-out infinite alternate}
+.llama+.llama{animation-delay:-.25s}
+@keyframes llama{to{transform:scale(.85,1.12) rotate(3deg)}}
+.halo{animation:halo 1.4s ease-in-out infinite alternate}
+@keyframes halo{to{opacity:.6}}
+.reloj-arena{animation:arena 3s ease-in-out infinite}
+@keyframes arena{0%,80%{transform:translate(396px,62px)}100%{transform:translate(396px,62px) rotate(180deg)}}
+.hierbas{transform-origin:400px 49px;animation:hierbas 3s ease-in-out infinite alternate}
+@keyframes hierbas{to{transform:rotate(4deg)}}
