@@ -595,22 +595,15 @@ button.cal-day:hover{border-color:var(--primary)}
 :root[data-theme="dark"] .calc-aviso b{color:var(--gold)}
 @media (max-width:760px){.calc-grupos{grid-template-columns:1fr}.calc-grupo{flex-direction:row;align-items:center}.calc-nombre small{display:block;margin-left:0}}
 
-/* Portada con fondo vivo: fotos que pasan despacio bajo una máscara roja y un patrón de estrellas */
+/* Portada con videos de fondo bajo una máscara roja */
 .hero{isolation:isolate}
-.hero-fondo{position:absolute;inset:0;z-index:-1;overflow:hidden;background:var(--hero)}
-.hero-fondo i{position:absolute;inset:-6%;background:center/cover no-repeat;opacity:0;filter:blur(3px) saturate(.9);animation:fondo-pasa 27s linear infinite}
-.hero-fondo i:nth-child(2){animation-delay:9s}
-.hero-fondo i:nth-child(3){animation-delay:18s}
-@keyframes fondo-pasa{0%{opacity:0;transform:scale(1) translate(0,0)}6%{opacity:1}33%{opacity:1}42%{opacity:0;transform:scale(1.14) translate(-2%,-1.5%)}100%{opacity:0}}
-/* Máscara del color de la marca */
-.hero-fondo::before{content:"";position:absolute;inset:0;z-index:1;
-  background:radial-gradient(120% 90% at 78% 40%,color-mix(in srgb,var(--hero) 80%,transparent),var(--hero) 75%),
-    linear-gradient(color-mix(in srgb,var(--hero) 70%,transparent),color-mix(in srgb,var(--hero) 70%,transparent))}
-/* Patrón de estrellas y copos dorados */
-.hero-fondo::after{content:"";position:absolute;inset:0;z-index:2;opacity:.13;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='%23E8B04B' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M30 18v24M18 30h24M21.5 21.5l17 17M38.5 21.5l-17 17M30 18l-3 3M30 18l3 3M30 42l-3-3M30 42l3-3'/%3E%3Cpath d='M90 78l2.6 6.4L99 87l-6.4 2.6L90 96l-2.6-6.4L81 87l6.4-2.6z' fill='%23E8B04B' stroke='none'/%3E%3Ccircle cx='96' cy='22' r='1.6' fill='%23E8B04B' stroke='none'/%3E%3Ccircle cx='20' cy='96' r='1.6' fill='%23E8B04B' stroke='none'/%3E%3C/svg%3E");
-  background-size:120px 120px;animation:patron-baja 60s linear infinite}
-@keyframes patron-baja{to{background-position:0 120px}}
+.hero-fondo{position:absolute;inset:0;z-index:-1;overflow:hidden;background:var(--hero) center/cover no-repeat}
+.hero-fondo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s ease}
+.hero-fondo video.activo{opacity:1}
+/* Máscara: se ve el video, pero el rojo manda y el texto se lee bien */
+.hero-fondo::after{content:"";position:absolute;inset:0;z-index:1;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--hero) 58%,transparent) 0%,color-mix(in srgb,var(--hero) 72%,transparent) 55%,color-mix(in srgb,var(--hero) 86%,transparent) 100%)}
+@media (max-width:860px){.hero-fondo::after{background:linear-gradient(color-mix(in srgb,var(--hero) 82%,transparent),color-mix(in srgb,var(--hero) 74%,transparent) 60%,color-mix(in srgb,var(--hero) 84%,transparent))}}
 
 /* Galería más grande, en columnas escalonadas, con un telón rojo que se abre al entrar */
 @media (min-width:861px){.hero .wrap{grid-template-columns:1.3fr 1fr;gap:clamp(32px,5vw,80px)}}
@@ -638,3 +631,27 @@ button.cal-day:hover{border-color:var(--primary)}
 /* Lo que entra de lado no debe crear scroll horizontal en celular */
 #inicio{overflow-x:clip}
 @media (min-width:861px){.hero h1{font-size:clamp(2.6rem,4.6vw,4.3rem)}}
+
+/* Opción B de galería: fotos tipo instantánea, sueltas sobre la mesa */
+.galeria[data-estilo="polaroid"]{gap:18px 14px;padding-block:2% 6%}
+.galeria[data-estilo="polaroid"] .gal-foto{aspect-ratio:4/5;border-radius:4px;outline:0;border:10px solid #FFF8F2;border-bottom-width:42px;box-shadow:0 18px 38px rgba(0,0,0,.5);background-color:#FFF8F2;translate:none}
+.galeria[data-estilo="polaroid"] .gal-foto:nth-child(1){rotate:-5deg}.galeria[data-estilo="polaroid"] .gal-foto:nth-child(2){rotate:3deg;translate:0 8%}
+.galeria[data-estilo="polaroid"] .gal-foto:nth-child(3){rotate:-2deg}.galeria[data-estilo="polaroid"] .gal-foto:nth-child(4){rotate:4deg}
+.galeria[data-estilo="polaroid"] .gal-foto:nth-child(5){rotate:-3deg;translate:0 8%}.galeria[data-estilo="polaroid"] .gal-foto:nth-child(6){rotate:5deg}
+.galeria[data-estilo="polaroid"] .gal-foto.con-foto .gal-nombre{position:absolute;left:0;right:0;bottom:-38px;background:none;padding:8px 4px;color:#5C1418;text-align:center;font-family:"Caveat","Segoe Print","Bradley Hand",cursive;font-size:1.05rem}
+.galeria[data-estilo="polaroid"] .gal-foto:hover{border-color:#fff}
+.galeria[data-estilo="polaroid"] .gal-foto{overflow:visible}
+.galeria[data-estilo="polaroid"] .gal-foto::after{border-radius:2px;inset:-10px -10px -42px}
+
+/* Opción C de galería: arcos con marco dorado, estilo restaurante */
+.galeria[data-estilo="arcos"]{gap:16px}
+.galeria[data-estilo="arcos"] .gal-foto{aspect-ratio:3/4.4;border-radius:999px 999px 14px 14px;outline:1.5px solid var(--gold);outline-offset:5px}
+.galeria[data-estilo="arcos"] .gal-foto:nth-child(n+4){border-radius:14px 14px 999px 999px}
+.galeria[data-estilo="arcos"] .gal-foto:nth-child(n+4) .gal-nombre{order:-1;align-self:flex-start;background:linear-gradient(rgba(20,4,6,.85),transparent);padding:12px 12px 34px;text-align:center}
+.galeria[data-estilo="arcos"] .gal-foto:nth-child(n+4){align-items:flex-start}
+.galeria[data-estilo="arcos"] .gal-foto .gal-nombre{text-align:center}
+@media (max-width:860px){
+  .galeria[data-estilo="polaroid"] .gal-foto{border-width:6px 6px 40px}
+  .galeria[data-estilo="polaroid"] .gal-foto.con-foto .gal-nombre{bottom:-38px;font-size:.74rem;line-height:1.1;padding:4px 2px;height:36px;display:grid;place-items:center}
+  .galeria[data-estilo="polaroid"] .gal-foto::after{inset:-6px -6px -40px}
+}

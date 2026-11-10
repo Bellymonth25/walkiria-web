@@ -4,6 +4,7 @@ import { enlaceWhatsApp } from "./lib/pedido";
 import { iniciarComun } from "./comun";
 import { $ } from "./ui/dom";
 import { iniciarVisor } from "./ui/visor";
+import { iniciarFondoVideo } from "./ui/fondo-video";
 import { iniciarApariciones } from "./ui/aparecer";
 
 // Medio árbol (24) y estrella de Belén (31) de fondo en la tarjeta, cortados por la orilla derecha.
@@ -42,10 +43,6 @@ const visor = iniciarVisor();
 const recuadros = [...document.querySelectorAll<HTMLElement>("[data-gal]")];
 const conFoto = new Set<string>();
 const urlFoto = (id: string) => `${import.meta.env.BASE_URL}img/galeria/${id}.jpg`;
-// Fondo de la portada: las fotos van pasando despacio detrás del rojo, como un video.
-document.querySelectorAll<HTMLElement>("[data-fondo]").forEach((el) => {
-  el.style.backgroundImage = `url("${urlFoto(el.dataset.fondo!)}")`;
-});
 recuadros.forEach((el, n) => {
   const id = el.dataset.gal!;
   const img = new Image();
@@ -87,3 +84,4 @@ $("#volanteMini").addEventListener("click", abrirVolante);
 
 // Las secciones aparecen con una animación al bajar, solo la primera vez.
 iniciarApariciones();
+iniciarFondoVideo();
