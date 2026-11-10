@@ -1,12 +1,16 @@
-/** Volante: vista en grande a pantalla completa, con zoom al tocar. */
-export function iniciarVolante(urlGrande: string): void {
+/**
+ * Volante: vista en grande a pantalla completa, con zoom al tocar.
+ * Primero se ve una versión mediana (rápida en celular); al acercar se cambia a la de 600 dpi.
+ */
+export function iniciarVolante(urlMedia: string, urlGrande: string): void {
   const visor = document.querySelector<HTMLDialogElement>("#visor");
   const img = document.querySelector<HTMLImageElement>("#visorImg");
   const lienzo = document.querySelector<HTMLElement>("#visorLienzo");
   if (!visor || !img || !lienzo) return;
 
+  let grande = false;
   const abrir = () => {
-    if (!img.src) img.src = urlGrande; // La imagen grande solo se descarga si la piden.
+    if (!img.src) img.src = urlMedia; // Las imágenes grandes solo se descargan si las piden.
     lienzo.classList.remove("zoom");
     visor.showModal();
   };
@@ -21,6 +25,10 @@ export function iniciarVolante(urlGrande: string): void {
     const fy = (e.clientY - r.top) / r.height;
     const acercar = !lienzo.classList.contains("zoom");
     lienzo.classList.toggle("zoom", acercar);
+    if (acercar && !grande) {
+      grande = true;
+      img.src = urlGrande;
+    }
     if (acercar) {
       lienzo.scrollLeft = fx * img.offsetWidth - lienzo.clientWidth / 2;
       lienzo.scrollTop = fy * img.offsetHeight - lienzo.clientHeight / 2;

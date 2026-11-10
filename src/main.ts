@@ -379,7 +379,10 @@ pintarDias();
 pintarOrden(pedido, ctx);
 iniciarNieve($<HTMLCanvasElement>("#snow"), $<HTMLButtonElement>("#snowToggle"));
 iniciarLuces($(".lights"));
-iniciarVolante(`${import.meta.env.BASE_URL}volante/volante-walkiria-2026.png`);
+iniciarVolante(
+  `${import.meta.env.BASE_URL}volante/volante-2600.webp`,
+  `${import.meta.env.BASE_URL}volante/volante-walkiria-2026.png`,
+);
 iniciarHoja($("#order"), $<HTMLButtonElement>("#bar"), $("#barBtn"));
 
 // Lo que mide la barra de arriba (con luces), para que la búsqueda y el pedido se peguen justo debajo.

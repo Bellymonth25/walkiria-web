@@ -420,5 +420,5 @@ button.cal-day:hover{border-color:var(--primary)}
 .visor-lienzo{flex:1;overflow:auto;display:grid;place-items:start center;padding:12px;-webkit-overflow-scrolling:touch}
 .visor-lienzo img{display:block;max-width:100%;height:auto;cursor:zoom-in;background:#fff;border-radius:4px}
 .visor-lienzo.zoom{place-items:start start}
-.visor-lienzo.zoom img{max-width:none;width:min(2550px,240vw);cursor:zoom-out}
+.visor-lienzo.zoom img{max-width:none;width:min(5100px,300vw);cursor:zoom-out}
 .visor-ayuda{margin:0;text-align:center;font-size:.8rem;opacity:.7;padding:6px 0 calc(8px + env(safe-area-inset-bottom,0px))}
