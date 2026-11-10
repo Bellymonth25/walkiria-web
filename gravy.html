@@ -196,29 +196,31 @@
         <p>La misma hoja que va con tu pedido. Tócala para verla en grande, o descárgala para tenerla a la mano.</p>
         <div class="volante-btns">
           <button class="btn btn-red" type="button" id="instVer">Ver en grande</button>
-          <a class="btn btn-ghost" href="gravy/instructivo-gravy-carta.pdf" download="Instructivo gravy La Walkiria (carta).pdf">Descargar PDF carta</a>
-          <a class="btn btn-ghost" href="gravy/instructivo-gravy-celular.pdf" download="Instructivo gravy La Walkiria (celular).pdf">Descargar PDF para celular</a>
+          <a class="btn btn-ghost" href="gravy/instructivo-gravy-celular.pdf" download="Instructivo gravy La Walkiria (celular).pdf">Descargar PDF</a>
+          <a class="btn btn-ghost" href="gravy/instructivo-gravy-carta.pdf" download="Instructivo gravy La Walkiria (carta).pdf">Descargar PDF para imprimir</a>
         </div>
         <p class="fine">¿Aún no pides tu cena? <a href="pedido.html">Haz tu pedido</a>.</p>
       </div>
       <button class="volante-mini inst-mini" type="button" id="instMini" aria-label="Ver el instructivo en grande">
-        <picture>
-          <source media="(max-width:760px)" srcset="gravy/instructivo-celular-900.webp" width="900" height="2250">
-          <img src="gravy/instructivo-carta-1100.webp" width="1100" height="1424" alt="Instrucciones para su gravy: paso 1 diluir el gravy, paso 2 caliente su cena, paso 3 en el horno" loading="lazy">
-        </picture>
+        <img src="gravy/instructivo-celular-900.webp" width="900" height="2250" alt="Instrucciones para su gravy: paso 1 diluir el gravy, paso 2 caliente su cena, paso 3 en el horno" loading="lazy">
         <span class="volante-lupa" aria-hidden="true">Ver en grande</span>
       </button>
     </div>
   </section>
 
-  <dialog class="visor" id="visor" aria-label="Instructivo en grande">
+  <dialog class="visor" id="visor" aria-label="Imagen en grande">
     <div class="visor-barra">
-      <span class="visor-titulo">Instructivo del gravy</span>
-      <a class="btn btn-gold btn-sm" href="gravy/instructivo-gravy-carta.pdf" download="Instructivo gravy La Walkiria (carta).pdf">Descargar PDF</a>
+      <span class="visor-titulo" id="visorTitulo"></span>
+      <span class="visor-desc" id="visorDescargas"></span>
       <button class="visor-cerrar" type="button" id="visorCerrar">Cerrar ✕</button>
     </div>
-    <div class="visor-lienzo" id="visorLienzo"><img id="visorImg" alt="Instrucciones para su gravy"></div>
-    <p class="visor-ayuda">Toca la imagen para acercar o alejar.</p>
+    <div class="visor-lienzo" id="visorLienzo">
+      <img id="visorImg" alt="">
+      <div class="visor-vacio" id="visorVacio" hidden></div>
+    </div>
+    <button class="visor-flecha ant" type="button" id="visorAnt" aria-label="Foto anterior" hidden>‹</button>
+    <button class="visor-flecha sig" type="button" id="visorSig" aria-label="Foto siguiente" hidden>›</button>
+    <p class="visor-ayuda" id="visorAyuda"></p>
   </dialog>
 </main>
 

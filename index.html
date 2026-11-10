@@ -46,7 +46,7 @@
 <main id="inicio">
   <section class="hero">
     <div class="wrap">
-      <div class="galeria" id="galeria" aria-label="Fotos de nuestros productos"><figure class="gal-foto" data-gal="pavo-relleno"><figcaption>Pavo relleno</figcaption></figure><figure class="gal-foto" data-gal="lomo-ciruela"><figcaption>Lomo a la ciruela</figcaption></figure><figure class="gal-foto" data-gal="bacalao"><figcaption>Bacalao</figcaption></figure><figure class="gal-foto" data-gal="romeritos"><figcaption>Romeritos</figcaption></figure><figure class="gal-foto" data-gal="ensalada-manzana"><figcaption>Ensalada de manzana</figcaption></figure><figure class="gal-foto" data-gal="strudel"><figcaption>Strudel de manzana</figcaption></figure></div>
+      <div class="galeria" id="galeria" aria-label="Fotos de nuestros productos"><button class="gal-foto nevar" type="button" data-gal="pavo-relleno" data-nombre="Pavo relleno" aria-label="Ver foto de Pavo relleno en grande"><span class="gal-nombre">Pavo relleno</span></button><button class="gal-foto nevar" type="button" data-gal="lomo-ciruela" data-nombre="Lomo a la ciruela" aria-label="Ver foto de Lomo a la ciruela en grande"><span class="gal-nombre">Lomo a la ciruela</span></button><button class="gal-foto nevar" type="button" data-gal="bacalao" data-nombre="Bacalao" aria-label="Ver foto de Bacalao en grande"><span class="gal-nombre">Bacalao</span></button><button class="gal-foto nevar" type="button" data-gal="romeritos" data-nombre="Romeritos" aria-label="Ver foto de Romeritos en grande"><span class="gal-nombre">Romeritos</span></button><button class="gal-foto nevar" type="button" data-gal="ensalada-manzana" data-nombre="Ensalada de manzana" aria-label="Ver foto de Ensalada de manzana en grande"><span class="gal-nombre">Ensalada de manzana</span></button><button class="gal-foto nevar" type="button" data-gal="strudel" data-nombre="Strudel de manzana" aria-label="Ver foto de Strudel de manzana en grande"><span class="gal-nombre">Strudel de manzana</span></button></div>
       <div class="hero-texto">
         <img class="hero-logo" src="/img/logo.webp" alt="La Walkiria Quality Food" width="200" height="176">
         <div class="eyebrow">La Walkiria Alimentos · Cenas de fin de año <span data-cfg="anio"></span></div>
@@ -80,17 +80,19 @@
     </div>
   </section>
 
-  <dialog class="visor" id="visor" aria-label="Volante en grande">
+  <dialog class="visor" id="visor" aria-label="Imagen en grande">
     <div class="visor-barra">
-      <span class="visor-titulo">Volante <span data-cfg="anio"></span></span>
-      <a class="btn btn-gold btn-sm" href="volante/volante-walkiria-2026.pdf" download="Volante La Walkiria 2026.pdf">Descargar PDF</a>
-      <a class="btn btn-ghost btn-sm" href="volante/volante-walkiria-2026.png" download="Volante La Walkiria 2026.png">Imagen</a>
+      <span class="visor-titulo" id="visorTitulo"></span>
+      <span class="visor-desc" id="visorDescargas"></span>
       <button class="visor-cerrar" type="button" id="visorCerrar">Cerrar ✕</button>
     </div>
     <div class="visor-lienzo" id="visorLienzo">
-      <img id="visorImg" alt="Volante Cenas de fin de año 2026 de La Walkiria" width="5100" height="6600">
+      <img id="visorImg" alt="">
+      <div class="visor-vacio" id="visorVacio" hidden></div>
     </div>
-    <p class="visor-ayuda">Toca la imagen para acercar o alejar.</p>
+    <button class="visor-flecha ant" type="button" id="visorAnt" aria-label="Foto anterior" hidden>‹</button>
+    <button class="visor-flecha sig" type="button" id="visorSig" aria-label="Foto siguiente" hidden>›</button>
+    <p class="visor-ayuda" id="visorAyuda"></p>
   </dialog>
 
   <section class="regalo-sec" id="regalo">
@@ -118,26 +120,26 @@
     <div class="wrap">
       <div class="sec-head"><div><h2>Antes de pedir</h2><p>Lo que más nos preguntan por teléfono.</p></div></div>
       <div class="antes">
-        <article class="antes-c">
+        <article class="antes-c nevar" tabindex="0">
           <svg class="antes-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
           <h3>Pedidos</h3>
           <p><span class="subr">En línea, por teléfono o WhatsApp, con <span data-cfg="diasPedido"></span> días de anticipación.</span></p>
           <p class="cortes" data-cfg="cortesLineas"></p>
           <p class="aparte">El 24 y el 31 solo tomamos pedidos por teléfono fijo o en la tienda, sujetos a disponibilidad.</p>
         </article>
-        <article class="antes-c">
+        <article class="antes-c nevar" tabindex="0">
           <svg class="antes-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9.2c-.5-1-1.6-1.6-3-1.6-1.8 0-3 .9-3 2.2 0 3 6 1.4 6 4.4 0 1.3-1.3 2.2-3 2.2-1.500 0-2.700-.6-3.2-1.700M12 5.8v1.8M12 16.4v1.8"/></svg>
           <h3>Anticipo</h3>
           <p>Apartas tu pedido con <b data-cfg="anticipo"></b>. El resto lo pagas al recoger.</p>
           <p class="aparte">Con tu anticipo te damos tu número de pedido.</p>
         </article>
-        <article class="antes-c">
+        <article class="antes-c nevar" tabindex="0">
           <svg class="antes-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h11v9H2zM13 10h4l4 3v3h-8z"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>
           <h3>Envíos a domicilio</h3>
           <p>Sujetos a la disponibilidad de los repartidores. Avísanos con al menos <b><span data-cfg="diasAviso"></span> días de anticipación</b>. Te recomendamos estar disponible todo el día, porque no manejamos una hora exacta de llegada.</p>
           <table class="num" id="zonesTable"></table>
         </article>
-        <article class="antes-c">
+        <article class="antes-c nevar" tabindex="0">
           <svg class="antes-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10 5.5 4h13L20 10M4 10v10h16V10M4 10h16M10 20v-6h4v6"/></svg>
           <h3>24 y 31 de diciembre</h3>
           <p>No hay envíos a domicilio: <b>sólo entrega en tienda</b>.</p>
