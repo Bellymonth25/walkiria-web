@@ -72,6 +72,38 @@
     </div>
   </section>
 
+  <section class="volante-sec" id="volante">
+    <div class="wrap volante">
+      <div class="volante-info">
+        <div class="eyebrow">Temporada <span data-cfg="anio"></span></div>
+        <h2>Nuestro volante</h2>
+        <p>Todos los precios en una sola hoja. Tócalo para verlo en grande, o descárgalo para tenerlo a la mano o compartirlo.</p>
+        <div class="volante-btns">
+          <button class="btn btn-red" type="button" id="volanteVer">Ver en grande</button>
+          <a class="btn btn-ghost" href="volante/volante-walkiria-2026.pdf" download="Volante La Walkiria 2026.pdf">Descargar PDF</a>
+          <a class="btn btn-ghost" href="volante/volante-walkiria-2026.png" download="Volante La Walkiria 2026.png">Descargar imagen</a>
+        </div>
+        <p class="fine">¿Prefieres armar tu pedido aquí? <a href="#precios">Ve a la lista de precios</a> y mándalo por WhatsApp ya escrito.</p>
+      </div>
+      <button class="volante-mini" type="button" id="volanteMini" aria-label="Ver el volante en grande">
+        <img src="volante/volante-800.webp" srcset="volante/volante-800.webp 800w, volante/volante-1400.webp 1400w" sizes="(max-width:760px) 92vw, 460px" width="800" height="1035" alt="Volante Cenas de fin de año 2026 de La Walkiria con todos los precios" loading="eager">
+        <span class="volante-lupa" aria-hidden="true">Ver en grande</span>
+      </button>
+    </div>
+  </section>
+
+  <dialog class="visor" id="visor" aria-label="Volante en grande">
+    <div class="visor-barra">
+      <a class="btn btn-gold btn-sm" href="volante/volante-walkiria-2026.pdf" download="Volante La Walkiria 2026.pdf">Descargar PDF</a>
+      <a class="btn btn-ghost btn-sm" href="volante/volante-walkiria-2026.png" download="Volante La Walkiria 2026.png">Imagen</a>
+      <button class="visor-cerrar" type="button" id="visorCerrar" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="visor-lienzo" id="visorLienzo">
+      <img id="visorImg" alt="Volante Cenas de fin de año 2026 de La Walkiria" width="5100" height="6600">
+    </div>
+    <p class="visor-ayuda">Toca la imagen para acercar o alejar.</p>
+  </dialog>
+
   <section class="regalo-sec" id="regalo">
     <div class="wrap">
       <div class="regalo">

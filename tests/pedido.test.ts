@@ -57,22 +57,22 @@ describe("empaques", () => {
     expect(empaquesDe(lomo, linea(lomo, { cantidad: 4.5, presentacion: "charola" }))[0]).toMatchObject({ tamano: "mediana", piezas: 2 });
   });
   it("suma el empaque al importe", () => {
-    expect(importeLinea(lomo, linea(lomo, { cantidad: 6, presentacion: "charola" }))).toBe(6 * 430 + 2 * 35);
+    expect(importeLinea(lomo, linea(lomo, { cantidad: 6, presentacion: "charola" }))).toBe(6 * 440 + 2 * 35);
   });
 });
 
 describe("pavos", () => {
   it("completo usa los kilos por pavo; medio usa 3.5 kg de estimado", () => {
-    expect(importeLinea(pavoR, linea(pavoR, { cantidad: 2, kgPorPavo: 6 }))).toBe(2 * 6 * 390);
-    expect(importeLinea(pavoR, linea(pavoR, { tamano: "medio" }))).toBe(3.5 * 390);
+    expect(importeLinea(pavoR, linea(pavoR, { cantidad: 2, kgPorPavo: 6 }))).toBe(2 * 6 * 400);
+    expect(importeLinea(pavoR, linea(pavoR, { tamano: "medio" }))).toBe(3.5 * 400);
   });
 });
 
 describe("total y faltantes", () => {
   it("suma envío solo a domicilio", () => {
     const p: Pedido = { ...base, lineas: { "lomo-adobado": linea(lomo, { cantidad: 2 }) } };
-    expect(total(p, productos, temporada.zonas)).toBe(860);
-    expect(total({ ...p, modo: "domicilio", zona: 2 }, productos, temporada.zonas)).toBe(1060);
+    expect(total(p, productos, temporada.zonas)).toBe(880);
+    expect(total({ ...p, modo: "domicilio", zona: 2 }, productos, temporada.zonas)).toBe(1080);
   });
   it("pide día y dirección cuando aplica", () => {
     const p: Pedido = { ...base, lineas: { bacalao: linea(prod("bacalao")) }, nombre: "Ana", fecha: null };
@@ -96,12 +96,12 @@ describe("mensaje de WhatsApp", () => {
       ctx,
     );
     expect(m.split("\n")[1]).toBe("Nombre: Ana López");
-    expect(m).toContain("• Pavo Relleno, 1 medio pavo (3 a 4 kg): $1,365");
+    expect(m).toContain("• Pavo Relleno, 1 medio pavo (3 a 4 kg): $1,400");
     expect(m).toContain("Presentación: Bolsa o caja de cartón (sin costo)");
-    expect(m).toContain("• Lomo Adobado, 6 kg: $2,580");
+    expect(m).toContain("• Lomo Adobado, 6 kg: $2,640");
     expect(m).toContain("Presentación: 2 charolas grandes (+$70)");
     expect(m).toContain("Nota del pedido: Ensalada sin apio");
-    expect(m).toContain("Total estimado: $4,015");
+    expect(m).toContain("Total estimado: $4,110");
   });
 });
 
@@ -149,8 +149,8 @@ describe("maquila", () => {
     expect(conRellenoSugerido(linea(maq, { cantidad: 8.5, kgRelleno: 3, rellenoManual: true })).kgRelleno).toBe(3);
   });
   it("se cobra por kilo y el pavo relleno suma su relleno", () => {
-    expect(importeLinea(maq, linea(maq, { cantidad: 4, tipoMaquila: "Lomo Mechado" }))).toBe(4 * 75);
-    expect(importeLinea(maq, linea(maq, { cantidad: 6, tipoMaquila: "Pavo Relleno", kgRelleno: 1.5 }))).toBe(6 * 75 + 1.5 * 390);
+    expect(importeLinea(maq, linea(maq, { cantidad: 4, tipoMaquila: "Lomo Mechado" }))).toBe(4 * 170);
+    expect(importeLinea(maq, linea(maq, { cantidad: 6, tipoMaquila: "Pavo Relleno", kgRelleno: 1.5 }))).toBe(6 * 170 + 1.5 * 400);
   });
   it("pide qué carne trae, y en Otro que lo especifique", () => {
     const p: Pedido = { ...base, nombre: "Ana", lineas: { "maquila-1": linea(maq) } };
@@ -173,10 +173,10 @@ describe("maquila", () => {
       },
       { ...ctx, nombreDia: "Miércoles 30 de diciembre", diaSujeto: true },
     );
-    expect(m).toContain("• Maquila de Pavo Relleno, aprox. 6 kg: $840");
+    expect(m).toContain("• Maquila de Pavo Relleno, aprox. 6 kg: $1,420");
     expect(m).toContain("   Con 1 kg de relleno");
     expect(m).toContain("   Nota: Poca sal");
-    expect(m).toContain("• Maquila de Cabrito, aprox. 3 kg: $225");
+    expect(m).toContain("• Maquila de Cabrito, aprox. 3 kg: $510");
     expect(m).toContain("Llevaré la carne para la maquila a la tienda al menos 2 días antes de la entrega.");
     expect(m).toContain("Día: Miércoles 30 de diciembre (sujeto a disponibilidad)");
     expect(m).not.toContain("Presentación");
@@ -200,10 +200,11 @@ describe("reglas de entrega", () => {
     expect(fechaElegible("2026-12-31", hoy, temporada)).toBe(true);
     expect(fechaElegible("2027-01-01", hoy, temporada)).toBe(false);
   });
-  it("a domicilio: no el 24 ni el 31, y con 2 días de aviso", () => {
+  it("a domicilio: no el 24 ni el 31, y con 3 días de aviso", () => {
     expect(sinDomicilio("2026-12-24", hoy, temporada)).toBe("tienda");
     expect(sinDomicilio("2026-11-07", hoy, temporada)).toBe("aviso");
-    expect(sinDomicilio("2026-11-08", hoy, temporada)).toBeNull();
+    expect(sinDomicilio("2026-11-08", hoy, temporada)).toBe("aviso");
+    expect(sinDomicilio("2026-11-09", hoy, temporada)).toBeNull();
   });
 });
 
@@ -216,10 +217,10 @@ describe("varios pavos y patos", () => {
       },
       nombre: "Ana", modo: "tienda" as const, zona: 0, direccion: "", referencias: "", nota: "", fecha: "2026-12-23",
     };
-    expect(total(pedido, productos, [])).toBe(7 * 390 + 9 * 390 + 35);
+    expect(total(pedido, productos, [])).toBe(7 * 400 + 9 * 400 + 35);
     const m = mensaje(pedido, { catalogo: productos, zonas: [], nombreDia: "Miércoles 23 de diciembre", tardio: false });
-    expect(m).toContain("• Pavo Relleno, 1 pavo completo (aprox. 7 kg): $2,730");
-    expect(m).toContain("• Pavo Relleno, 1 pavo completo (aprox. 9 kg): $3,510");
+    expect(m).toContain("• Pavo Relleno, 1 pavo completo (aprox. 7 kg): $2,800");
+    expect(m).toContain("• Pavo Relleno, 1 pavo completo (aprox. 9 kg): $3,600");
   });
 
   it("el pato se pide por pieza y se cobra por su peso aproximado", () => {
