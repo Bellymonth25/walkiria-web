@@ -37,7 +37,7 @@ const PASOS: Paso[] = [
   },
   {
     titulo: "Paso 3 · Al horno",
-    texto: "Precalienta el horno al máximo durante 15 minutos. Después bájalo a 200 °C y mete la charola.",
+    texto: "Precalienta el horno al máximo durante 15 minutos. Después bájalo a 200 °C y mete la charola cubierta con papel aluminio.",
     dura: 9,
   },
   {
@@ -46,8 +46,8 @@ const PASOS: Paso[] = [
     datos: [
       ["Pavo de menos de 7 kg", "35 minutos, voltear y bañar, y otros 35 minutos."],
       ["Pavo de más de 7 kg", "45 minutos, voltear y bañar, y otros 45 minutos."],
-      ["Pierna en trozo", "1 hora, volteando cada 30 minutos."],
-      ["Pierna rebanada", "20 minutos."],
+      ["Lomo o costilla en trozo", "1 hora, volteando cada 30 minutos."],
+      ["Lomo o costilla rebanado", "20 minutos."],
     ],
     dura: 14,
   },
@@ -64,6 +64,37 @@ const PASOS: Paso[] = [
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 
+/** El árbol de Navidad crece hasta el borde de arriba de la escena, sea cual sea el tamaño de la pantalla. */
+function ajustarArbol(): void {
+  const arbol = document.getElementById("arbol");
+  const svg = arbol?.closest("svg");
+  const escena = svg?.parentElement;
+  if (!arbol || !svg || !escena) return;
+  const redondos = [...arbol.querySelectorAll<SVGGraphicsElement>(".estrella, circle")];
+  const ajustar = () => {
+    const r = svg.getBoundingClientRect();
+    if (!r.width) return;
+    const escala = r.width / 640;
+    // Espacio visible arriba del dibujo (en compu la escena es más alta que el dibujo).
+    const hueco = Math.max(0, (r.top - escena.getBoundingClientRect().top) / escala);
+    const arriba = 4 - hueco;
+    const sy = (304 - arriba) / 272;
+    const sx = Math.min(1.55, sy * 1.3);
+    arbol.setAttribute("transform", `translate(${(535 - sx * 578).toFixed(1)} ${(arriba - sy * 30).toFixed(1)}) scale(${sx.toFixed(3)} ${sy.toFixed(3)})`);
+    // El árbol se ensancha, pero la estrella y las esferas conservan su forma redonda.
+    const k = (sy / sx).toFixed(3);
+    for (const el of redondos) {
+      const b = el.getBBox();
+      const cx = b.x + b.width / 2;
+      const cy = b.y + b.height / 2;
+      el.setAttribute("transform", `translate(${cx} ${cy}) scale(${k} 1) translate(${-cx} ${-cy})`);
+    }
+  };
+  ajustar();
+  if ("ResizeObserver" in window) new ResizeObserver(ajustar).observe(escena);
+  else addEventListener("resize", ajustar);
+}
+
 function iniciarExplicacion(): void {
   const caja = $("#expl");
   const paso = $("#explPaso");
@@ -71,7 +102,6 @@ function iniciarExplicacion(): void {
   const datos = $("#explDatos");
   const puntos = $("#explPuntos");
   const pausa = $<HTMLButtonElement>("#explPausa");
-  const sinMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const verBtn = $<HTMLButtonElement>("#explVer");
   let actual = 0;
@@ -130,8 +160,8 @@ function iniciarExplicacion(): void {
 
   verBtn.addEventListener("click", () => {
     ir(0);
-    // Con "reducir movimiento" no avanza sola: se pasa con las flechas.
-    poner(!sinMovimiento);
+    // Avanza sola aunque el sistema tenga "reducir movimiento": el cliente pidió ver la explicación.
+    poner(true);
   });
   pausa.addEventListener("click", () => {
     if (!corriendo && actual === PASOS.length - 1) ir(0);
@@ -177,4 +207,5 @@ function iniciarInstructivo(): void {
 iniciarComun();
 $<HTMLAnchorElement>("#topWa").href = enlaceWhatsApp(negocio.whatsapp, "Hola, tengo una duda sobre cómo preparar el gravy.");
 iniciarExplicacion();
+ajustarArbol();
 iniciarInstructivo();

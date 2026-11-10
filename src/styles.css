@@ -37,7 +37,9 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{scroll-behavior:smooth}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+/* "Reducir movimiento" (Windows: Efectos de animación apagados) quita las animaciones de la página.
+   La explicación del gravy es la excepción: el cliente la pide con "Ver explicación". */
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}:not(.expl-escena *),:not(.expl-escena *)::before,:not(.expl-escena *)::after{transition:none!important;animation:none!important}}
 body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--hero)}
 .wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -395,6 +397,19 @@ button.cal-day:hover{border-color:var(--primary)}
 .volante-info h2{font-size:clamp(2rem,4vw,2.8rem);margin:8px 0 10px}
 .volante-info>p{color:var(--muted);max-width:44ch}
 .volante-info .eyebrow{color:var(--gold-ink)}
+/* "Haz tu pedido en línea": tarjeta que se nota, con flecha que se mueve */
+.pedido-cta{display:flex;align-items:center;gap:14px;max-width:460px;margin-top:22px;padding:14px 18px 14px 14px;border-radius:18px;background:linear-gradient(135deg,var(--brand),color-mix(in srgb,var(--brand) 70%,#000));color:#fff;text-decoration:none;box-shadow:0 12px 28px color-mix(in srgb,var(--brand) 35%,transparent);transition:transform .25s cubic-bezier(.3,1.4,.5,1),box-shadow .25s}
+.pedido-cta:hover,.pedido-cta:focus-visible{transform:translateY(-3px);box-shadow:0 18px 36px color-mix(in srgb,var(--brand) 45%,transparent)}
+.pedido-cta:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.pedido-cta-ico{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:14px;background:var(--gold);color:#2B1D00}
+.pedido-cta-ico svg{width:28px;height:28px}
+.pedido-cta-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pedido-cta-txt b{font-family:var(--font-display);font-weight:400;font-size:1.45rem;line-height:1.1;color:#fff}
+.pedido-cta-txt small{font-size:.86rem;opacity:.85}
+.pedido-cta-flecha{margin-left:auto;flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.16);font-size:1.3rem;transition:transform .25s}
+.pedido-cta:hover .pedido-cta-flecha{transform:translateX(4px);background:rgba(255,255,255,.26)}
+:root[data-theme="dark"] .pedido-cta{background:linear-gradient(135deg,#B3262E,#6E141A)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pedido-cta{background:linear-gradient(135deg,#B3262E,#6E141A)}}
 .volante-btns{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 14px}
 .volante-btns .btn-ghost{color:var(--fg)}
 .volante-mini{position:relative;display:block;padding:0;border:0;background:none;cursor:zoom-in;border-radius:10px;overflow:hidden;
@@ -416,9 +431,18 @@ button.cal-day:hover{border-color:var(--primary)}
 .visor-barra .btn-ghost{color:#fff}
 .visor-cerrar{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:999px;border:0;background:#fff;color:#1d1616;font:700 .92rem var(--font-body);cursor:pointer}
 .visor-lienzo{flex:1;min-height:0;overflow:auto;display:grid;place-items:center;padding:14px;-webkit-overflow-scrolling:touch}
-.visor-lienzo img{display:block;width:auto;height:auto;max-width:100%;max-height:calc(100dvh - 2*var(--vp) - 136px);cursor:zoom-in;background:#fff;border-radius:6px}
+.visor-lienzo img{display:block;width:auto;height:auto;max-width:100%;max-height:calc(100dvh - 2*var(--vp) - 136px);background:#fff;border-radius:6px;user-select:none;-webkit-user-drag:none}
 .visor-lienzo.zoom{place-items:start start}
-.visor-lienzo.zoom img{max-width:none;max-height:none;width:max(100%,min(1700px,250vw));cursor:zoom-out}
+.visor-lienzo.zoom img{max-width:none;max-height:none;cursor:grab;margin:auto}
+.visor-lienzo.zoom.arrastrando img{cursor:grabbing}
+/* Botones de zoom: − 100% + y ajustar */
+.visor-zoom{position:absolute;left:50%;bottom:calc(46px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:4px;padding:5px;border-radius:999px;background:rgba(29,22,22,.86);box-shadow:0 8px 24px rgba(0,0,0,.4);backdrop-filter:blur(6px);z-index:2}
+.visor-zoom[hidden]{display:none}
+.visor-zoom button{width:42px;height:42px;border-radius:50%;border:0;background:transparent;color:#fff;font:700 1.35rem/1 var(--font-body);cursor:pointer;display:grid;place-items:center}
+.visor-zoom button:hover:not(:disabled){background:rgba(255,255,255,.14)}
+.visor-zoom button:disabled{opacity:.35;cursor:default}
+.visor-zoom button svg{width:20px;height:20px}
+.visor-zoom output{min-width:54px;text-align:center;color:#fff;font:600 .9rem var(--font-body);font-variant-numeric:tabular-nums}
 .visor-ayuda{margin:0;text-align:center;font-size:.82rem;opacity:.75;padding:8px 0 calc(10px + env(safe-area-inset-bottom,0px))}
 @media (max-width:560px){.visor-titulo{display:none}.visor-barra{justify-content:space-between}.visor-barra .btn-sm{padding:9px 12px}}
 
@@ -507,7 +531,7 @@ button.cal-day:hover{border-color:var(--primary)}
 .visor-desc{display:flex;gap:8px}
 .visor-lienzo.alta{place-items:start center}
 .visor-lienzo.alta img{max-height:none;width:min(100%,760px)}
-.visor-lienzo.alta.zoom img{width:max(100%,min(1700px,250vw))}
+.visor-lienzo.alta.zoom{place-items:start start}.visor-lienzo.alta.zoom img{margin:0 auto}
 .visor-vacio{display:grid;place-items:center;width:min(100%,560px);aspect-ratio:4/3;border:2px dashed rgba(255,255,255,.35);border-radius:14px;color:rgba(255,255,255,.8);font-size:1.1rem;text-align:center;padding:20px}
 .visor-flecha{position:absolute;top:50%;transform:translateY(-50%);width:52px;height:52px;border-radius:50%;border:0;background:#fff;color:#1d1616;font-size:1.8rem;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);transition:transform .2s}
 .visor-flecha:hover{transform:translateY(-50%) scale(1.1)}
