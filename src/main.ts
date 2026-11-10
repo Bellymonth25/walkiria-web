@@ -19,6 +19,7 @@ import { iniciarLuces } from "./ui/luces";
 import { iniciarNav } from "./ui/nav";
 import { iniciarHoja } from "./ui/hoja";
 import { iniciarVolante } from "./ui/volante";
+import { iniciarCalculadora, type Agregado } from "./ui/calculadora";
 import { iniciarTema } from "./ui/tema";
 
 // ---------- Estado ----------
@@ -228,6 +229,31 @@ function agregar(productoId: string): void {
   if (p.maquila) document.querySelector<HTMLSelectElement>(`#tipo-${id}`)?.focus();
 }
 
+/** Lo que arma la calculadora entra al pedido (si el producto ya estaba, se cambia su cantidad). */
+function agregarDeCalculadora(items: readonly Agregado[]): void {
+  let n = 0;
+  for (const { productoId, cambios } of items) {
+    const p = producto(productoId);
+    if (!p || estaAgotado(p, agotados)) continue;
+    let id = p.id;
+    if (variasLineas(p)) {
+      siguiente[p.id] = (siguiente[p.id] ?? 0) + 1;
+      id = `${p.id}-${siguiente[p.id]}`;
+    }
+    ponerLinea(id, { ...(pedido.lineas[id] ?? nuevaLinea(p)), ...cambios });
+    n++;
+  }
+  if (!n) return;
+  filtro = "todo";
+  busqueda = "";
+  $<HTMLInputElement>("#q").value = "";
+  pintarChips(vista());
+  pintarMenu(vista());
+  pintarOrden(pedido, ctx);
+  aviso(`Listo: agregamos ${n} ${n === 1 ? "producto" : "productos"} a tu pedido. Puedes ajustarlos aquí.`);
+  $("#precios").scrollIntoView({ behavior: "smooth" });
+}
+
 document.addEventListener("click", (e) => {
   const t = (e.target as Element).closest<HTMLElement>("button, a");
   if (!t) return;
@@ -379,6 +405,7 @@ pintarDias();
 pintarOrden(pedido, ctx);
 iniciarNieve($<HTMLCanvasElement>("#snow"), $<HTMLButtonElement>("#snowToggle"));
 iniciarLuces($(".lights"));
+iniciarCalculadora($("#calc"), productos, (p) => estaAgotado(p, agotados), agregarDeCalculadora);
 iniciarVolante(
   `${import.meta.env.BASE_URL}volante/volante-2600.webp`,
   `${import.meta.env.BASE_URL}volante/volante-walkiria-2026.png`,
