@@ -4,5 +4,5 @@ import { defineConfig } from "vite";
 // como en la raíz del dominio propio (www.lawalkiria.com.mx).
 export default defineConfig({
   base: "./",
-  build: { target: "es2022" },
+  build: { target: "es2022", rollupOptions: { input: ["index.html", "pedido.html", "gravy.html"] } },
 });

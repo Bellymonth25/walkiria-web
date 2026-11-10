@@ -115,3 +115,14 @@ export const firebase = {
   proyecto: "lwk-app-a583b",
   documento: "publicWeb/disponibilidad",
 } as const;
+
+/**
+ * Calculadora "¿Cuánto pido?". Porciones por adulto y cuánto come cada grupo comparado con un adulto.
+ * Para ajustar las porciones solo hay que cambiar estos números.
+ */
+export const calculadora = {
+  porcionAdultoKg: { carne: 0.15, pasta: 0.15, ensalada: 0.15, romeritos: 0.05, bacalao: 0.05 },
+  factor: { ninos: 0.5, adolescentes: 1.25, adultos: 1, mayores: 0.75 },
+  /** Un Strudel de Manzana grande alcanza para 10 personas. */
+  personasPorStrudel: 10,
+} as const;

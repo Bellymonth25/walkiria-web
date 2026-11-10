@@ -233,3 +233,31 @@ describe("varios pavos y patos", () => {
     expect(empaquesDe(pato, linea(pato, { cantidad: 2, presentacion: "charola" }))).toEqual([{ tamano: "mediana", piezas: 2, precio: 30 }]);
   });
 });
+
+import { calcularCena, pavosPara, redondearKg } from "../src/lib/calculadora";
+
+describe("calculadora de cena", () => {
+  it("redondea hacia arriba al cuarto de kilo", () => {
+    expect(redondearKg(0)).toBe(0);
+    expect(redondearKg(1.5)).toBe(1.5);
+    expect(redondearKg(1.51)).toBe(1.75);
+  });
+  it("niños comen menos y adolescentes más", () => {
+    const c = calcularCena({ ninos: 2, adolescentes: 2, adultos: 4, mayores: 2 });
+    expect(c.personas).toBe(10);
+    expect(c.equivalentes).toBe(2 * 0.5 + 2 * 1.25 + 4 + 2 * 0.75);
+    expect(c.carne).toBe(1.5); // 9 × 150 g = 1.35 kg
+    expect(c.romeritos).toBe(0.5); // 9 × 50 g = 0.45 kg
+    expect(c.panes).toBe(10);
+    expect([c.strudelGrande, c.strudelIndividual]).toEqual([1, 0]);
+  });
+  it("postre: strudel grande por cada 10, el resto individual", () => {
+    expect(calcularCena({ ninos: 0, adolescentes: 0, adultos: 13, mayores: 0 })).toMatchObject({ strudelGrande: 1, strudelIndividual: 3 });
+    expect(calcularCena({ ninos: 0, adolescentes: 0, adultos: 8, mayores: 0 })).toMatchObject({ strudelGrande: 1, strudelIndividual: 0 });
+  });
+  it("reparte la carne en pavos de máximo 10 kg", () => {
+    expect(pavosPara(3)).toEqual([{ tamano: "medio", kgPorPavo: 5 }]);
+    expect(pavosPara(7.2)).toEqual([{ tamano: "completo", kgPorPavo: 7.5 }]);
+    expect(pavosPara(14)).toEqual([{ tamano: "completo", kgPorPavo: 7 }, { tamano: "completo", kgPorPavo: 7 }]);
+  });
+});

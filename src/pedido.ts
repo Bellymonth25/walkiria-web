@@ -1,7 +1,7 @@
 import "./styles.css";
 import type { Linea, ModoEntrega, Pedido, Presentacion, TamanoPavo } from "./types";
 import { categorias, productos } from "./data/productos";
-import { firebase, maquila, negocio, temporada } from "./data/temporada";
+import { firebase, negocio, temporada } from "./data/temporada";
 import { dinero } from "./lib/formato";
 import { esPedidoTardio } from "./lib/fechas";
 import { sinDomicilio } from "./lib/entrega";
@@ -10,16 +10,13 @@ import {
   aumentar, conRellenoSugerido, disminuir, enlaceWhatsApp, faltantes, normalizarCantidad, normalizarKgPavo,
   normalizarKgRelleno, nuevaLinea, textoFaltantes, variasLineas,
 } from "./lib/pedido";
-import { $, aviso, llenar } from "./ui/dom";
+import { $, aviso } from "./ui/dom";
 import { actualizarPreciosPresentacion, pintarChips, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
 import { pintarOrden, textoPedido, type ContextoOrden } from "./ui/orden";
 import { pintarCalendario, rangoMeses } from "./ui/calendario";
-import { iniciarNieve } from "./ui/nieve";
-import { iniciarLuces } from "./ui/luces";
-import { iniciarNav } from "./ui/nav";
 import { iniciarHoja } from "./ui/hoja";
-import { iniciarVolante } from "./ui/volante";
-import { iniciarTema } from "./ui/tema";
+import { iniciarCalculadora, type Agregado } from "./ui/calculadora";
+import { iniciarComun } from "./comun";
 
 // ---------- Estado ----------
 const pedido: Pedido = {
@@ -56,6 +53,46 @@ const vista = (): VistaMenu => ({
   agotados: (p) => estaAgotado(p, agotados),
 });
 
+/** El pedido se guarda mientras dure la visita, para no perderlo al ir a otra página (Inicio, Gravy) y volver. */
+const CLAVE = "walkiria-pedido";
+function pintarPedido(): void {
+  pintarOrden(pedido, ctx);
+  try {
+    sessionStorage.setItem(CLAVE, JSON.stringify(pedido));
+  } catch {
+    /* sin almacenamiento: el pedido dura mientras no cambie de página */
+  }
+}
+
+function restaurar(): void {
+  let g: Partial<Pedido>;
+  try {
+    g = JSON.parse(sessionStorage.getItem(CLAVE) ?? "null") ?? {};
+  } catch {
+    return;
+  }
+  if (typeof g !== "object") return;
+  const lineas: Record<string, Linea> = {};
+  for (const [id, l] of Object.entries(g.lineas ?? {})) {
+    if (!l || !productos.some((p) => p.id === l.productoId)) continue;
+    lineas[id] = l;
+    const n = Number(id.slice(l.productoId.length + 1));
+    if (n > 0) siguiente[l.productoId] = Math.max(siguiente[l.productoId] ?? 0, n);
+  }
+  pedido.lineas = lineas;
+  pedido.nombre = typeof g.nombre === "string" ? g.nombre : "";
+  pedido.modo = g.modo === "domicilio" ? "domicilio" : "tienda";
+  pedido.zona = typeof g.zona === "number" && temporada.zonas[g.zona] ? g.zona : 0;
+  pedido.direccion = typeof g.direccion === "string" ? g.direccion : "";
+  pedido.referencias = typeof g.referencias === "string" ? g.referencias : "";
+  pedido.nota = typeof g.nota === "string" ? g.nota : "";
+  pedido.fecha = typeof g.fecha === "string" && /^\d{4}-\d{2}-\d{2}$/.test(g.fecha) ? g.fecha : null;
+  $<HTMLInputElement>("#cname").value = pedido.nombre;
+  $<HTMLTextAreaElement>("#addr").value = pedido.direccion;
+  $<HTMLInputElement>("#ref").value = pedido.referencias;
+  $<HTMLTextAreaElement>("#nota").value = pedido.nota;
+}
+
 const producto = (id: string) => productos.find((p) => p.id === id);
 /** Producto y línea a partir del id de la línea. */
 function deLinea(id: string) {
@@ -71,7 +108,7 @@ function ponerLinea(id: string, linea: Linea | null): void {
 
 const repintar = (productoId: string) => {
   pintarRenglon(vista(), productoId);
-  pintarOrden(pedido, ctx);
+  pintarPedido();
 };
 
 /** Mientras el cliente escribe: solo cambia el texto de abajo y el total, sin repintar el campo. */
@@ -80,80 +117,15 @@ function actualizarInfo(id: string): void {
   const info = document.querySelector(`[data-info="${id}"]`);
   if (x && info) info.textContent = textoDetalle(x.p, x.l);
   if (x) actualizarPreciosPresentacion(x.p, id, x.l);
-  pintarOrden(pedido, ctx);
+  pintarPedido();
 }
 
 // ---------- Textos y datos fijos ----------
-// Medio árbol (24) y estrella de Belén (31) de fondo en la tarjeta, cortados por la orilla derecha.
-const ICONO_ARBOL = `<svg class="day-ico arbol" viewBox="0 0 80 120" aria-hidden="true"><path d="M40 6c4 10 12 18 20 22-4 1-8 1-12 0 7 10 15 17 24 21-6 2-13 2-19 0 8 11 17 19 27 23-12 4-27 5-40 5s-28-1-40-5c10-4 19-12 27-23-6 2-13 2-19 0 9-4 17-11 24-21-4 1-8 1-12 0 8-4 16-12 20-22Z" fill="currentColor"/><rect x="34" y="78" width="12" height="16" rx="2" fill="currentColor"/><path d="m40 0 2.4 5 5.4.6-4 3.7 1.1 5.4L40 12l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6Z" fill="currentColor"/></svg>`;
-const ICONO_ESTRELLA = `<svg class="day-ico" viewBox="0 0 100 120" aria-hidden="true"><path d="M50 0Q54 56 90 60Q54 64 50 120Q46 64 10 60Q46 56 50 0Z" fill="currentColor"/><path d="M31 41 69 79M69 41 31 79" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><circle cx="50" cy="60" r="6" fill="currentColor"/></svg>`;
 function llenarDatos(): void {
-  llenar("anio", String(temporada.anio));
-  llenar(
-    "cortes",
-    temporada.cortes
-      .map((c) => `Para ${c.para}, hasta el ${c.limite} de diciembre; el ${c.tardio} se reciben sujetos a disponibilidad.`)
-      .join(" "),
-  );
-  // En "Antes de pedir" cada corte va en su propio renglón para que no se vea cargado.
-  document.querySelectorAll<HTMLElement>('[data-cfg="cortesLineas"]').forEach((el) => {
-    el.innerHTML = temporada.cortes
-      .map((c) => `<span class="corte">Para ${c.para}, hasta el <b>${c.limite} de diciembre</b>; el ${c.tardio} se reciben sujetos a disponibilidad.</span>`)
-      .join("");
-  });
-  llenar("anticipo", temporada.anticipo);
-  llenar("notaPrecios", temporada.notaPrecios);
-  llenar("whatsapp", negocio.whatsappVisible);
-  llenar("telefonos", negocio.telefonos);
-  document.querySelectorAll<HTMLElement>('[data-cfg="telLinks"]').forEach((el) => {
-    el.innerHTML = negocio.telefonosMarcar
-      .map((n) => `<a class="tel" href="tel:+52${n}">${n.slice(0, 2)} ${n.slice(2, 6)} ${n.slice(6)}</a>`)
-      .join(" / ");
-  });
-  llenar("direccion", negocio.direccion);
-  llenar("horario", negocio.horario);
-  llenar("precioCocinar", dinero(maquila.precioCocinarKg));
-  llenar("precioRelleno", dinero(maquila.precioRellenoKg));
-  llenar("diasAnticipacion", String(maquila.diasAnticipacion));
-  llenar("diasAviso", String(temporada.diasAvisoDomicilio));
-  llenar("diasPedido", String(temporada.diasAnticipacionPedido));
-
-  const general = enlaceWhatsApp(negocio.whatsapp, "Hola, quiero información de las cenas navideñas.");
-  $<HTMLAnchorElement>("#topWa").href = general;
-  $<HTMLAnchorElement>("#contactWa").href = general;
   $<HTMLAnchorElement>("#avisoWa").href = enlaceWhatsApp(negocio.whatsapp, "Hola, quiero saber si todavía hay disponibilidad para un pedido.");
-
-  const destino = encodeURIComponent(negocio.direccionMapas);
-  $<HTMLAnchorElement>("#goMaps").href = `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${destino}`;
-  $<HTMLAnchorElement>("#goWaze").href = `https://waze.com/ul?navigate=yes&q=${destino}`;
-  $<HTMLIFrameElement>("#mapFrame").src = `https://www.google.com/maps?q=${destino}&output=embed`;
-
   $("#zone").innerHTML = temporada.zonas
     .map((z, i) => `<option value="${i}">${z.nombre} · ${dinero(z.costo)}</option>`)
     .join("");
-  $("#zonesTable").innerHTML = temporada.zonas.map((z) => `<tr><td>${z.nombre}</td><td>${dinero(z.costo)}</td></tr>`).join("");
-
-  const textos = {
-    limite: ["due", ""],
-    sujeto: ["", "Sujeto a disponibilidad"],
-    tienda: ["hot", "Sólo entrega en tienda"],
-  } as const;
-  $("#cal").innerHTML = temporada.diasEspeciales
-    .map((d) => {
-      const corte = temporada.cortes.find((c) => c.limite === d.dia);
-      const [clase, base] = textos[d.tipo];
-      const texto = corte ? `Último día para pedir en línea la cena de ${corte.para}` : base;
-      const extra = d.tipo === "tienda" ? `<small class="sujeto">*Sujeto a disponibilidad</small>` : "";
-      // 24: árbol de Navidad; 31: estrella de Año Nuevo.
-      const icono = d.tipo === "tienda" ? (d.dia === 24 ? ICONO_ARBOL : ICONO_ESTRELLA) : "";
-      return `<div class="day ${clase}">${icono}<b class="num">${d.dia}</b><span class="mes">de diciembre</span><small>${texto}</small>${extra}</div>`;
-    })
-    .join("");
-
-  // Foto de la cena: se muestra solo si existe public/img/cena.jpg
-  const foto = $<HTMLImageElement>("#fotoImg");
-  foto.addEventListener("load", () => ($("#foto").hidden = false));
-  foto.src = `${import.meta.env.BASE_URL}img/cena.jpg`;
 
   // Fotos de presentación: public/img/presentaciones/<tipo>.jpg. Mientras no existan, se ve el recuadro de muestra.
   document.querySelectorAll<HTMLElement>("[data-foto]").forEach((el) => {
@@ -173,7 +145,7 @@ const pintarDias = () =>
 
 function cambiarModo(modo: ModoEntrega): void {
   pedido.modo = modo;
-  pintarOrden(pedido, ctx);
+  pintarPedido();
 }
 
 /** 24 y 31 de diciembre: solo tienda. A domicilio: con al menos N días de anticipación. */
@@ -206,7 +178,7 @@ async function cargarDisponibilidad(): Promise<void> {
   const nombres = [...new Set(quitados.map(([, l]) => producto(l.productoId)!.nombre))];
   if (nombres.length) aviso(`Se agotó: ${nombres.join(", ")}. Lo quitamos de tu pedido.`);
   pintarMenu(vista());
-  pintarOrden(pedido, ctx);
+  pintarPedido();
 }
 
 /** Para probar en local: ?agotados=PROD_001,PROD_008 */
@@ -226,6 +198,32 @@ function agregar(productoId: string): void {
   ponerLinea(id, nuevaLinea(p));
   repintar(p.id);
   if (p.maquila) document.querySelector<HTMLSelectElement>(`#tipo-${id}`)?.focus();
+}
+
+/** Lo que arma la calculadora entra al pedido (si el producto ya estaba, se cambia su cantidad). */
+function agregarDeCalculadora(items: readonly Agregado[]): void {
+  let n = 0;
+  for (const { productoId, cambios } of items) {
+    const p = producto(productoId);
+    if (!p || estaAgotado(p, agotados)) continue;
+    let id = p.id;
+    if (variasLineas(p)) {
+      siguiente[p.id] = (siguiente[p.id] ?? 0) + 1;
+      id = `${p.id}-${siguiente[p.id]}`;
+    }
+    ponerLinea(id, { ...(pedido.lineas[id] ?? nuevaLinea(p)), ...cambios });
+    n++;
+  }
+  if (!n) return;
+  filtro = "todo";
+  busqueda = "";
+  $<HTMLInputElement>("#q").value = "";
+  pintarChips(vista());
+  pintarMenu(vista());
+  pintarPedido();
+  aviso(`Listo: agregamos ${n} ${n === 1 ? "producto" : "productos"} a tu pedido. Puedes ajustarlos aquí.`);
+  $<HTMLDetailsElement>("#calcCaja").open = false;
+  $("#precios").scrollIntoView({ behavior: "smooth" });
 }
 
 document.addEventListener("click", (e) => {
@@ -261,7 +259,7 @@ document.addEventListener("click", (e) => {
     pedido.fecha = d.fecha;
     pintarDias();
     revisarDia();
-    pintarOrden(pedido, ctx);
+    pintarPedido();
   } else if (d.mes && !(t as HTMLButtonElement).disabled) {
     const n = new Date(mesVisto.anio, mesVisto.mes + Number(d.mes), 1);
     const { desde, hasta } = rangoMeses(temporada, hoy);
@@ -272,15 +270,8 @@ document.addEventListener("click", (e) => {
   } else if (d.mode && !(t as HTMLButtonElement).disabled) {
     cambiarModo(d.mode as ModoEntrega);
     revisarDia();
-  } else if (t.id === "regaloAdd") {
-    e.preventDefault();
-    filtro = "todo";
-    busqueda = "";
-    $<HTMLInputElement>("#q").value = "";
-    pintarChips(vista());
-    pintarMenu(vista());
-    agregar("maquila");
-    document.querySelector('[data-row="maquila"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
+  } else if (t.getAttribute("href") === "#calcCaja") {
+    $<HTMLDetailsElement>("#calcCaja").open = true;
   } else if (t.id === "send" && t.getAttribute("aria-disabled") === "true") {
     e.preventDefault();
     const falta = faltantes(pedido, productos);
@@ -354,7 +345,7 @@ $<HTMLInputElement>("#q").addEventListener("input", (e) => {
 const enlazarTexto = (sel: string, campo: "nombre" | "direccion" | "referencias" | "nota") =>
   $<HTMLInputElement>(sel).addEventListener("input", (e) => {
     pedido[campo] = (e.target as HTMLInputElement).value;
-    pintarOrden(pedido, ctx);
+    pintarPedido();
   });
 enlazarTexto("#cname", "nombre");
 enlazarTexto("#addr", "direccion");
@@ -363,32 +354,36 @@ enlazarTexto("#nota", "nota");
 
 $<HTMLSelectElement>("#zone").addEventListener("change", (e) => {
   pedido.zona = Number((e.target as HTMLSelectElement).value);
-  pintarOrden(pedido, ctx);
+  pintarPedido();
 });
-window.addEventListener("resize", () => pintarOrden(pedido, ctx));
+window.addEventListener("resize", () => pintarPedido());
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) void cargarDisponibilidad();
 });
 
 // ---------- Inicio ----------
-iniciarTema($<HTMLButtonElement>("#themeToggle"));
+iniciarComun();
+restaurar();
 llenarDatos();
+$<HTMLSelectElement>("#zone").value = String(pedido.zona);
+if (pedido.fecha) mesVisto = { anio: Number(pedido.fecha.slice(0, 4)), mes: Number(pedido.fecha.slice(5, 7)) - 1 };
 pintarChips(vista());
 pintarMenu(vista());
 pintarDias();
-pintarOrden(pedido, ctx);
-iniciarNieve($<HTMLCanvasElement>("#snow"), $<HTMLButtonElement>("#snowToggle"));
-iniciarLuces($(".lights"));
-iniciarVolante(
-  `${import.meta.env.BASE_URL}volante/volante-2600.webp`,
-  `${import.meta.env.BASE_URL}volante/volante-walkiria-2026.png`,
-);
+revisarDia();
+pintarPedido();
+iniciarCalculadora($("#calc"), productos, (p) => estaAgotado(p, agotados), agregarDeCalculadora);
 iniciarHoja($("#order"), $<HTMLButtonElement>("#bar"), $("#barBtn"));
 
-// Lo que mide la barra de arriba (con luces), para que la búsqueda y el pedido se peguen justo debajo.
-const barra = $("header.top");
-new ResizeObserver(() => {
-  document.documentElement.style.setProperty("--alto-top", `${barra.getBoundingClientRect().bottom}px`);
-}).observe(barra);
-iniciarNav($(".nav"), () => barra.getBoundingClientRect().bottom);
+
+
+// Desde el inicio: "¿Le regalaron el pavo?" llega con ?agregar=maquila y la maquila ya puesta.
+const pedir = new URLSearchParams(location.search).get("agregar");
+if (pedir && producto(pedir)) {
+  $<HTMLDetailsElement>("#calcCaja").open = false;
+  const ya = Object.values(pedido.lineas).some((l) => l.productoId === pedir);
+  if (!ya) agregar(pedir);
+  history.replaceState(null, "", location.pathname);
+  requestAnimationFrame(() => document.querySelector(`[data-row="${pedir}"]`)?.scrollIntoView({ block: "center" }));
+}
 void cargarDisponibilidad();
