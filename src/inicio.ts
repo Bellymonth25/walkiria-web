@@ -3,7 +3,7 @@ import { dinero } from "./lib/formato";
 import { enlaceWhatsApp } from "./lib/pedido";
 import { iniciarComun } from "./comun";
 import { $ } from "./ui/dom";
-import { iniciarVolante } from "./ui/volante";
+import { iniciarVisor } from "./ui/visor";
 
 // Medio árbol (24) y estrella de Belén (31) de fondo en la tarjeta, cortados por la orilla derecha.
 const ICONO_ARBOL = `<svg class="day-ico arbol" viewBox="0 0 80 120" aria-hidden="true"><path d="M40 6c4 10 12 18 20 22-4 1-8 1-12 0 7 10 15 17 24 21-6 2-13 2-19 0 8 11 17 19 27 23-12 4-27 5-40 5s-28-1-40-5c10-4 19-12 27-23-6 2-13 2-19 0 9-4 17-11 24-21-4 1-8 1-12 0 8-4 16-12 20-22Z" fill="currentColor"/><rect x="34" y="78" width="12" height="16" rx="2" fill="currentColor"/><path d="m40 0 2.4 5 5.4.6-4 3.7 1.1 5.4L40 12l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6Z" fill="currentColor"/></svg>`;
@@ -37,17 +37,45 @@ $("#cal").innerHTML = temporada.diasEspeciales
   .join("");
 
 // Galería: cada recuadro muestra public/img/galeria/<producto>.jpg. Mientras no exista la foto, se ve el recuadro de muestra.
-document.querySelectorAll<HTMLElement>("[data-gal]").forEach((el) => {
-  const url = `${import.meta.env.BASE_URL}img/galeria/${el.dataset.gal}.jpg`;
+const visor = iniciarVisor();
+const recuadros = [...document.querySelectorAll<HTMLElement>("[data-gal]")];
+const conFoto = new Set<string>();
+const urlFoto = (id: string) => `${import.meta.env.BASE_URL}img/galeria/${id}.jpg`;
+recuadros.forEach((el, n) => {
+  const id = el.dataset.gal!;
   const img = new Image();
   img.onload = () => {
-    el.style.backgroundImage = `url("${url}")`;
+    conFoto.add(id);
+    el.style.backgroundImage = `url("${urlFoto(id)}")`;
     el.classList.add("con-foto");
   };
-  img.src = url;
+  img.src = urlFoto(id);
+  // Al picar se abre la galería en grande, empezando por esa foto.
+  el.addEventListener("click", () =>
+    visor.abrir(
+      recuadros.map((r) => {
+        const rid = r.dataset.gal!;
+        const nombre = r.dataset.nombre ?? "";
+        return { titulo: nombre, alt: `Foto de ${nombre}`, media: conFoto.has(rid) ? urlFoto(rid) : undefined };
+      }),
+      n,
+    ),
+  );
 });
 
-iniciarVolante(
-  `${import.meta.env.BASE_URL}volante/volante-2600.webp`,
-  `${import.meta.env.BASE_URL}volante/volante-walkiria-2026.png`,
-);
+const base = `${import.meta.env.BASE_URL}volante/`;
+const abrirVolante = () =>
+  visor.abrir([
+    {
+      titulo: `Volante ${temporada.anio}`,
+      alt: `Volante Cenas de fin de año ${temporada.anio} de La Walkiria`,
+      media: `${base}volante-2600.webp`,
+      grande: `${base}volante-walkiria-2026.png`,
+      descargas: [
+        { texto: "Descargar PDF", href: `${base}volante-walkiria-2026.pdf`, archivo: `Volante La Walkiria ${temporada.anio}.pdf` },
+        { texto: "Imagen", href: `${base}volante-walkiria-2026.png`, archivo: `Volante La Walkiria ${temporada.anio}.png` },
+      ],
+    },
+  ]);
+$("#volanteVer").addEventListener("click", abrirVolante);
+$("#volanteMini").addEventListener("click", abrirVolante);

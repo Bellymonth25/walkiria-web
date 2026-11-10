@@ -249,8 +249,8 @@ footer .wrap{padding-block:28px calc(28px + env(safe-area-inset-bottom,0px));dis
 #send[aria-disabled="true"]{opacity:.5}
 
 /* Luces navideñas bajo la barra */
-.lights{height:14px;margin-top:-2px;position:relative;overflow:hidden;
-  background:linear-gradient(transparent 4px,color-mix(in srgb,var(--hero-fg) 25%,transparent) 4px 5px,transparent 5px)}
+.lights{position:absolute;left:0;right:0;top:100%;height:16px;margin-top:-4px;overflow:hidden;pointer-events:none;
+  background:linear-gradient(transparent 4px,color-mix(in srgb,var(--gold) 60%,transparent) 4px 5px,transparent 5px)}
 :root{--bulb-a:#FFD36E;--bulb-b:#FF6B6B;--bulb-c:#7BD88F}
 .lights i{position:absolute;top:5.8px;width:6.4px;height:6.4px;border-radius:50%;background:var(--c);
   box-shadow:0 0 6px 1px var(--c);transition:opacity .35s ease,box-shadow .35s ease}
@@ -408,7 +408,7 @@ button.cal-day:hover{border-color:var(--primary)}
   .volante-mini{order:-1;transform:none}
   .volante-btns .btn{flex:1 1 auto;text-align:center}
 }
-.visor{--vp:clamp(14px,5vmin,56px);width:calc(100vw - 2*var(--vp));height:calc(100dvh - 2*var(--vp));max-width:1200px;max-height:none;margin:auto;padding:0;
+.visor{--vp:clamp(8px,2.5vmin,28px);width:calc(100vw - 2*var(--vp));height:calc(100dvh - 2*var(--vp));max-width:1600px;max-height:none;margin:auto;padding:0;
   border:1px solid rgba(255,255,255,.18);border-radius:16px;background:#1d1616;color:#fff;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5)}
 .visor::backdrop{background:rgba(20,8,8,.55)}
 .visor[open]{display:flex;flex-direction:column}
@@ -467,10 +467,10 @@ button.cal-day:hover{border-color:var(--primary)}
 .gal-foto{position:relative;margin:0;border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--hero-fg) 9%,transparent) center/cover no-repeat;
   border:1.5px dashed color-mix(in srgb,var(--hero-fg) 38%,transparent);display:flex;align-items:flex-end;min-height:0}
 .gal-foto:first-child{grid-column:span 2;grid-row:span 2}
-.gal-foto figcaption{width:100%;padding:8px 10px;font-weight:600;font-size:.86rem;line-height:1.2;color:var(--hero-fg)}
+.gal-nombre{width:100%;padding:8px 10px;font-weight:600;font-size:.86rem;line-height:1.2;color:var(--hero-fg)}
 .gal-foto:not(.con-foto)::before{content:"Foto";position:absolute;inset:0;display:grid;place-items:center;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;opacity:.45}
 .gal-foto.con-foto{border:0;box-shadow:0 10px 26px rgba(0,0,0,.3)}
-.gal-foto.con-foto figcaption{background:linear-gradient(transparent,rgba(0,0,0,.72));padding-top:26px;color:#fff}
+.gal-foto.con-foto .gal-nombre{background:linear-gradient(transparent,rgba(0,0,0,.72));padding-top:26px;color:#fff}
 @media (max-width:860px){.hero .wrap{grid-template-columns:1fr}.galeria{order:2;transform:none;aspect-ratio:auto;grid-auto-rows:28vw}}
 
 /* Antes de pedir */
@@ -508,3 +508,50 @@ button.cal-day:hover{border-color:var(--primary)}
   .calc-nombre small{display:inline;margin-left:6px}
   .calc-grupo input{width:48px}
 }
+
+/* Visor: flechas, imágenes alargadas y recuadro sin foto */
+.visor-desc{display:flex;gap:8px}
+.visor-lienzo.alta{place-items:start center}
+.visor-lienzo.alta img{max-height:none;width:min(100%,760px)}
+.visor-lienzo.alta.zoom img{width:max(100%,min(1700px,250vw))}
+.visor-vacio{display:grid;place-items:center;width:min(100%,560px);aspect-ratio:4/3;border:2px dashed rgba(255,255,255,.35);border-radius:14px;color:rgba(255,255,255,.8);font-size:1.1rem;text-align:center;padding:20px}
+.visor-flecha{position:absolute;top:50%;transform:translateY(-50%);width:52px;height:52px;border-radius:50%;border:0;background:#fff;color:#1d1616;font-size:1.8rem;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);transition:transform .2s}
+.visor-flecha:hover{transform:translateY(-50%) scale(1.1)}
+.visor-flecha.ant{left:14px}.visor-flecha.sig{right:14px}
+@media (max-width:560px){.visor-flecha{width:44px;height:44px;font-size:1.5rem}.visor-flecha.ant{left:8px}.visor-flecha.sig{right:8px}}
+
+/* Nieve que cae dentro de un recuadro al pasar el cursor */
+.nevar{position:relative}
+.nevar::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;opacity:0;transition:opacity .5s ease;
+  background-image:radial-gradient(circle,#fff 0 1.6px,transparent 2.3px),radial-gradient(circle,#fff 0 2.4px,transparent 3.1px),radial-gradient(circle,#fff 0 1.2px,transparent 1.9px);
+  background-size:46px 46px,74px 74px,30px 30px;background-position:0 0,20px 10px,8px 24px;animation:nevar 2.8s linear infinite paused}
+.nevar:hover::after,.nevar:focus-visible::after{opacity:.8;animation-play-state:running}
+@keyframes nevar{to{background-position:0 46px,20px 84px,8px 54px}}
+
+/* Galería: los recuadros se sacuden y les cae nieve */
+.gal-foto{cursor:zoom-in;font:inherit;color:inherit;text-align:left;padding:0;transition:transform .35s cubic-bezier(.3,1.4,.5,1),box-shadow .35s,border-color .35s}
+.gal-foto:hover,.gal-foto:focus-visible{transform:translateY(-5px) scale(1.035);box-shadow:0 16px 34px rgba(0,0,0,.4);border-color:var(--gold);animation:sacudir .55s ease-in-out;z-index:1}
+@keyframes sacudir{0%{rotate:0deg}20%{rotate:-2.5deg}45%{rotate:2deg}70%{rotate:-1deg}100%{rotate:0deg}}
+
+/* Antes de pedir: al pasar el cursor el color se abre desde el ícono, con nieve */
+.antes-c{overflow:hidden;isolation:isolate;transition:color .45s ease,transform .45s ease,box-shadow .45s ease,border-color .45s ease}
+.antes-c::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--hero);clip-path:circle(0 at 41px 41px);transition:clip-path .65s cubic-bezier(.4,0,.2,1)}
+.antes-c::after{z-index:-1}
+.antes-c:hover,.antes-c:focus-visible{color:var(--hero-fg);transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.22)}
+.antes-c:hover::before,.antes-c:focus-visible::before{clip-path:circle(150% at 41px 41px)}
+.antes-c .aparte,.antes-c td{transition:color .45s ease,border-color .45s ease}
+.antes-c:hover .aparte,.antes-c:focus-visible .aparte{color:color-mix(in srgb,var(--hero-fg) 82%,transparent)}
+.antes-c:hover td,.antes-c:focus-visible td{border-color:color-mix(in srgb,var(--hero-fg) 35%,transparent)}
+.antes-ico{transition:transform .45s cubic-bezier(.3,1.5,.5,1)}
+.antes-c:hover .antes-ico,.antes-c:focus-visible .antes-ico{transform:scale(1.12) rotate(-8deg)}
+
+/* Fechas: la tarjeta crece y cambia de color */
+.day{transition:transform .35s cubic-bezier(.3,1.4,.5,1),box-shadow .35s,background-color .35s,color .35s,border-color .35s}
+.day small,.day .mes,.day-ico{transition:color .35s,opacity .35s}
+.day:hover{transform:scale(1.09);z-index:2;box-shadow:0 18px 36px rgba(0,0,0,.22);background:var(--gold-soft);border-color:var(--gold-ink)}
+.day.due:hover{background:var(--gold);color:#2B1D00}
+.day.due:hover small,.day.due:hover .mes{color:#2B1D00}
+.day.hot:hover{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.day.hot:hover small,.day.hot:hover .mes,.day.hot:hover small.sujeto{color:var(--brand-ink)!important}
+.day.hot:hover .day-ico{color:var(--brand-ink);opacity:.28}
+.antes-c:hover::after,.antes-c:focus-visible::after{opacity:.38}

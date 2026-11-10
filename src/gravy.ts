@@ -3,6 +3,7 @@ import "./gravy.css";
 import { negocio } from "./data/temporada";
 import { enlaceWhatsApp } from "./lib/pedido";
 import { iniciarComun } from "./comun";
+import { iniciarVisor } from "./ui/visor";
 
 /** Guion de la explicación. Los textos salen del instructivo impreso. */
 interface Paso {
@@ -72,6 +73,7 @@ function iniciarExplicacion(): void {
   const pausa = $<HTMLButtonElement>("#explPausa");
   const sinMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  const verBtn = $<HTMLButtonElement>("#explVer");
   let actual = 0;
   let corriendo = false;
   let reloj = 0;
@@ -86,7 +88,7 @@ function iniciarExplicacion(): void {
     if (!corriendo) return;
     reloj = window.setTimeout(() => {
       if (actual < PASOS.length - 1) ir(actual + 1);
-      else poner(false);
+      else terminar();
     }, PASOS[actual]!.dura * 1000);
   };
 
@@ -98,8 +100,16 @@ function iniciarExplicacion(): void {
     programar();
   };
 
+  // Al acabar el último paso aparece el botón para verla otra vez.
+  const terminar = () => {
+    poner(false);
+    caja.dataset.estado = "fin";
+    verBtn.lastChild!.textContent = " Ver explicación de nuevo";
+  };
+
   function ir(i: number): void {
     actual = Math.max(0, Math.min(PASOS.length - 1, i));
+    if (caja.dataset.estado === "fin") caja.dataset.estado = "pausa";
     const p = PASOS[actual]!;
     caja.dataset.paso = String(actual);
     paso.textContent = p.titulo;
@@ -118,7 +128,7 @@ function iniciarExplicacion(): void {
     programar();
   }
 
-  $("#explVer").addEventListener("click", () => {
+  verBtn.addEventListener("click", () => {
     ir(0);
     // Con "reducir movimiento" no avanza sola: se pasa con las flechas.
     poner(!sinMovimiento);
@@ -143,37 +153,25 @@ function iniciarExplicacion(): void {
   texto.textContent = "Soy el pavo de La Walkiria. Toca «Ver explicación» y te enseño cómo preparar tu gravy, paso a paso.";
 }
 
-/** Instructivo en grande: en celular se abre la versión alargada, en computadora la de tamaño carta. */
+/** Instructivo en grande: la versión alargada, que en pantalla se lee mejor que la de tamaño carta. */
 function iniciarInstructivo(): void {
-  const visor = $<HTMLDialogElement>("#visor");
-  const img = $<HTMLImageElement>("#visorImg");
-  const lienzo = $("#visorLienzo");
+  const visor = iniciarVisor();
   const base = `${import.meta.env.BASE_URL}gravy/`;
-
-  const abrir = () => {
-    const celular = window.matchMedia("(max-width:760px)").matches;
-    img.src = base + (celular ? "instructivo-celular-2400.webp" : "instructivo-carta-3400.webp");
-    lienzo.classList.remove("zoom");
-    visor.showModal();
-  };
+  const abrir = () =>
+    visor.abrir([
+      {
+        titulo: "Instructivo del gravy",
+        alt: "Instrucciones para su gravy",
+        media: `${base}instructivo-celular-2400.webp`,
+        alta: true,
+        descargas: [
+          { texto: "Descargar PDF", href: `${base}instructivo-gravy-celular.pdf`, archivo: "Instructivo gravy La Walkiria.pdf" },
+          { texto: "Para imprimir", href: `${base}instructivo-gravy-carta.pdf`, archivo: "Instructivo gravy La Walkiria (carta).pdf" },
+        ],
+      },
+    ]);
   $("#instVer").addEventListener("click", abrir);
   $("#instMini").addEventListener("click", abrir);
-  $("#visorCerrar").addEventListener("click", () => visor.close());
-  img.addEventListener("click", (e) => {
-    const r = img.getBoundingClientRect();
-    const fx = (e.clientX - r.left) / r.width;
-    const fy = (e.clientY - r.top) / r.height;
-    const acercar = lienzo.classList.toggle("zoom");
-    if (acercar) {
-      lienzo.scrollLeft = fx * img.offsetWidth - lienzo.clientWidth / 2;
-      lienzo.scrollTop = fy * img.offsetHeight - lienzo.clientHeight / 2;
-    } else {
-      lienzo.scrollTo(0, 0);
-    }
-  });
-  lienzo.addEventListener("click", (e) => {
-    if (e.target === lienzo) visor.close();
-  });
 }
 
 iniciarComun();
