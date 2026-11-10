@@ -8,10 +8,10 @@ import { sinDomicilio } from "./lib/entrega";
 import { estaAgotado, leerAgotados } from "./lib/disponibilidad";
 import {
   aumentar, conRellenoSugerido, disminuir, enlaceWhatsApp, faltantes, normalizarCantidad, normalizarKgPavo,
-  normalizarKgRelleno, nuevaLinea, textoFaltantes, variasLineas,
+  idLinea, normalizarKgRelleno, nuevaLinea, textoFaltantes, variasLineas,
 } from "./lib/pedido";
 import { $, aviso } from "./ui/dom";
-import { actualizarPreciosPresentacion, pintarChips, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
+import { actualizarPreciosPresentacion, pintarChips, pintarFilaPorClave, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
 import { pintarOrden, textoPedido, type ContextoOrden } from "./ui/orden";
 import { pintarCalendario, rangoMeses } from "./ui/calendario";
 import { iniciarHoja } from "./ui/hoja";
@@ -36,6 +36,13 @@ const hoy = new Date();
 let mesVisto = { anio: hoy.getFullYear(), mes: hoy.getMonth() };
 /** Siguiente número de línea para productos que se agregan varias veces (maquila-1, pavo-relleno-2…). */
 const siguiente: Record<string, number> = {};
+/** Grupos abiertos para elegir versión (lomos, pechuga…). */
+const abiertos = new Set<string>();
+/**
+ * Lo que agregó la calculadora: cuánto sumó a cada línea. "Retirar del carrito" quita solo eso;
+ * lo que el cliente agregó aparte se queda.
+ */
+let sugerido: { personas: number; lineas: Record<string, number> } | null = null;
 
 const ctx: ContextoOrden = {
   catalogo: productos,
@@ -51,14 +58,18 @@ const vista = (): VistaMenu => ({
   busqueda,
   lineas: pedido.lineas,
   agotados: (p) => estaAgotado(p, agotados),
+  abiertos,
 });
 
 /** El pedido se guarda mientras dure la visita, para no perderlo al ir a otra página (Inicio, Gravy) y volver. */
 const CLAVE = "walkiria-pedido";
+const CLAVE_SUGERIDO = "walkiria-sugerido";
 function pintarPedido(): void {
   pintarOrden(pedido, ctx);
+  pintarSugerido();
   try {
     sessionStorage.setItem(CLAVE, JSON.stringify(pedido));
+    sessionStorage.setItem(CLAVE_SUGERIDO, JSON.stringify(sugerido));
   } catch {
     /* sin almacenamiento: el pedido dura mientras no cambie de página */
   }
@@ -75,7 +86,7 @@ function restaurar(): void {
   const lineas: Record<string, Linea> = {};
   for (const [id, l] of Object.entries(g.lineas ?? {})) {
     if (!l || !productos.some((p) => p.id === l.productoId)) continue;
-    lineas[id] = l;
+    lineas[id] = { ...l, version: typeof l.version === "string" ? l.version : "" };
     const n = Number(id.slice(l.productoId.length + 1));
     if (n > 0) siguiente[l.productoId] = Math.max(siguiente[l.productoId] ?? 0, n);
   }
@@ -87,6 +98,12 @@ function restaurar(): void {
   pedido.referencias = typeof g.referencias === "string" ? g.referencias : "";
   pedido.nota = typeof g.nota === "string" ? g.nota : "";
   pedido.fecha = typeof g.fecha === "string" && /^\d{4}-\d{2}-\d{2}$/.test(g.fecha) ? g.fecha : null;
+  try {
+    const s = JSON.parse(sessionStorage.getItem(CLAVE_SUGERIDO) ?? "null");
+    if (s && typeof s.personas === "number" && s.lineas && typeof s.lineas === "object") sugerido = s;
+  } catch {
+    /* sin sugerido guardado */
+  }
   $<HTMLInputElement>("#cname").value = pedido.nombre;
   $<HTMLTextAreaElement>("#addr").value = pedido.direccion;
   $<HTMLInputElement>("#ref").value = pedido.referencias;
@@ -187,34 +204,43 @@ function pruebaAgotados(): string[] {
 }
 
 // ---------- Eventos ----------
-function agregar(productoId: string): void {
+function agregar(productoId: string, version = ""): void {
   const p = producto(productoId);
   if (!p || estaAgotado(p, agotados)) return;
-  let id = p.id;
+  let id = idLinea(p, version);
   if (variasLineas(p)) {
     siguiente[p.id] = (siguiente[p.id] ?? 0) + 1;
     id = `${p.id}-${siguiente[p.id]}`;
   }
-  ponerLinea(id, nuevaLinea(p));
+  ponerLinea(id, nuevaLinea(p, version));
   repintar(p.id);
   if (p.maquila) document.querySelector<HTMLSelectElement>(`#tipo-${id}`)?.focus();
 }
 
-/** Lo que arma la calculadora entra al pedido (si el producto ya estaba, se cambia su cantidad). */
-function agregarDeCalculadora(items: readonly Agregado[]): void {
-  let n = 0;
+/**
+ * Lo que arma la calculadora se SUMA al pedido y se apunta cuánto se sumó a cada línea,
+ * para poder retirarlo después sin tocar lo que el cliente agregó aparte.
+ */
+function agregarDeCalculadora(items: readonly Agregado[], personas: number): void {
+  // Si ya había usado la calculadora, lo sugerido antes se cambia por lo nuevo.
+  if (sugerido) quitarSugerido();
+  const sumado: Record<string, number> = {};
   for (const { productoId, cambios } of items) {
     const p = producto(productoId);
     if (!p || estaAgotado(p, agotados)) continue;
-    let id = p.id;
+    let id = idLinea(p, cambios.version ?? "");
     if (variasLineas(p)) {
       siguiente[p.id] = (siguiente[p.id] ?? 0) + 1;
       id = `${p.id}-${siguiente[p.id]}`;
     }
-    ponerLinea(id, { ...(pedido.lineas[id] ?? nuevaLinea(p)), ...cambios });
-    n++;
+    const antes = pedido.lineas[id];
+    const cantidad = cambios.cantidad ?? 1;
+    ponerLinea(id, antes ? { ...antes, ...cambios, cantidad: Math.round((antes.cantidad + cantidad) * 100) / 100 } : { ...nuevaLinea(p, cambios.version ?? ""), ...cambios });
+    sumado[id] = Math.round(((sumado[id] ?? 0) + cantidad) * 100) / 100;
   }
+  const n = Object.keys(sumado).length;
   if (!n) return;
+  sugerido = { personas, lineas: sumado };
   filtro = "todo";
   busqueda = "";
   $<HTMLInputElement>("#q").value = "";
@@ -224,6 +250,33 @@ function agregarDeCalculadora(items: readonly Agregado[]): void {
   aviso(`Listo: agregamos ${n} ${n === 1 ? "producto" : "productos"} a tu pedido. Puedes ajustarlos aquí.`);
   $<HTMLDetailsElement>("#calcCaja").open = false;
   $("#precios").scrollIntoView({ behavior: "smooth" });
+}
+
+/** Resta del pedido solo lo que sumó la calculadora. */
+function quitarSugerido(): void {
+  if (!sugerido) return;
+  for (const [id, cant] of Object.entries(sugerido.lineas)) {
+    const x = deLinea(id);
+    if (!x) continue;
+    const resto = Math.round((x.l.cantidad - cant) * 100) / 100;
+    const minimo = x.p.unidad === "kg" && !x.p.pavoEntero && !x.p.pieza ? 0.25 : 1;
+    ponerLinea(id, x.p.pavoEntero || resto < minimo ? null : { ...x.l, cantidad: resto });
+  }
+  sugerido = null;
+}
+
+/** La tarjeta de la calculadora muestra que ya se usó, con el botón para retirar lo sugerido. */
+function pintarSugerido(): void {
+  // Si el cliente ya quitó a mano todo lo sugerido, la tarjeta vuelve a estar libre.
+  if (sugerido && !Object.keys(sugerido.lineas).some((id) => pedido.lineas[id])) sugerido = null;
+  const caja = $("#calcCaja");
+  caja.classList.toggle("usada", sugerido !== null);
+  const barra = $("#calcUsada");
+  barra.hidden = sugerido === null;
+  if (sugerido) {
+    const n = sugerido.personas;
+    $("#calcUsadaTxt").innerHTML = `<b>Ya agregaste lo sugerido para ${n} ${n === 1 ? "persona" : "personas"}.</b> Si lo retiras, lo que agregaste aparte se queda en tu pedido.`;
+  }
 }
 
 document.addEventListener("click", (e) => {
@@ -237,6 +290,25 @@ document.addEventListener("click", (e) => {
     pintarMenu(vista());
   } else if (d.add) {
     agregar(d.add);
+  } else if (d.abrir) {
+    if (abiertos.has(d.abrir)) abiertos.delete(d.abrir);
+    else abiertos.add(d.abrir);
+    pintarFilaPorClave(vista(), d.abrir);
+  } else if (d.addv !== undefined) {
+    // Versión de un grupo: si ya está en el pedido se quita; si no, se agrega.
+    const [pid, version = ""] = d.addv.split("|") as [string, string?];
+    const p = producto(pid);
+    if (!p) return;
+    const id = idLinea(p, version);
+    if (pedido.lineas[id]) {
+      ponerLinea(id, null);
+      repintar(p.id);
+    } else agregar(pid, version);
+  } else if (t.id === "calcRetirar") {
+    quitarSugerido();
+    pintarMenu(vista());
+    pintarPedido();
+    aviso("Quitamos lo sugerido de tu pedido. Lo que agregaste aparte se quedó.");
   } else if (d.inc || d.dec) {
     const id = (d.inc ?? d.dec)!;
     const x = deLinea(id);

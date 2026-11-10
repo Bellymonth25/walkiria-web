@@ -26,6 +26,17 @@ export interface Producto {
   /** Maquila: el cliente trae su carne y se cobra por kilo cocinado. Se puede agregar varias veces. */
   maquila?: boolean;
   /**
+   * Versiones del mismo producto y precio (ej. pechuga horneada, adobada o mechada).
+   * Cada versión es su propia línea del pedido.
+   */
+  versiones?: readonly string[];
+  /**
+   * Productos con distinto precio que se eligen juntos (ej. los lomos). En la lista se ven
+   * como un solo renglón con sus opciones; `opcion` es el nombre corto dentro del grupo.
+   */
+  familia?: string;
+  opcion?: string;
+  /**
    * Ids del producto en Firestore (`products`). Si todos están sin disponibilidad,
    * la web lo muestra como AGOTADO.
    */
@@ -66,6 +77,8 @@ export interface Linea {
   rellenoManual: boolean;
   /** Nota solo para este producto. */
   nota: string;
+  /** Versión elegida en productos con `versiones` ("" si no aplica). */
+  version: string;
 }
 
 export interface ZonaEnvio {

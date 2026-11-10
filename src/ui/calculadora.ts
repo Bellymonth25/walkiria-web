@@ -35,20 +35,20 @@ export function iniciarCalculadora(
   raiz: HTMLElement,
   catalogo: readonly Producto[],
   agotado: (p: Producto) => boolean,
-  alAgregar: (items: Agregado[]) => void,
+  alAgregar: (items: Agregado[], personas: number) => void,
 ): void {
   const p = (id: string) => catalogo.find((x) => x.id === id);
 
-  // Carnes que se pueden elegir. La pechuga va en sus tres preparaciones.
+  // Carnes que se pueden elegir. Las que tienen versiones (pechuga, pierna) van en cada una.
   const carnes: Carne[] = [];
   for (const x of catalogo) {
     if (x.pieza || x.maquila || (x.categoria !== "pavo" && x.categoria !== "cerdo")) continue;
-    if (x.id === "pechuga-pavo") {
-      for (const e of ["Horneada", "Adobada", "Mechada"]) carnes.push({ id: `${x.id}:${e}`, productoId: x.id, estilo: e });
+    if (x.versiones?.length) {
+      for (const e of x.versiones) carnes.push({ id: `${x.id}:${e}`, productoId: x.id, estilo: e });
     } else carnes.push({ id: x.id, productoId: x.id });
   }
   const carne = (id: string) => carnes.find((c) => c.id === id) ?? carnes[0]!;
-  const nombreCarne = (c: Carne) => `${p(c.productoId)?.nombre ?? ""}${c.estilo ? ` ${c.estilo}` : ""}`;
+  const nombreCarne = (c: Carne) => `${p(c.productoId)?.nombre ?? ""}${c.estilo ? ` ${c.estilo.toLowerCase()}` : ""}`;
 
   const personas: Personas = { personas: cfg.sugeridas[0], adolescentes: 0 };
   const total = () => personas.personas + personas.adolescentes;
@@ -56,7 +56,8 @@ export function iniciarCalculadora(
   /** La primera carne sigue a la recomendación hasta que el cliente la cambie. */
   let elegidas: string[] = [recomendada()];
   let primeraTocada = false;
-  let pastaId = "espagueti";
+  const espagueti = p("espagueti");
+  let pastaId = espagueti?.versiones?.[0] ? `espagueti:${espagueti.versiones[0]}` : "espagueti";
   let conRomeritos = true;
   let conBacalao = true;
   let presentacion: Presentacion = "acrilico";
@@ -104,17 +105,18 @@ export function iniciarCalculadora(
           agregado: lineas.map((l) => ({ productoId: x.id, cambios: l })),
         });
       } else {
-        const l = linea(x, { cantidad: kg, nota: ca.estilo ?? "" });
+        const l = linea(x, { cantidad: kg, version: ca.estilo ?? "" });
         filas.push({ nombre: nombreCarne(ca), cantidad: kilos(kg), importe: importeLinea(x, l), agregado: [{ productoId: x.id, cambios: l }] });
       }
     });
-    const porKilo = (id: string, kg: number) => {
+    const porKilo = (id: string, kg: number, version = "") => {
       const x = p(id);
       if (!x || !kg) return;
-      const l = linea(x, { cantidad: kg });
-      filas.push({ nombre: x.nombre, cantidad: kilos(kg), importe: importeLinea(x, l), agregado: [{ productoId: id, cambios: l }] });
+      const l = linea(x, { cantidad: kg, version });
+      filas.push({ nombre: version ? `${x.nombre} ${version.toLowerCase()}` : x.nombre, cantidad: kilos(kg), importe: importeLinea(x, l), agregado: [{ productoId: id, cambios: l }] });
     };
-    porKilo(pastaId, c.pasta);
+    const [pastaProd, pastaVer = ""] = pastaId.split(":") as [string, string?];
+    porKilo(pastaProd, c.pasta, pastaVer);
     porKilo("ensalada-manzana", c.ensalada);
     if (conRomeritos) porKilo("romeritos", c.romeritos);
     if (conBacalao) porKilo("bacalao", c.bacalao);
@@ -128,23 +130,16 @@ export function iniciarCalculadora(
     return filas;
   };
 
-  /** Si dos carnes son el mismo producto (ej. pechuga horneada y adobada), van en una sola línea con una nota. */
+  /** Si dos carnes son el mismo producto y versión, se suman en una sola línea. Versiones distintas van aparte. */
   const juntar = (items: Agregado[]): Agregado[] => {
     const salida: Agregado[] = [];
-    const partes = new Map<Agregado, Array<Partial<Linea>>>();
     for (const it of items) {
       const x = p(it.productoId);
-      const igual = x && !x.pavoEntero ? salida.find((s) => s.productoId === it.productoId) : undefined;
-      if (!igual) {
-        const nuevo = { productoId: it.productoId, cambios: { ...it.cambios } };
-        salida.push(nuevo);
-        partes.set(nuevo, [it.cambios]);
-        continue;
-      }
-      const lista = partes.get(igual)!;
-      lista.push(it.cambios);
-      igual.cambios.cantidad = lista.reduce((a, c) => a + (c.cantidad ?? 0), 0);
-      igual.cambios.nota = lista.map((c) => `${kilos(c.cantidad ?? 0)} ${(c.nota ?? "").toLowerCase()}`.trim()).join(" y ");
+      const igual = x && !x.pavoEntero
+        ? salida.find((s) => s.productoId === it.productoId && (s.cambios.version ?? "") === (it.cambios.version ?? ""))
+        : undefined;
+      if (igual) igual.cambios.cantidad = (igual.cambios.cantidad ?? 0) + (it.cambios.cantidad ?? 0);
+      else salida.push({ productoId: it.productoId, cambios: { ...it.cambios } });
     }
     return salida;
   };
@@ -172,7 +167,7 @@ export function iniciarCalculadora(
       <div class="calc-total"><span>Total aproximado</span><b class="num">${dinero(Math.round(suma))}</b></div>
       <button class="btn btn-wa" type="button" id="calcAgregar">Agregar todo a mi pedido</button>
       <p class="calc-aviso"><b>Es una recomendación.</b> La hacemos con nuestra experiencia de muchos años, calculando un promedio para que todos coman bien y puedan repetir un poco. Cada familia y cada cena es diferente, así que no podemos garantizar que no falte o sobre comida. Después de agregarlo puedes subir o bajar cada producto en tu pedido.</p>`;
-    res().querySelector("#calcAgregar")?.addEventListener("click", () => alAgregar(juntar(filas.flatMap((f) => f.agregado))));
+    res().querySelector("#calcAgregar")?.addEventListener("click", () => alAgregar(juntar(filas.flatMap((f) => f.agregado)), c.personas));
   };
 
   const pintarCarnes = () => {
@@ -220,7 +215,11 @@ export function iniciarCalculadora(
         <label class="calc-campo"><span class="calc-etq">Pasta</span><select id="calcPasta">${["espagueti", "ravioles"]
           .map((id) => p(id))
           .filter((x): x is Producto => !!x)
-          .map((x) => `<option value="${x.id}"${x.id === pastaId ? " selected" : ""}${agotado(x) ? " disabled" : ""}>${escapar(x.nombre)}</option>`)
+          .flatMap((x) => (x.versiones?.length ? x.versiones.map((ver) => [x, ver] as const) : [[x, ""] as const]))
+          .map(([x, ver]) => {
+            const valor = ver ? `${x.id}:${ver}` : x.id;
+            return `<option value="${escapar(valor)}"${valor === pastaId ? " selected" : ""}${agotado(x) ? " disabled" : ""}>${escapar(ver ? `${x.nombre} ${ver.toLowerCase()}` : x.nombre)}</option>`;
+          })
           .join("")}</select></label>
         <fieldset class="calc-campo"><legend class="calc-etq">Extra</legend>
           <div class="calc-extras">

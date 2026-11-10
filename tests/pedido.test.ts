@@ -3,7 +3,7 @@ import type { Linea, Pedido, Producto } from "../src/types";
 import { productos } from "../src/data/productos";
 import { temporada } from "../src/data/temporada";
 import {
-  aumentar, conRellenoSugerido, disminuir, empaquesDe, rellenoSugerido, faltantes, importeLinea, mensaje, normalizarCantidad, normalizarKgPavo, nuevaLinea, total,
+  aumentar, conRellenoSugerido, disminuir, empaquesDe, rellenoSugerido, faltantes, idLinea, importeLinea, mensaje, nombreLinea, normalizarCantidad, normalizarKgPavo, nuevaLinea, total,
 } from "../src/lib/pedido";
 import { esPedidoTardio, nombreDia } from "../src/lib/fechas";
 import { estaAgotado, parsearAgotados } from "../src/lib/disponibilidad";
@@ -268,5 +268,33 @@ describe("calculadora de cena", () => {
     expect(pavosPara(3)).toEqual([{ tamano: "medio", kgPorPavo: 5 }]);
     expect(pavosPara(7.2)).toEqual([{ tamano: "completo", kgPorPavo: 7.5 }]);
     expect(pavosPara(14)).toEqual([{ tamano: "completo", kgPorPavo: 7 }, { tamano: "completo", kgPorPavo: 7 }]);
+  });
+});
+
+describe("versiones (pechuga, pierna, espagueti)", () => {
+  const pechuga = prod("pechuga-pavo");
+  it("cada versión es su propia línea", () => {
+    expect(idLinea(pechuga, "Horneada")).toBe("pechuga-pavo~horneada");
+    expect(idLinea(pechuga, "Adobada")).not.toBe(idLinea(pechuga, "Horneada"));
+    expect(idLinea(prod("espagueti"), "En salsa de 3 quesos")).toBe("espagueti~en-salsa-de-3-quesos");
+    expect(idLinea(lomo)).toBe("lomo-adobado");
+  });
+  it("el nombre en el pedido lleva la versión", () => {
+    expect(nombreLinea(pechuga, nuevaLinea(pechuga, "Adobada"))).toBe("Pechuga de Pavo adobada");
+    expect(nuevaLinea(pechuga, "Inventada").version).toBe("");
+    expect(nombreLinea(lomo, nuevaLinea(lomo))).toBe("Lomo Adobado");
+  });
+  it("el mensaje separa las versiones", () => {
+    const p: Pedido = {
+      ...base,
+      nombre: "Ana",
+      lineas: {
+        [idLinea(pechuga, "Horneada")]: { ...nuevaLinea(pechuga, "Horneada"), cantidad: 0.5 },
+        [idLinea(pechuga, "Adobada")]: { ...nuevaLinea(pechuga, "Adobada"), cantidad: 0.5 },
+      },
+    };
+    const m = mensaje(p, ctx);
+    expect(m).toContain("Pechuga de Pavo horneada, 0.5 kg");
+    expect(m).toContain("Pechuga de Pavo adobada, 0.5 kg");
   });
 });

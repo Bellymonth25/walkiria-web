@@ -1,6 +1,6 @@
 import type { Linea, Pedido, Presentacion, Producto, TamanoEmpaque, ZonaEnvio } from "../types";
 import { empaques, maquila, pavo } from "../data/temporada";
-import { dinero, enLista, kilos } from "./formato";
+import { dinero, enLista, kilos, normalizar } from "./formato";
 
 // ---------- Presentación ----------
 
@@ -90,7 +90,11 @@ export const maquilaIncompleta = (l: Linea): boolean =>
 /** Productos que se agregan como varias líneas independientes (cada maquila, cada pavo). */
 export const variasLineas = (p: Producto): boolean => Boolean(p.maquila || p.pavoEntero);
 
-export function nuevaLinea(p: Producto): Linea {
+/** Id de la línea en el pedido. Cada versión va aparte: "pechuga-pavo~horneada". */
+export const idLinea = (p: Producto, version = ""): string =>
+  version ? `${p.id}~${normalizar(version).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}` : p.id;
+
+export function nuevaLinea(p: Producto, version = ""): Linea {
   return {
     productoId: p.id,
     // Maquila: el cliente escribe cuánto pesa su carne (empieza vacío).
@@ -103,6 +107,7 @@ export function nuevaLinea(p: Producto): Linea {
     kgRelleno: 1,
     rellenoManual: false,
     nota: "",
+    version: p.versiones?.includes(version) ? version : "",
   };
 }
 
@@ -144,7 +149,7 @@ export function textoCantidad(p: Producto, l: Linea): string {
 
 /** Nombre del renglón en el pedido: "Pavo Relleno" o "Maquila de Lomo Mechado". */
 export const nombreLinea = (p: Producto, l: Linea): string =>
-  p.maquila ? `Maquila de ${nombreMaquila(l) || "carne"}` : p.nombre;
+  p.maquila ? `Maquila de ${nombreMaquila(l) || "carne"}` : l.version ? `${p.nombre} ${l.version.toLowerCase()}` : p.nombre;
 
 const porKilo = (p: Producto): boolean => p.unidad === "kg" && !p.pavoEntero && !p.pieza;
 
@@ -199,6 +204,8 @@ export function renglones(pedido: Pedido, catalogo: readonly Producto[]): Renglo
   return catalogo.flatMap((p) =>
     entradas
       .filter(([, l]) => l.productoId === p.id)
+      // Las versiones van en el orden del catálogo (horneada, adobada, mechada).
+      .sort(([, a], [, b]) => (p.versiones?.indexOf(a.version) ?? 0) - (p.versiones?.indexOf(b.version) ?? 0))
       .map(([id, l]) => ({ id, producto: p, linea: l, importe: importeLinea(p, l) })),
   );
 }
