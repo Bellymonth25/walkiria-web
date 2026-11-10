@@ -2,7 +2,6 @@
 .gravy h1{font-size:clamp(2.2rem,5vw,3.2rem);margin:8px 0 0}
 .gravy .sec-head .eyebrow{color:var(--gold-ink)}
 .gravy-wrap{max-width:780px}
-.nav a[href="gravy.html"][aria-current="true"]{box-shadow:inset 0 -2px 0 var(--gold)}
 
 .expl{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .expl-escena{position:relative;background:linear-gradient(var(--gold-soft),var(--surface-2));color:var(--fg)}

@@ -1,9 +1,8 @@
 import "./styles.css";
 import "./gravy.css";
-import { negocio, temporada } from "./data/temporada";
+import { negocio } from "./data/temporada";
 import { enlaceWhatsApp } from "./lib/pedido";
-import { iniciarLuces } from "./ui/luces";
-import { iniciarTema } from "./ui/tema";
+import { iniciarComun } from "./comun";
 
 /** Guion de la explicación. Los textos salen del instructivo impreso. */
 interface Paso {
@@ -177,9 +176,7 @@ function iniciarInstructivo(): void {
   });
 }
 
-document.querySelectorAll<HTMLElement>('[data-cfg="anio"]').forEach((el) => (el.textContent = String(temporada.anio)));
+iniciarComun();
 $<HTMLAnchorElement>("#topWa").href = enlaceWhatsApp(negocio.whatsapp, "Hola, tengo una duda sobre cómo preparar el gravy.");
-iniciarTema($<HTMLButtonElement>("#themeToggle"));
-iniciarLuces($(".lights"));
 iniciarExplicacion();
 iniciarInstructivo();
