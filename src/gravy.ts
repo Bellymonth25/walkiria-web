@@ -70,6 +70,7 @@ function ajustarArbol(): void {
   const svg = arbol?.closest("svg");
   const escena = svg?.parentElement;
   if (!arbol || !svg || !escena) return;
+  const redondos = [...arbol.querySelectorAll<SVGGraphicsElement>(".estrella, circle")];
   const ajustar = () => {
     const r = svg.getBoundingClientRect();
     if (!r.width) return;
@@ -80,6 +81,14 @@ function ajustarArbol(): void {
     const sy = (304 - arriba) / 272;
     const sx = Math.min(1.55, sy * 1.3);
     arbol.setAttribute("transform", `translate(${(535 - sx * 578).toFixed(1)} ${(arriba - sy * 30).toFixed(1)}) scale(${sx.toFixed(3)} ${sy.toFixed(3)})`);
+    // El árbol se ensancha, pero la estrella y las esferas conservan su forma redonda.
+    const k = (sy / sx).toFixed(3);
+    for (const el of redondos) {
+      const b = el.getBBox();
+      const cx = b.x + b.width / 2;
+      const cy = b.y + b.height / 2;
+      el.setAttribute("transform", `translate(${cx} ${cy}) scale(${k} 1) translate(${-cx} ${-cy})`);
+    }
   };
   ajustar();
   if ("ResizeObserver" in window) new ResizeObserver(ajustar).observe(escena);
