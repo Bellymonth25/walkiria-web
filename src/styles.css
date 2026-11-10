@@ -690,3 +690,30 @@ button.cal-day:hover{border-color:var(--primary)}
 .vaciar{align-self:flex-end;margin:6px 0 2px;padding:6px 2px;border:0;background:none;color:var(--brand);font:600 .85rem var(--font-body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .vaciar[hidden]{display:none}
 .vaciar:hover{color:var(--fg)}
+
+/* Diálogo propio para confirmar (vaciar pedido, etc.). En celular sale desde abajo. */
+.confirma{width:min(420px,calc(100vw - 32px));margin:auto;padding:28px 24px 22px;border:0;border-radius:22px;background:var(--surface);color:var(--fg);text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.35);animation:confirma-entra .22s cubic-bezier(.2,.9,.3,1.2)}
+.confirma::backdrop{background:rgba(30,8,10,.55);backdrop-filter:blur(3px);animation:confirma-fondo .2s ease}
+.confirma.saliendo{animation:confirma-sale .16s ease forwards}
+.confirma.saliendo::backdrop{opacity:0;transition:opacity .16s}
+.confirma-ico{width:64px;height:64px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;background:var(--gold-soft);color:var(--gold-ink)}
+.confirma-ico.peligro{background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand)}
+.confirma-ico svg{width:30px;height:30px}
+.confirma h2{font-family:var(--font-display);font-weight:400;font-size:1.7rem;line-height:1.1;margin:0 0 8px}
+.confirma p{margin:0 0 22px;color:var(--muted);line-height:1.45}
+.confirma-btns{display:flex;gap:10px}
+.confirma-btns .btn{flex:1;white-space:normal;line-height:1.15}
+.confirma-no{background:transparent;color:var(--fg);box-shadow:inset 0 0 0 1.5px var(--line)}
+.confirma-no:hover{box-shadow:inset 0 0 0 1.5px var(--fg)}
+.confirma .btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+@keyframes confirma-entra{from{opacity:0;transform:translateY(12px) scale(.96)}}
+@keyframes confirma-sale{to{opacity:0;transform:translateY(8px) scale(.97)}}
+@keyframes confirma-fondo{from{opacity:0}}
+@media (max-width:560px){
+  .confirma{width:100%;max-width:none;margin:auto 0 0;border-radius:22px 22px 0 0;padding:26px 20px calc(20px + env(safe-area-inset-bottom,0px));animation-name:confirma-sube}
+  .confirma.saliendo{animation-name:confirma-baja}
+  .confirma-btns{flex-direction:column-reverse}
+  .confirma-btns .btn{padding:16px}
+}
+@keyframes confirma-sube{from{transform:translateY(100%)}}
+@keyframes confirma-baja{to{transform:translateY(100%)}}
