@@ -4,7 +4,8 @@ import { enlaceWhatsApp } from "./lib/pedido";
 import { iniciarComun } from "./comun";
 import { $ } from "./ui/dom";
 import { iniciarVisor } from "./ui/visor";
-import { iniciarCarrusel, iniciarFotos } from "./ui/galeria";
+import { iniciarCarrusel, iniciarFotos, pintarFotos } from "./ui/galeria";
+import { fotosPlatillos } from "./data/galeria";
 import { iniciarFondoVideo } from "./ui/fondo-video";
 import { iniciarApariciones } from "./ui/aparecer";
 import "./portadas.css";
@@ -44,6 +45,7 @@ $("#cal").innerHTML = temporada.diasEspeciales
 const visor = iniciarVisor();
 const pista = document.querySelector<HTMLElement>("#carrusel");
 if (pista) {
+  pintarFotos(pista, fotosPlatillos.filter((f) => f.carrusel !== false));
   iniciarCarrusel(pista);
   iniciarFotos(visor, pista);
 }
