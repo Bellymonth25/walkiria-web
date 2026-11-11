@@ -1,11 +1,31 @@
-// Fondo de la portada: los videos de cenas navideñas pasan uno tras otro, en orden al azar,
-// con un fundido entre cada uno. Se pausan cuando la portada no se ve.
+// Fondo de la portada: los videos de cenas navideñas pasan uno tras otro, con un fundido entre cada uno.
+// La lista se baraja una vez al abrir la página y se recorre en ese orden: ninguno se repite hasta que
+// han pasado todos. Se pausan cuando la portada no se ve.
 const videos = [1, 3, 4, 5, 6].map((n) => `${import.meta.env.BASE_URL}video/cena-${n}.mp4`);
 
-function siguienteAlAzar(anterior: string | null): string {
-  const opciones = videos.filter((v) => v !== anterior);
-  return opciones[Math.floor(Math.random() * opciones.length)] ?? videos[0]!;
+/** Baraja la lista (Fisher-Yates). */
+function barajar<T>(lista: T[]): T[] {
+  const r = [...lista];
+  for (let i = r.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [r[i], r[j]] = [r[j]!, r[i]!];
+  }
+  return r;
 }
+
+// Cola de reproducción: se recorre en orden y, al terminar, se vuelve a barajar
+// cuidando que el primero de la nueva ronda no sea el último que acaba de pasar.
+let cola: string[] = [];
+function siguienteVideo(): string {
+  if (!cola.length) {
+    const ultimo = anterior;
+    cola = barajar(videos);
+    if (ultimo && cola[0] === ultimo && cola.length > 1) cola.push(cola.shift()!);
+  }
+  anterior = cola.shift()!;
+  return anterior;
+}
+let anterior: string | null = null;
 
 export function iniciarFondoVideo(): void {
   const caja = document.querySelector<HTMLElement>(".hero-fondo");
@@ -30,7 +50,7 @@ export function iniciarFondoVideo(): void {
   const preparar = () => {
     if (preparado) return;
     preparado = true;
-    fuente = siguienteAlAzar(fuente);
+    fuente = siguienteVideo();
     otro.src = fuente;
     otro.preload = "auto";
     otro.load();
@@ -66,7 +86,7 @@ export function iniciarFondoVideo(): void {
     v.addEventListener("ended", () => v === actual && cambiar());
   }
 
-  fuente = siguienteAlAzar(null);
+  fuente = siguienteVideo();
   a.src = fuente;
   a.preload = "auto";
   a.addEventListener("playing", () => a.classList.add("activo"), { once: true });
