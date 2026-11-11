@@ -15,6 +15,8 @@
 .hero-bajar svg{width:22px;height:22px}
 .hero-bajar:hover{border-color:var(--gold);color:var(--gold)}
 @keyframes bajar{50%{transform:translateY(8px)}}
+/* En el celular el texto ocupa más de una pantalla: la flecha va justo debajo de los botones, completa */
+@media (max-width:860px){.hero{flex-direction:column;align-items:stretch}.hero .wrap{padding-bottom:24px}.hero-bajar{position:relative;left:auto;bottom:auto;margin:0 auto 36px;width:52px;height:52px;flex:none}.hero-bajar svg{width:24px;height:24px}}
 
 /* Barra de arriba en el inicio: transparente sobre el video, sin logo (ya está grande en la portada).
    Al bajar se vuelve sólida y aparece el logo. */

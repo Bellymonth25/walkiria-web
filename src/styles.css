@@ -407,8 +407,8 @@ button.cal-day:hover{border-color:var(--primary)}
 .volante-btns{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 14px}
 .volante-btns .btn-ghost{color:var(--fg)}
 .volante-mini{position:relative;display:block;padding:0;border:0;background:none;cursor:zoom-in;border-radius:10px;overflow:hidden;
-  box-shadow:0 18px 40px rgba(0,0,0,.22),0 0 0 1px var(--line);transform:rotate(-1deg);transition:transform .25s ease,box-shadow .25s ease}
-.volante-mini:hover,.volante-mini:focus-visible{transform:rotate(0) scale(1.01);box-shadow:0 24px 50px rgba(0,0,0,.28),0 0 0 1px var(--line)}
+  box-shadow:0 18px 40px rgba(0,0,0,.22),0 0 0 1px var(--line);transition:transform .25s ease,box-shadow .25s ease}
+.volante-mini:hover,.volante-mini:focus-visible{transform:scale(1.03);box-shadow:0 24px 50px rgba(0,0,0,.28),0 0 0 1px var(--line)}
 .volante-mini img{display:block;width:100%;height:auto}
 .volante-lupa{position:absolute;right:12px;bottom:12px;background:rgba(20,10,10,.78);color:#fff;font:600 .85rem var(--font-body);padding:8px 12px;border-radius:999px}
 @media (max-width:760px){
