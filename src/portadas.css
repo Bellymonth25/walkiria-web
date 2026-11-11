@@ -41,6 +41,10 @@
 .carrusel .gal-foto{flex:none;height:clamp(260px,32vw,420px);aspect-ratio:auto;border-radius:28px;translate:none;display:flex;align-items:flex-end;outline:0;
   transition:width .55s cubic-bezier(.2,0,0,1),filter .3s;box-shadow:none}
 .carrusel .gal-foto::after{display:none}
+/* La foto mide siempre lo de una grande y queda centrada: al achicarse el recuadro solo se recorta */
+.carrusel .gal-foto.con-foto{background-image:none!important}
+.carrusel .gal-foto.con-foto::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:var(--ancho-grande,300px);transform:translateX(-50%);background:var(--foto) center/cover no-repeat}
+.carrusel .gal-foto .gal-nombre{position:relative;z-index:1}
 .carrusel .gal-foto:hover,.carrusel .gal-foto:focus-visible{transform:none;animation:none;box-shadow:none}
 .carrusel .gal-foto[data-tam="grande"]:hover{filter:brightness(1.06)}
 .carrusel .gal-foto:not([data-tam="grande"]){cursor:pointer}

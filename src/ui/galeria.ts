@@ -49,6 +49,7 @@ export function pintarFotos(caja: HTMLElement, fotos: FotoGaleria[]): void {
         b.dataset.gal = f.id;
         b.dataset.nombre = f.nombre;
         b.dataset.forma = f.forma;
+        if (f.ancha) b.dataset.ancha = "";
         b.setAttribute("aria-label", `Ver foto de ${f.nombre} en grande`);
         const n = document.createElement("span");
         n.className = "gal-nombre";

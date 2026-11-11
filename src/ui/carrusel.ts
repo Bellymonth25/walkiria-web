@@ -1,5 +1,6 @@
 /**
- * Carrusel al estilo Material 3 ("multi-browse"): unas fotos grandes, una mediana y una chica a cada orilla.
+ * Carrusel al estilo Material 3 ("multi-browse"): fotos grandes al inicio, luego una mediana y una chica.
+ * Como pide Material, la foto no se encoge: se recorta (máscara) cuando su recuadro se hace chico.
  * Avanza solo cada pocos segundos; se pausa con el mouse encima. En celular se desliza con el dedo.
  * Al picar una foto chica o mediana, el carrusel avanza hasta ella; al picar una grande se abre en el visor.
  */
@@ -29,10 +30,11 @@ export function iniciarCarrusel(caja: HTMLElement, pista: HTMLElement): void {
   const medir = () => {
     const ancho = caja.clientWidth;
     grandes = ancho >= 1000 ? 3 : ancho >= 620 ? 2 : 1;
-    const chica = ancho < 620 ? 36 : 56;
+    const chica = ancho < 620 ? 40 : 56;
     const factorMediana = grandes === 1 ? 0.42 : 0.55;
-    const grande = (ancho - 2 * chica - (grandes + 2) * ESPACIO) / (grandes + factorMediana);
+    const grande = (ancho - chica - (grandes + 1) * ESPACIO) / (grandes + factorMediana);
     anchos = { chica, mediana: grande * factorMediana, grande };
+    caja.style.setProperty("--ancho-grande", `${grande}px`);
   };
 
   const pintar = (animar = true) => {
@@ -45,7 +47,7 @@ export function iniciarCarrusel(caja: HTMLElement, pista: HTMLElement): void {
       else if (d === grandes) tam = "mediana";
       f.style.width = `${anchos[tam]}px`;
       f.dataset.tam = tam;
-      if (i < actual - 1) x += anchos.chica + ESPACIO;
+      if (i < actual) x += anchos.chica + ESPACIO;
     });
     pista.style.transform = `translateX(${-x}px)`;
     if (!animar) void pista.offsetWidth;

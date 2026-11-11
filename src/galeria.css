@@ -9,10 +9,11 @@
 @media (max-width:600px){.gal-rejilla{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
 
 /* Cuadrícula de tarjetas escalonada (como las colecciones de tarjetas de Material 3):
-   columnas parejas; las fotos verticales miden dos filas y las horizontales una. */
-.gal-rejilla.mosaico{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:clamp(120px,13vw,180px);grid-auto-flow:dense;gap:10px}
+   tres columnas parejas; las fotos verticales miden dos filas, las horizontales una y las anchas dos columnas. */
+.gal-rejilla.mosaico{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:clamp(150px,17vw,240px);grid-auto-flow:dense;gap:12px}
 .mosaico .gal-foto{aspect-ratio:auto;translate:none;border-radius:20px;outline:0;box-shadow:none;background-image:none!important}
 .mosaico .gal-foto[data-forma="v"]{grid-row:span 2}
+.mosaico .gal-foto[data-ancha]{grid-column:span 2}
 /* La foto va en una capa propia para acercarla poquito con el mouse, sin mover la tarjeta */
 .mosaico .gal-foto.con-foto::before{content:"";position:absolute;inset:0;background:var(--foto) center/cover no-repeat;transition:transform .6s cubic-bezier(.2,0,0,1),filter .6s}
 .mosaico .gal-foto .gal-nombre{position:relative;z-index:1;width:100%;font-size:.9rem;padding:30px 14px 12px}
