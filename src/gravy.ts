@@ -47,7 +47,7 @@ const PASOS: Paso[] = [
       ["Pavo de menos de 7 kg", "35 minutos, voltear y bañar, y otros 35 minutos."],
       ["Pavo de más de 7 kg", "45 minutos, voltear y bañar, y otros 45 minutos."],
       ["Lomo o costilla en trozo", "1 hora, volteando cada 30 minutos."],
-      ["Lomo o costilla rebanado", "20 minutos."],
+      ["Lomo o costilla rebanado", "30 a 40 minutos."],
     ],
     dura: 14,
   },
