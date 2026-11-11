@@ -4,11 +4,11 @@ import { enlaceWhatsApp } from "./lib/pedido";
 import { iniciarComun } from "./comun";
 import { $ } from "./ui/dom";
 import { iniciarVisor } from "./ui/visor";
-import { iniciarCarrusel, iniciarFotos } from "./ui/galeria";
+import { iniciarCarrusel, iniciarFotos, pintarFotos } from "./ui/galeria";
+import { fotosPlatillos } from "./data/galeria";
 import { iniciarFondoVideo } from "./ui/fondo-video";
 import { iniciarApariciones } from "./ui/aparecer";
 import "./portadas.css";
-import "./encabezados.css";
 
 // Medio árbol (24) y estrella de Belén (31) de fondo en la tarjeta, cortados por la orilla derecha.
 const ICONO_ARBOL = `<svg class="day-ico arbol" viewBox="0 0 80 120" aria-hidden="true"><path d="M40 6c4 10 12 18 20 22-4 1-8 1-12 0 7 10 15 17 24 21-6 2-13 2-19 0 8 11 17 19 27 23-12 4-27 5-40 5s-28-1-40-5c10-4 19-12 27-23-6 2-13 2-19 0 9-4 17-11 24-21-4 1-8 1-12 0 8-4 16-12 20-22Z" fill="currentColor"/><rect x="34" y="78" width="12" height="16" rx="2" fill="currentColor"/><path d="m40 0 2.4 5 5.4.6-4 3.7 1.1 5.4L40 12l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6Z" fill="currentColor"/></svg>`;
@@ -45,6 +45,7 @@ $("#cal").innerHTML = temporada.diasEspeciales
 const visor = iniciarVisor();
 const pista = document.querySelector<HTMLElement>("#carrusel");
 if (pista) {
+  pintarFotos(pista, fotosPlatillos.filter((f) => f.carrusel !== false));
   iniciarCarrusel(pista);
   iniciarFotos(visor, pista);
 }
@@ -54,7 +55,7 @@ const abrirVolante = () =>
   visor.abrir([
     {
       titulo: `Menú ${temporada.anio}`,
-      alt: `Volante Cenas de fin de año ${temporada.anio} de La Walkiria`,
+      alt: `Volante Cenas de Fin de Año ${temporada.anio} de La Walkiria`,
       media: `${base}volante-2600.webp`,
       grande: `${base}volante-walkiria-2026.png`,
       descargas: [
@@ -90,16 +91,3 @@ if (barra && portadaEl) {
   }, { passive: true });
   revisar();
 }
-
-// ?titulo=1..6 cambia el texto principal de la portada, para compararlos. 1 es el de siempre.
-const TITULOS = [
-  "La cena de Navidad, <em>hecha en casa</em> como la de la abuela.",
-  "La cena de Navidad con <em>el sazón de la abuela.</em>",
-  "La cena de Navidad que <em>sabe a casa</em> de la abuela.",
-  "La receta de la abuela, <em>lista para tu mesa</em> de Navidad.",
-  "Como la cena de la abuela, <em>sin que nadie</em> se quede en la cocina.",
-  "Esta Navidad, la cena <em>sabe a la de la abuela.</em>",
-];
-const titulo = Number(new URLSearchParams(location.search).get("titulo"));
-const h1 = document.querySelector<HTMLElement>(".hero h1");
-if (h1 && titulo >= 2 && titulo <= TITULOS.length) h1.innerHTML = TITULOS[titulo - 1]!;

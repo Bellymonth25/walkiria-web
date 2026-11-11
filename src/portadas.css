@@ -48,8 +48,7 @@
 .ver-todas a{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:1.35rem;color:var(--brand);text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:7px}
 .ver-todas a span{color:var(--gold);transition:transform .25s}
 .ver-todas a:hover span{transform:translateX(5px)}
-/* Sin animaciones: el carrusel se recorre deslizando */
-@media (prefers-reduced-motion:reduce){.carrusel{overflow-x:auto}}
+
 /* Celular: logo, título, texto, botones y flecha caben en la primera pantalla.
    Los tamaños se ajustan al alto de la pantalla para que también quepa en celulares bajitos. */
 @media (max-width:600px){

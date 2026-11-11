@@ -1,4 +1,5 @@
 import type { Visor } from "./visor";
+import type { FotoGaleria } from "../data/galeria";
 
 /**
  * Fotos de la galería: cada recuadro [data-gal] muestra public/img/galeria/<id>.jpg.
@@ -34,6 +35,27 @@ export function iniciarFotos(visor: Visor, grupo: ParentNode): void {
   });
 }
 
+/** Pinta un recuadro por foto disponible dentro de `caja`. */
+export function pintarFotos(caja: HTMLElement, fotos: FotoGaleria[]): void {
+  caja.replaceChildren(
+    ...fotos
+      .filter((f) => f.disponible !== false)
+      .map((f) => {
+        const b = document.createElement("button");
+        b.className = "gal-foto";
+        b.type = "button";
+        b.dataset.gal = f.id;
+        b.dataset.nombre = f.nombre;
+        b.setAttribute("aria-label", `Ver foto de ${f.nombre} en grande`);
+        const n = document.createElement("span");
+        n.className = "gal-nombre";
+        n.textContent = f.nombre;
+        b.append(n);
+        return b;
+      }),
+  );
+}
+
 /** Carrusel que corre solo: se duplican las fotos para que la vuelta no se note. */
 export function iniciarCarrusel(pista: HTMLElement): void {
   const originales = [...pista.children] as HTMLElement[];
@@ -44,4 +66,6 @@ export function iniciarCarrusel(pista: HTMLElement): void {
     copia.tabIndex = -1;
     pista.append(copia);
   }
+  // Misma velocidad sin importar cuántas fotos haya.
+  pista.style.animationDuration = `${originales.length * 7}s`;
 }
