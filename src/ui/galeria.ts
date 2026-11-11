@@ -49,7 +49,6 @@ export function pintarFotos(caja: HTMLElement, fotos: FotoGaleria[]): void {
         b.dataset.gal = f.id;
         b.dataset.nombre = f.nombre;
         b.dataset.forma = f.forma;
-        if (f.destacada) b.dataset.destacada = "";
         b.setAttribute("aria-label", `Ver foto de ${f.nombre} en grande`);
         const n = document.createElement("span");
         n.className = "gal-nombre";
@@ -58,18 +57,4 @@ export function pintarFotos(caja: HTMLElement, fotos: FotoGaleria[]): void {
         return b;
       }),
   );
-}
-
-/** Carrusel que corre solo: se duplican las fotos para que la vuelta no se note. */
-export function iniciarCarrusel(pista: HTMLElement): void {
-  const originales = [...pista.children] as HTMLElement[];
-  for (const el of originales) {
-    const copia = el.cloneNode(true) as HTMLElement;
-    copia.setAttribute("data-copia", "");
-    copia.setAttribute("aria-hidden", "true");
-    copia.tabIndex = -1;
-    pista.append(copia);
-  }
-  // Misma velocidad sin importar cuántas fotos haya.
-  pista.style.animationDuration = `${originales.length * 7}s`;
 }

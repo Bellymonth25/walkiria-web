@@ -40,7 +40,7 @@ html{scroll-behavior:smooth}
 /* "Reducir movimiento" (Windows: Efectos de animación apagados) quita las animaciones de la página.
    La explicación del gravy es la excepción: el cliente la pide con "Ver explicación". */
 /* Con "menos movimiento" se apagan las animaciones, menos la escena del gravy, el carrusel y los videos de la portada */
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}:not(.expl-escena *):not(.carrusel-pista):not(.hero-fondo video),:not(.expl-escena *)::before,:not(.expl-escena *)::after{transition:none!important;animation:none!important}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}:not(.expl-escena *):not(.carrusel-pista):not(.carrusel-pista *):not(.hero-fondo video),:not(.expl-escena *)::before,:not(.expl-escena *)::after{transition:none!important;animation:none!important}}
 body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--hero)}
 .wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}

@@ -35,21 +35,26 @@
 .galeria-sec .sec-head{text-align:center;justify-content:center}
 .galeria-sec .sec-head p{margin-inline:auto}
 .galeria-sec .eyebrow{color:var(--gold-ink)}
-.carrusel{overflow:hidden;padding-block:34px 64px;margin-inline:calc(50% - 50vw);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
-.carrusel-pista{display:flex;width:max-content;animation:carrusel 46s linear infinite}
-/* Se detiene con el mouse encima o al recorrerlo con el teclado (no se queda detenido al cerrar el visor) */
-@media (hover:hover){.carrusel:hover .carrusel-pista{animation-play-state:paused}}
-.carrusel:has(:focus-visible) .carrusel-pista{animation-play-state:paused}
-@keyframes carrusel{to{transform:translateX(-50%)}}
-.carrusel .gal-foto{flex:none;width:clamp(190px,21vw,290px);aspect-ratio:4/5;margin-right:20px;translate:none;display:flex;align-items:flex-end;transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s}
+.carrusel{overflow:hidden;margin-top:26px;touch-action:pan-y;user-select:none}
+.carrusel-pista{display:flex;gap:8px;transition:transform .55s cubic-bezier(.2,0,0,1)}
+.carrusel-pista.sin-animar,.carrusel-pista.sin-animar .gal-foto{transition:none!important}
+.carrusel .gal-foto{flex:none;height:clamp(260px,32vw,420px);aspect-ratio:auto;border-radius:28px;translate:none;display:flex;align-items:flex-end;outline:0;
+  transition:width .55s cubic-bezier(.2,0,0,1),filter .3s;box-shadow:none}
 .carrusel .gal-foto::after{display:none}
-.carrusel .gal-foto:hover,.carrusel .gal-foto:focus-visible{transform:scale(1.12);animation:none;z-index:2;box-shadow:0 16px 32px -8px rgba(0,0,0,.28)}
-.carrusel .gal-foto.con-foto{box-shadow:0 10px 22px -6px rgba(0,0,0,.2)}
-.carrusel .gal-foto.con-foto:hover,.carrusel .gal-foto.con-foto:focus-visible{box-shadow:0 16px 32px -8px rgba(0,0,0,.28)}
-.ver-todas{text-align:center;margin:-22px 0 0;position:relative}
-.ver-todas a{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:1.35rem;color:var(--brand);text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:7px}
-.ver-todas a span{color:var(--gold);transition:transform .25s}
-.ver-todas a:hover span{transform:translateX(5px)}
+.carrusel .gal-foto:hover,.carrusel .gal-foto:focus-visible{transform:none;animation:none;box-shadow:none}
+.carrusel .gal-foto[data-tam="grande"]:hover{filter:brightness(1.06)}
+.carrusel .gal-foto:not([data-tam="grande"]){cursor:pointer}
+.carrusel .gal-foto .gal-nombre{width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:40px 18px 16px;transition:opacity .3s}
+.carrusel .gal-foto:not([data-tam="grande"]) .gal-nombre{opacity:0}
+.carrusel-pie{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px}
+.ver-todas{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:1.25rem;color:var(--brand);text-decoration:none}
+.ver-todas .vt-txt{text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:7px}
+.ver-todas span:last-child{color:var(--gold);transition:transform .25s}
+.ver-todas:hover span:last-child{transform:translateX(5px)}
+.carrusel-flechas{display:flex;gap:8px}
+.carrusel-flechas button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:1.5rem;line-height:1;cursor:pointer;display:grid;place-items:center;transition:background .2s,border-color .2s}
+.carrusel-flechas button:hover{border-color:var(--gold);background:var(--surface-2)}
+@media (max-width:600px){.carrusel .gal-foto{height:300px}.carrusel .gal-foto .gal-nombre{padding:34px 14px 14px;font-size:.9rem}}
 
 /* Celular: logo, título, texto, botones y flecha caben en la primera pantalla.
    Los tamaños se ajustan al alto de la pantalla para que también quepa en celulares bajitos. */

@@ -8,19 +8,24 @@
 .gal-rejilla .gal-foto::after{display:none}
 @media (max-width:600px){.gal-rejilla{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
 
-/* Mosaico: las fotos verticales ocupan dos filas, las horizontales dos columnas
-   y las destacadas un cuadro grande; el hueco que queda lo llena la siguiente foto que quepa. */
-.gal-rejilla.mosaico{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:clamp(130px,15vw,200px);grid-auto-flow:dense;gap:14px}
-.mosaico .gal-foto{aspect-ratio:auto;translate:none;box-shadow:0 8px 22px -6px rgba(0,0,0,.28);background-image:none!important}
+/* Cuadrícula de tarjetas escalonada (como las colecciones de tarjetas de Material 3):
+   columnas parejas; las fotos verticales miden dos filas y las horizontales una. */
+.gal-rejilla.mosaico{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:clamp(120px,13vw,180px);grid-auto-flow:dense;gap:10px}
+.mosaico .gal-foto{aspect-ratio:auto;translate:none;border-radius:20px;outline:0;box-shadow:none;background-image:none!important}
 .mosaico .gal-foto[data-forma="v"]{grid-row:span 2}
-.mosaico .gal-foto[data-forma="h"]{grid-column:span 2}
-.mosaico .gal-foto[data-destacada]{grid-column:span 2;grid-row:span 2}
-/* La foto va en una capa propia para acercarla poquito con el mouse, sin mover el recuadro */
-.mosaico .gal-foto.con-foto::before{content:"";position:absolute;inset:0;background:var(--foto) center/cover no-repeat;transition:transform .6s cubic-bezier(.2,.7,.2,1),filter .6s}
-.mosaico .gal-foto .gal-nombre{position:relative;z-index:1;width:100%;transition:padding .35s}
-/* Hover discreto: la foto se acerca un poco y se aclara; el marco dorado se marca */
-.mosaico .gal-foto:hover,.mosaico .gal-foto:focus-visible{transform:none;animation:none;box-shadow:0 8px 22px -6px rgba(0,0,0,.28);outline-color:var(--gold)}
+/* La foto va en una capa propia para acercarla poquito con el mouse, sin mover la tarjeta */
+.mosaico .gal-foto.con-foto::before{content:"";position:absolute;inset:0;background:var(--foto) center/cover no-repeat;transition:transform .6s cubic-bezier(.2,0,0,1),filter .6s}
+.mosaico .gal-foto .gal-nombre{position:relative;z-index:1;width:100%;font-size:.9rem;padding:30px 14px 12px}
+.mosaico .gal-foto:hover,.mosaico .gal-foto:focus-visible{transform:none;animation:none;box-shadow:none}
 .mosaico .gal-foto:hover::before,.mosaico .gal-foto:focus-visible::before{transform:scale(1.04);filter:brightness(1.06)}
-.mosaico .gal-foto:hover .gal-nombre{padding-bottom:16px}
-.mosaico .gal-foto[data-destacada] .gal-nombre{font-size:1.15rem}
-@media (max-width:760px){.gal-rejilla.mosaico{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:clamp(120px,30vw,170px);gap:10px}}
+.mosaico .gal-foto:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.gal-mas{display:none}
+@media (max-width:760px){
+  .gal-rejilla.mosaico{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:clamp(110px,30vw,150px);gap:8px}
+  /* En celular se ven solo las primeras fotos, con un degradado y el botón para ver las demás */
+  .gal-plegable{position:relative}
+  .gal-plegable.plegada .mosaico .gal-foto:nth-child(n+9){display:none}
+  .gal-plegable.plegada::after{content:"";position:absolute;left:0;right:0;bottom:56px;height:170px;background:linear-gradient(transparent,var(--bg));pointer-events:none}
+  .gal-plegable .gal-mas{display:flex;margin:14px auto 0;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 .95rem var(--font-body);padding:11px 20px;border-radius:999px;cursor:pointer;position:relative;z-index:1}
+  .gal-plegable:not(.plegada) .gal-mas{display:none}
+}
