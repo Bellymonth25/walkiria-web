@@ -23,6 +23,7 @@ export const fotosPlatillos: FotoGaleria[] = [
   { id: "lomo-a-la-espinaca", nombre: "Lomo a la espinaca" },
   { id: "lechon", nombre: "Lechón" },
   { id: "codornices", nombre: "Codornices" },
+  { id: "bacalao", nombre: "Bacalao" },
   { id: "romeritos", nombre: "Romeritos" },
   { id: "relleno", nombre: "Relleno tradicional" },
   { id: "ensalada-de-manzana", nombre: "Ensalada de manzana" },
