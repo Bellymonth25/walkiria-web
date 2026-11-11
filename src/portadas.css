@@ -15,6 +15,8 @@
 .hero-bajar svg{width:22px;height:22px}
 .hero-bajar:hover{border-color:var(--gold);color:var(--gold)}
 @keyframes bajar{50%{transform:translateY(8px)}}
+/* En el celular el texto ocupa más de una pantalla: la flecha va justo debajo de los botones, completa */
+@media (max-width:860px){.hero{flex-direction:column;align-items:stretch}.hero .wrap{padding-bottom:24px}.hero-bajar{position:relative;left:auto;bottom:auto;margin:0 auto 36px;width:52px;height:52px;flex:none}.hero-bajar svg{width:24px;height:24px}}
 
 /* Barra de arriba en el inicio: transparente sobre el video, sin logo (ya está grande en la portada).
    Al bajar se vuelve sólida y aparece el logo. */
@@ -48,3 +50,15 @@
 .ver-todas a:hover span{transform:translateX(5px)}
 /* Sin animaciones: el carrusel se recorre deslizando */
 @media (prefers-reduced-motion:reduce){.carrusel{overflow-x:auto}}
+/* Celular: logo, título, texto, botones y flecha caben en la primera pantalla.
+   Los tamaños se ajustan al alto de la pantalla para que también quepa en celulares bajitos. */
+@media (max-width:600px){
+  .hero .wrap{flex:1;align-content:center;padding-top:calc(var(--alto-top,72px) + 1.5svh);padding-bottom:1svh}
+  .hero-texto{min-height:0}
+  .hero-logo{width:auto;height:clamp(64px,13svh,124px);margin-bottom:0}
+  .hero .eyebrow{font-size:.66rem;margin-top:1.2svh}
+  .hero h1{font-size:clamp(1.8rem,5.4svh,2.7rem);line-height:1.04;margin-top:1svh}
+  .hero p.lead{font-size:clamp(.86rem,2.3svh,1.02rem);line-height:1.45;margin:1.6svh auto 2.2svh}
+  .hero-ctas .btn{padding-block:clamp(10px,1.7svh,14px)}
+  .hero-bajar{width:46px;height:46px;margin:0 auto 2.4svh}
+}

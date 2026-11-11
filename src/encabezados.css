@@ -9,3 +9,8 @@
 .top[data-encabezado="4"] .nav a{background:none!important;letter-spacing:.06em;text-transform:uppercase;font-size:.8rem;font-weight:600}
 .top[data-encabezado="4"] .nav a[aria-current="page"]{color:var(--gold)}
 .top[data-encabezado="4"] .nav a[aria-current="page"]::after{left:22%;right:22%;width:auto;height:2px;margin:0;border-radius:2px;bottom:0}
+/* Celular: las cuatro opciones caben siempre en una línea, aunque la pantalla sea muy angosta */
+@media (max-width:760px){
+  .top[data-encabezado="4"] .nav{justify-content:space-evenly;gap:0}
+  .top[data-encabezado="4"] .nav a{padding:7px clamp(4px,1.6vw,14px);font-size:clamp(.64rem,3.05vw,.8rem);letter-spacing:clamp(.01em,.25vw,.06em)}
+}
