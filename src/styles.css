@@ -641,7 +641,8 @@ button.cal-day:hover{border-color:var(--primary)}
 .hero[data-mascara="1"]{--m:70%}
 .hero[data-mascara="2"]{--m:78%}
 .hero[data-mascara="4"]{--m:91%}
-.hero-fondo::after{content:"";position:absolute;inset:0;z-index:2;transform:translateZ(0);background:color-mix(in srgb,var(--hero) var(--m),transparent)}
+/* La máscara usa siempre el rojo del tema oscuro: deja ver mejor el video en los dos temas. */
+.hero-fondo::after{content:"";position:absolute;inset:0;z-index:2;transform:translateZ(0);background:color-mix(in srgb,#3A0D10 var(--m),transparent)}
 /* Un poco de sombra para que el texto se lea sobre el video */
 .hero-texto{text-shadow:0 2px 14px rgba(0,0,0,.35)}
 .hero-texto .eyebrow{text-shadow:0 1px 6px rgba(0,0,0,.6)}
