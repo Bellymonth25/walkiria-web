@@ -17,6 +17,7 @@ import { pintarCalendario, rangoMeses } from "./ui/calendario";
 import { iniciarHoja } from "./ui/hoja";
 import { iniciarCalculadora, type Agregado } from "./ui/calculadora";
 import { iniciarComun } from "./comun";
+import { confirmar } from "./ui/confirmar";
 
 // ---------- Estado ----------
 const pedido: Pedido = {
@@ -253,6 +254,26 @@ function agregarDeCalculadora(items: readonly Agregado[], personas: number): voi
   $("#precios").scrollIntoView({ behavior: "smooth" });
 }
 
+/** Empezar de cero: se quitan todos los productos. Nombre, fecha y dirección se quedan. */
+async function vaciarPedido(): Promise<void> {
+  const n = Object.keys(pedido.lineas).length;
+  const ok = await confirmar({
+    titulo: "¿Vaciar tu pedido?",
+    texto: `Se quitan ${n === 1 ? "el producto" : `los ${n} productos`} de tu pedido. Tu nombre, fecha y dirección se quedan.`,
+    si: "Sí, vaciar",
+    no: "No, conservarlo",
+    peligro: true,
+  });
+  if (!ok) return;
+  pedido.lineas = {};
+  sugerido = null;
+  for (const k of Object.keys(siguiente)) delete siguiente[k];
+  abiertos.clear();
+  pintarMenu(vista());
+  pintarPedido();
+  aviso("Listo, tu pedido quedó vacío.");
+}
+
 /** Resta del pedido solo lo que sumó la calculadora. */
 function quitarSugerido(): void {
   if (!sugerido) return;
@@ -306,15 +327,7 @@ document.addEventListener("click", (e) => {
       repintar(p.id);
     } else agregar(pid, version);
   } else if (t.id === "vaciar") {
-    // Empezar de cero: se quitan todos los productos. Nombre, fecha y dirección se quedan.
-    if (!confirm("¿Vaciar tu pedido? Se quitan todos los productos.")) return;
-    pedido.lineas = {};
-    sugerido = null;
-    for (const k of Object.keys(siguiente)) delete siguiente[k];
-    abiertos.clear();
-    pintarMenu(vista());
-    pintarPedido();
-    aviso("Listo, tu pedido quedó vacío.");
+    void vaciarPedido();
   } else if (t.id === "calcRetirar") {
     quitarSugerido();
     pintarMenu(vista());
