@@ -95,3 +95,34 @@ if (portada && /^[2-6]$/.test(portada)) {
   if (portada === "2") document.querySelector<HTMLElement>("#galeria")?.removeAttribute("data-estilo");
 }
 iniciarFondoVideo();
+
+// La barra de arriba es transparente sobre la portada y se vuelve sólida (con logo) al bajar.
+const barra = document.querySelector<HTMLElement>("header.top-video");
+const portadaEl = document.querySelector<HTMLElement>(".hero");
+if (barra && portadaEl) {
+  let pendiente = false;
+  const revisar = () => {
+    pendiente = false;
+    barra.classList.toggle("solida", window.scrollY > portadaEl.offsetHeight - barra.offsetHeight * 2);
+  };
+  window.addEventListener("scroll", () => {
+    if (!pendiente) {
+      pendiente = true;
+      requestAnimationFrame(revisar);
+    }
+  }, { passive: true });
+  revisar();
+}
+
+// ?titulo=1..6 cambia el texto principal de la portada, para compararlos. 1 es el de siempre.
+const TITULOS = [
+  "La cena de Navidad, <em>hecha en casa</em> y por kilo.",
+  "La cena de Navidad, <em>hecha en casa.</em>",
+  "La cena de Navidad, <em>hecha en casa.</em> Tú solo pon la mesa.",
+  "La cena de Navidad, <em>hecha en casa</em> y lista para servir.",
+  "La cena de Navidad, <em>hecha en casa</em> a la medida de tu familia.",
+  "La cena de Navidad, <em>hecha en casa</em> como la de la abuela.",
+];
+const titulo = Number(new URLSearchParams(location.search).get("titulo"));
+const h1 = document.querySelector<HTMLElement>(".hero h1");
+if (h1 && titulo >= 2 && titulo <= TITULOS.length) h1.innerHTML = TITULOS[titulo - 1]!;

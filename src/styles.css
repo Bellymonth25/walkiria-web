@@ -471,6 +471,21 @@ button.cal-day:hover{border-color:var(--primary)}
   .nav{order:5;width:100%;margin:0;gap:0;justify-content:space-between}
   .nav a{flex:1;text-align:center;padding:8px 4px;border-radius:0}
 }
+/* Barra de arriba más limpia: pestaña activa como píldora, tema con un solo ícono y WhatsApp como botón redondo */
+.nav{gap:4px}
+.nav a{border-radius:999px;padding:8px 14px}
+.nav a+a::before{display:none}
+.nav a[aria-current="page"]{box-shadow:none;background:color-mix(in srgb,var(--hero-fg) 14%,transparent);color:var(--hero-fg)}
+.nav a[aria-current="page"]::after{content:"";position:absolute;left:50%;bottom:3px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--gold)}
+.theme-toggle{width:40px;height:40px;border-radius:50%;padding:0;justify-content:center;border-color:transparent;background:color-mix(in srgb,var(--hero-fg) 10%,transparent)}
+.theme-toggle:hover{background:color-mix(in srgb,var(--hero-fg) 20%,transparent)}
+.theme-toggle .knob{display:none}
+.theme-toggle svg{width:19px;height:19px;opacity:1}
+.theme-toggle[aria-checked="false"] .sun,.theme-toggle[aria-checked="true"] .moon{display:none}
+.top .btn-wa{width:40px;height:40px;padding:0;border-radius:50%}
+.top .btn-wa .wa-ico{width:21px;height:21px}
+.wa-txt{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media (max-width:760px){.nav{justify-content:center;gap:6px}.nav a{flex:none;border-radius:999px;white-space:nowrap;padding:7px 14px;font-size:.92rem}}
 .sec-head h1{font-size:clamp(2rem,4vw,2.8rem)}
 
 /* Inicio: galería a la izquierda, título a la derecha */
