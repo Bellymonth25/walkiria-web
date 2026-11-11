@@ -724,3 +724,5 @@ button.cal-day:hover{border-color:var(--primary)}
 .vaciar{align-self:flex-end;margin:6px 0 2px;padding:6px 2px;border:0;background:none;color:var(--brand);font:600 .85rem var(--font-body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .vaciar[hidden]{display:none}
 .vaciar:hover{color:var(--fg)}
+/* Menú en celulares angostos: las opciones se achican un poco en lugar de salirse de la pantalla */
+@media (max-width:760px){.nav a{padding-inline:clamp(6px,2.6vw,14px);font-size:clamp(.8rem,3.6vw,.92rem)}}
