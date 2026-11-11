@@ -1,4 +1,5 @@
 import "./styles.css";
+import "./encabezados.css";
 import { maquila, negocio, temporada } from "./data/temporada";
 import { dinero } from "./lib/formato";
 import { enlaceWhatsApp } from "./lib/pedido";

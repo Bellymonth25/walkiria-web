@@ -12,9 +12,10 @@ export function iniciarFondoVideo(): void {
   if (!caja) return;
   caja.style.backgroundImage = `url("${import.meta.env.BASE_URL}video/cena-poster.jpg")`;
 
-  const sinMovimiento = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Los videos corren aunque la computadora tenga desactivadas las animaciones
+  // (Windows y Chrome lo piden así a menudo sin que el visitante lo sepa). Solo se omiten con ahorro de datos.
   const ahorroDatos = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
-  if (sinMovimiento || ahorroDatos) return;
+  if (ahorroDatos) return;
 
   const [a, b] = [...caja.querySelectorAll("video")];
   if (!a || !b) return;
