@@ -47,7 +47,7 @@ const PASOS: Paso[] = [
       ["Pavo de menos de 7 kg", "35 minutos, voltear y bañar, y otros 35 minutos."],
       ["Pavo de más de 7 kg", "45 minutos, voltear y bañar, y otros 45 minutos."],
       ["Lomo o costilla en trozo", "1 hora, volteando cada 30 minutos."],
-      ["Lomo o costilla rebanado", "20 minutos."],
+      ["Lomo o costilla rebanado", "30 a 40 minutos."],
     ],
     dura: 14,
   },
@@ -93,6 +93,18 @@ function ajustarArbol(): void {
   ajustar();
   if ("ResizeObserver" in window) new ResizeObserver(ajustar).observe(escena);
   else addEventListener("resize", ajustar);
+}
+
+/** Arranca desde cero las animaciones de la escena que se acaba de mostrar, en cualquier navegador. */
+function reiniciarEscena(n: number): void {
+  requestAnimationFrame(() => {
+    const esc = document.querySelector(`.esc[data-esc="${n}"]`);
+    esc?.querySelectorAll<SVGElement>("*").forEach((el) =>
+      el.getAnimations?.().forEach((a) => {
+        a.currentTime = 0;
+      }),
+    );
+  });
 }
 
 function iniciarExplicacion(): void {
@@ -142,6 +154,7 @@ function iniciarExplicacion(): void {
     if (caja.dataset.estado === "fin") caja.dataset.estado = "pausa";
     const p = PASOS[actual]!;
     caja.dataset.paso = String(actual);
+    reiniciarEscena(actual);
     paso.textContent = p.titulo;
     texto.textContent = p.texto;
     datos.hidden = !p.datos;
