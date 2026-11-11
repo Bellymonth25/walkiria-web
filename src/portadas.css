@@ -1,74 +1,20 @@
-/* Diseños de portada para comparar con ?portada=1..6 en la dirección.
-   1 = arcos (el de siempre), 2 = rectángulos escalonados. Del 3 al 6 son "limpios": sin fotos,
-   el video de fondo es el protagonista. */
-
-/* Piezas que solo usan algunos diseños */
-.hero-datos,.hero-cinta,.hero-bajar{display:none}
-
-.hero[data-portada="3"] .galeria,.hero[data-portada="4"] .galeria,
-.hero[data-portada="5"] .galeria,.hero[data-portada="6"] .galeria{display:none}
-.hero[data-portada="3"] .wrap,.hero[data-portada="4"] .wrap,
-.hero[data-portada="5"] .wrap,.hero[data-portada="6"] .wrap{grid-template-columns:1fr}
+/* Portada del inicio: todo al centro sobre el video, con una flecha para bajar. */
+.hero .wrap{grid-template-columns:1fr}
+.hero-texto{text-align:center;align-items:center;max-width:900px;margin-inline:auto}
+.hero-logo{margin-inline:auto}
+.hero .lead{margin-inline:auto;max-width:44ch}
+.hero-ctas{justify-content:center}
+.hero h1{font-size:clamp(2.8rem,6.4vw,5.4rem)}
+/* Logo: grande en computadora y tableta, normal en celular */
+.hero-logo{width:clamp(180px,26vw,230px)}
+@media (min-width:861px){.hero-logo{width:clamp(190px,17vw,260px);margin-bottom:18px}}
+@media (max-width:600px){.hero-logo{width:132px}}
 
 /* Flecha para bajar */
-.hero-bajar{position:absolute;left:50%;bottom:26px;z-index:2;width:46px;height:46px;margin-left:-23px;border:1.5px solid rgba(255,255,255,.55);border-radius:50%;color:#fff;place-items:center;animation:bajar 2s ease-in-out infinite}
+.hero-bajar{position:absolute;left:50%;bottom:26px;z-index:2;display:grid;width:46px;height:46px;margin-left:-23px;border:1.5px solid rgba(255,255,255,.55);border-radius:50%;color:#fff;place-items:center;animation:bajar 2s ease-in-out infinite}
 .hero-bajar svg{width:22px;height:22px}
 .hero-bajar:hover{border-color:var(--gold);color:var(--gold)}
 @keyframes bajar{50%{transform:translateY(8px)}}
-
-/* 3 · Centrado: todo al centro, como las portadas de restaurante con video a pantalla completa */
-.hero[data-portada="3"] .hero-texto{text-align:center;align-items:center;max-width:860px;margin-inline:auto}
-.hero[data-portada="3"] .hero-logo{margin-inline:auto}
-.hero[data-portada="3"] .lead{margin-inline:auto;max-width:44ch}
-.hero[data-portada="3"] .hero-ctas{justify-content:center}
-.hero[data-portada="3"] h1{font-size:clamp(2.8rem,6.6vw,5.6rem)}
-.hero[data-portada="3"] .hero-bajar{display:grid}
-
-/* 4 · Editorial: título enorme abajo a la izquierda y una franja con los datos clave */
-.hero[data-portada="4"]{align-items:flex-end}
-.hero[data-portada="4"] .wrap{padding-bottom:44px}
-.hero[data-portada="4"] .hero-texto{text-align:left;align-items:flex-start;min-height:0}
-.hero[data-portada="4"] .hero-logo{width:clamp(84px,9vw,120px)}
-.hero[data-portada="4"] h1{font-size:clamp(3rem,8.2vw,7.4rem);line-height:.98;max-width:13ch;letter-spacing:-.01em}
-.hero[data-portada="4"] .lead{margin-left:0;max-width:46ch}
-.hero[data-portada="4"] .hero-ctas{justify-content:flex-start}
-.hero[data-portada="4"] .hero-datos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;width:100%;margin:40px 0 0;padding:18px 0 0;list-style:none;border-top:1px solid rgba(255,255,255,.3);font-size:.98rem}
-.hero[data-portada="4"] .hero-datos li{padding-right:20px}
-.hero[data-portada="4"] .hero-datos b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.25rem;color:var(--gold)}
-
-/* 5 · Vidrio: una tarjeta translúcida y desenfocada sobre el video */
-.hero[data-portada="5"] .hero-texto{text-align:left;align-items:flex-start;max-width:600px;min-height:0;padding:clamp(26px,4vw,46px);border-radius:28px;background:rgba(40,6,10,.32);border:1px solid rgba(255,255,255,.18);box-shadow:0 30px 80px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(16px) saturate(1.3);backdrop-filter:blur(16px) saturate(1.3);text-shadow:none}
-.hero[data-portada="5"] .wrap{padding-bottom:56px}
-.hero[data-portada="5"] .hero-logo{width:clamp(72px,7vw,96px);margin-bottom:8px}
-.hero[data-portada="5"] h1{font-size:clamp(2.4rem,4vw,3.6rem)}
-.hero[data-portada="5"] .lead{margin-block:14px 22px}
-.hero[data-portada="5"] .lead{margin-left:0}
-.hero[data-portada="5"] .hero-ctas{justify-content:flex-start}
-.hero[data-portada="5"] .hero-datos{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 0;padding:0;list-style:none;font-size:.88rem}
-.hero[data-portada="5"] .hero-datos li{padding:7px 13px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16)}
-.hero[data-portada="5"] .hero-datos b{color:var(--gold)}
-@media (min-width:861px){.hero[data-portada="5"] .wrap{justify-items:start}}
-
-/* 6 · Cinta: título grande al centro y una cinta dorada con los platillos que corre abajo */
-.hero[data-portada="6"] .wrap{padding-bottom:140px}
-.hero[data-portada="6"] .hero-texto{text-align:center;align-items:center;max-width:920px;margin-inline:auto}
-.hero[data-portada="6"] .hero-logo{margin-inline:auto;width:clamp(90px,11vw,140px)}
-.hero[data-portada="6"] h1{font-size:clamp(2.8rem,7vw,6rem);line-height:1}
-.hero[data-portada="6"] .lead{margin-inline:auto;max-width:44ch}
-.hero[data-portada="6"] .hero-ctas{justify-content:center}
-.hero[data-portada="6"] .hero-cinta{display:block;position:absolute;left:-2%;right:-2%;bottom:44px;z-index:1;overflow:hidden;background:var(--gold);color:#4A0F14;transform:rotate(-2deg);box-shadow:0 12px 30px rgba(0,0,0,.3)}
-.hero-cinta>div{display:flex;width:max-content;animation:cinta 38s linear infinite}
-.hero-cinta span{padding:14px 0;font-family:var(--font-display);font-size:clamp(1.1rem,2.2vw,1.6rem);white-space:pre}
-@keyframes cinta{to{transform:translateX(-50%)}}
-
-@media (max-width:860px){
-  .hero[data-portada="4"] .hero-datos{grid-template-columns:1fr;gap:12px;margin-top:28px}
-  .hero[data-portada="4"] .hero-texto,.hero[data-portada="5"] .hero-texto{min-height:0}
-  .hero[data-portada="4"],.hero[data-portada="5"]{align-items:center}
-  .hero[data-portada="5"] .hero-texto{border-radius:22px}
-  .hero[data-portada="6"] .wrap{padding-bottom:120px}
-  .hero[data-portada="6"] .hero-cinta{bottom:30px}
-}
 
 /* Barra de arriba en el inicio: transparente sobre el video, sin logo (ya está grande en la portada).
    Al bajar se vuelve sólida y aparece el logo. */
@@ -78,8 +24,27 @@
 .top-video.solida{background:color-mix(in srgb,var(--hero) 92%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 6px 24px rgba(0,0,0,.18)}
 .top-video.solida .logo{opacity:1;transform:none;pointer-events:auto}
 .top-video.solida .lights{opacity:1}
-.top-video:not(.solida) .nav a[aria-current="page"]{background:rgba(255,255,255,.16)}
 .hero{min-height:100svh}
 .hero .wrap{padding-top:calc(var(--alto-top,72px) + 28px)}
 @media (max-width:860px){.hero-texto{min-height:calc(100svh - var(--alto-top,110px) - 60px)}}
 #inicio section[id]{scroll-margin-top:var(--alto-top,72px)}
+
+/* La galería: un carrusel de fotos que corre solo. Con el mouse encima se detiene y la foto crece. */
+.galeria-sec .sec-head{text-align:center;justify-content:center}
+.galeria-sec .sec-head p{margin-inline:auto}
+.galeria-sec .eyebrow{color:var(--gold-ink)}
+.carrusel{overflow:hidden;padding-block:34px 64px;margin-inline:calc(50% - 50vw);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.carrusel-pista{display:flex;width:max-content;animation:carrusel 46s linear infinite}
+.carrusel:hover .carrusel-pista,.carrusel:focus-within .carrusel-pista{animation-play-state:paused}
+@keyframes carrusel{to{transform:translateX(-50%)}}
+.carrusel .gal-foto{flex:none;width:clamp(190px,21vw,290px);aspect-ratio:4/5;margin-right:20px;translate:none;display:flex;align-items:flex-end;transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s}
+.carrusel .gal-foto::after{display:none}
+.carrusel .gal-foto:hover,.carrusel .gal-foto:focus-visible{transform:scale(1.12);animation:none;z-index:2;box-shadow:0 16px 32px -8px rgba(0,0,0,.28)}
+.carrusel .gal-foto.con-foto{box-shadow:0 10px 22px -6px rgba(0,0,0,.2)}
+.carrusel .gal-foto.con-foto:hover,.carrusel .gal-foto.con-foto:focus-visible{box-shadow:0 16px 32px -8px rgba(0,0,0,.28)}
+.ver-todas{text-align:center;margin:-22px 0 0;position:relative}
+.ver-todas a{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:1.35rem;color:var(--brand);text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:7px}
+.ver-todas a span{color:var(--gold);transition:transform .25s}
+.ver-todas a:hover span{transform:translateX(5px)}
+/* Sin animaciones: el carrusel se recorre deslizando */
+@media (prefers-reduced-motion:reduce){.carrusel{overflow-x:auto}}
