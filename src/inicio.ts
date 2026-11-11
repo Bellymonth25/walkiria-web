@@ -89,12 +89,6 @@ iniciarApariciones();
 // ?mascara=1..4 en la dirección cambia qué tan rojo se ve el video, para compararlas.
 const mascara = new URLSearchParams(location.search).get("mascara");
 if (mascara && /^[1-4]$/.test(mascara)) document.querySelector<HTMLElement>(".hero")?.setAttribute("data-mascara", mascara);
-// ?portada=1..6 cambia el diseño de la portada, para compararlos. 1 es el de siempre (arcos).
-const portada = new URLSearchParams(location.search).get("portada");
-if (portada && /^[2-6]$/.test(portada)) {
-  document.querySelector<HTMLElement>(".hero")?.setAttribute("data-portada", portada);
-  if (portada === "2") document.querySelector<HTMLElement>("#galeria")?.removeAttribute("data-estilo");
-}
 iniciarFondoVideo();
 
 // La barra de arriba es transparente sobre la portada y se vuelve sólida (con logo) al bajar.
@@ -102,17 +96,9 @@ const barra = document.querySelector<HTMLElement>("header.top-video");
 const portadaEl = document.querySelector<HTMLElement>(".hero");
 if (barra && portadaEl) {
   let pendiente = false;
-  // ?encabezado=1..6 cambia el diseño de esta barra, para compararlos. 1 es el de siempre.
-  const enc = new URLSearchParams(location.search).get("encabezado") ?? "1";
-  if (/^[2-6]$/.test(enc)) barra.dataset.encabezado = enc;
-  if (enc === "5") armarMenu(barra);
-  let antes = window.scrollY;
   const revisar = () => {
     pendiente = false;
-    const y = window.scrollY;
-    barra.classList.toggle("solida", enc === "2" || y > portadaEl.offsetHeight - barra.offsetHeight * 2);
-    if (enc === "6") barra.classList.toggle("oculta", y > antes && y > barra.offsetHeight * 3);
-    antes = y;
+    barra.classList.toggle("solida", window.scrollY > portadaEl.offsetHeight - barra.offsetHeight * 2);
   };
   window.addEventListener("scroll", () => {
     if (!pendiente) {
@@ -125,46 +111,13 @@ if (barra && portadaEl) {
 
 // ?titulo=1..6 cambia el texto principal de la portada, para compararlos. 1 es el de siempre.
 const TITULOS = [
-  "La cena de Navidad, <em>hecha en casa</em> y por kilo.",
-  "La cena de Navidad, <em>hecha en casa.</em>",
-  "La cena de Navidad, <em>hecha en casa.</em> Tú solo pon la mesa.",
-  "La cena de Navidad, <em>hecha en casa</em> y lista para servir.",
-  "La cena de Navidad, <em>hecha en casa</em> a la medida de tu familia.",
   "La cena de Navidad, <em>hecha en casa</em> como la de la abuela.",
+  "La cena de Navidad con <em>el sazón de la abuela.</em>",
+  "La cena de Navidad que <em>sabe a casa</em> de la abuela.",
+  "La receta de la abuela, <em>lista para tu mesa</em> de Navidad.",
+  "Como la cena de la abuela, <em>sin que nadie</em> se quede en la cocina.",
+  "Esta Navidad, la cena <em>sabe a la de la abuela.</em>",
 ];
 const titulo = Number(new URLSearchParams(location.search).get("titulo"));
 const h1 = document.querySelector<HTMLElement>(".hero h1");
 if (h1 && titulo >= 2 && titulo <= TITULOS.length) h1.innerHTML = TITULOS[titulo - 1]!;
-
-/** Encabezado 5: un botón abre las páginas a pantalla completa. */
-function armarMenu(barra: HTMLElement): void {
-  const ico = (d: string) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="${d}"/></svg>`;
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "menu-btn";
-  btn.setAttribute("aria-label", "Abrir menú");
-  btn.innerHTML = ico("M4 7h16M4 12h16M4 17h10");
-  barra.querySelector(".wrap")?.append(btn);
-  const capa = document.createElement("div");
-  capa.className = "menu-capa";
-  capa.setAttribute("role", "dialog");
-  capa.setAttribute("aria-label", "Menú");
-  capa.innerHTML = [...barra.querySelectorAll<HTMLAnchorElement>(".nav a")].map((a) => a.outerHTML).join("");
-  const cerrar = document.createElement("button");
-  cerrar.type = "button";
-  cerrar.className = "menu-btn menu-cerrar";
-  cerrar.setAttribute("aria-label", "Cerrar menú");
-  cerrar.innerHTML = ico("M6 6l12 12M18 6L6 18");
-  capa.append(cerrar);
-  document.body.append(capa);
-  const poner = (v: boolean) => {
-    capa.classList.toggle("abierta", v);
-    document.documentElement.style.overflow = v ? "hidden" : "";
-    if (v) cerrar.focus();
-    else btn.focus();
-  };
-  btn.addEventListener("click", () => poner(true));
-  cerrar.addEventListener("click", () => poner(false));
-  capa.addEventListener("click", (e) => (e.target as HTMLElement).closest("a") && poner(false));
-  document.addEventListener("keydown", (e) => e.key === "Escape" && capa.classList.contains("abierta") && poner(false));
-}

@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600;700&display=swap">
 </head>
 <body>
-<header class="top top-video">
+<header class="top top-video" data-encabezado="4">
   <div class="wrap">
     <a class="logo" href="./"><img src="/img/logo.webp" alt="" width="44" height="39"><span class="logo-text">La <span>Walkiria</span></span></a>
     <nav class="nav" aria-label="Páginas">
@@ -44,27 +44,20 @@
 <canvas id="snow" aria-hidden="true"></canvas>
 
 <main id="inicio">
-  <section class="hero">
+  <section class="hero" data-portada="3">
     <div class="hero-fondo" aria-hidden="true"><video muted playsinline preload="none"></video><video muted playsinline preload="none"></video></div>
     <div class="wrap">
-      <div class="galeria" id="galeria" data-estilo="arcos" data-aparece="izq" aria-label="Fotos de nuestros productos"><button class="gal-foto" type="button" data-gal="pavo-relleno" data-nombre="Pavo relleno" aria-label="Ver foto de Pavo relleno en grande"><span class="gal-nombre">Pavo relleno</span></button><button class="gal-foto" type="button" data-gal="lomo-ciruela" data-nombre="Lomo a la ciruela" aria-label="Ver foto de Lomo a la ciruela en grande"><span class="gal-nombre">Lomo a la ciruela</span></button><button class="gal-foto" type="button" data-gal="bacalao" data-nombre="Bacalao" aria-label="Ver foto de Bacalao en grande"><span class="gal-nombre">Bacalao</span></button><button class="gal-foto" type="button" data-gal="romeritos" data-nombre="Romeritos" aria-label="Ver foto de Romeritos en grande"><span class="gal-nombre">Romeritos</span></button><button class="gal-foto" type="button" data-gal="ensalada-manzana" data-nombre="Ensalada de manzana" aria-label="Ver foto de Ensalada de manzana en grande"><span class="gal-nombre">Ensalada de manzana</span></button><button class="gal-foto" type="button" data-gal="strudel" data-nombre="Strudel de manzana" aria-label="Ver foto de Strudel de manzana en grande"><span class="gal-nombre">Strudel de manzana</span></button></div>
       <div class="hero-texto" data-aparece="der">
         <img class="hero-logo" src="/img/logo.webp" alt="La Walkiria Quality Food" width="200" height="176">
         <div class="eyebrow">La Walkiria Alimentos · Cenas de fin de año <span data-cfg="anio"></span></div>
-        <h1>La cena de Navidad, <em>hecha en casa</em> y por kilo.</h1>
+        <h1>La cena de Navidad, <em>hecha en casa</em> como la de la abuela.</h1>
         <p class="lead">Pavo, lomo, bacalao, romeritos y ensalada de manzana. Elige cuánto quieres, aparta con anticipo y recoge en tienda o te lo llevamos.</p>
         <div class="hero-ctas">
           <a class="btn btn-gold" href="pedido.html">Haz tu pedido</a>
           <a class="btn btn-ghost" href="#volante">Ver precios</a>
         </div>
-        <ul class="hero-datos">
-          <li><b>Navidad</b> pide hasta el 22 de dic.</li>
-          <li><b>Año Nuevo</b> pide hasta el 29 de dic.</li>
-          <li><b>Tlalpan</b> recoge en tienda o a domicilio</li>
-        </ul>
       </div>
     </div>
-    <div class="hero-cinta" aria-hidden="true"><div><span>Pavo relleno ✦ Pierna de pavo ✦ Lomo a la ciruela ✦ Bacalao ✦ Romeritos ✦ Ensalada de manzana ✦ Strudel ✦ </span><span>Pavo relleno ✦ Pierna de pavo ✦ Lomo a la ciruela ✦ Bacalao ✦ Romeritos ✦ Ensalada de manzana ✦ Strudel ✦ </span></div></div>
     <a class="hero-bajar" href="#volante" aria-label="Bajar a ver el menú"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
   </section>
 
@@ -103,6 +96,13 @@
     <button class="visor-flecha sig" type="button" id="visorSig" aria-label="Foto siguiente" hidden>›</button>
     <p class="visor-ayuda" id="visorAyuda"></p>
   </dialog>
+
+  <section class="sec galeria-sec" id="galeria-sec">
+    <div class="wrap">
+      <div class="sec-head" data-aparece><div><div class="eyebrow">Hecho en casa</div><h2>La galería</h2><p>Así llegan nuestros platillos a tu mesa. Toca una foto para verla en grande.</p></div></div>
+      <div class="galeria" id="galeria" data-estilo="arcos" data-aparece aria-label="Fotos de nuestros productos"><button class="gal-foto" type="button" data-gal="pavo-relleno" data-nombre="Pavo relleno" aria-label="Ver foto de Pavo relleno en grande"><span class="gal-nombre">Pavo relleno</span></button><button class="gal-foto" type="button" data-gal="lomo-ciruela" data-nombre="Lomo a la ciruela" aria-label="Ver foto de Lomo a la ciruela en grande"><span class="gal-nombre">Lomo a la ciruela</span></button><button class="gal-foto" type="button" data-gal="bacalao" data-nombre="Bacalao" aria-label="Ver foto de Bacalao en grande"><span class="gal-nombre">Bacalao</span></button><button class="gal-foto" type="button" data-gal="romeritos" data-nombre="Romeritos" aria-label="Ver foto de Romeritos en grande"><span class="gal-nombre">Romeritos</span></button><button class="gal-foto" type="button" data-gal="ensalada-manzana" data-nombre="Ensalada de manzana" aria-label="Ver foto de Ensalada de manzana en grande"><span class="gal-nombre">Ensalada de manzana</span></button><button class="gal-foto" type="button" data-gal="strudel" data-nombre="Strudel de manzana" aria-label="Ver foto de Strudel de manzana en grande"><span class="gal-nombre">Strudel de manzana</span></button></div>
+    </div>
+  </section>
 
   <section class="regalo-sec" id="regalo">
     <div class="wrap">
