@@ -7,6 +7,7 @@ import { iniciarVisor } from "./ui/visor";
 import { iniciarFondoVideo } from "./ui/fondo-video";
 import { iniciarApariciones } from "./ui/aparecer";
 import "./portadas.css";
+import "./encabezados.css";
 
 // Medio árbol (24) y estrella de Belén (31) de fondo en la tarjeta, cortados por la orilla derecha.
 const ICONO_ARBOL = `<svg class="day-ico arbol" viewBox="0 0 80 120" aria-hidden="true"><path d="M40 6c4 10 12 18 20 22-4 1-8 1-12 0 7 10 15 17 24 21-6 2-13 2-19 0 8 11 17 19 27 23-12 4-27 5-40 5s-28-1-40-5c10-4 19-12 27-23-6 2-13 2-19 0 9-4 17-11 24-21-4 1-8 1-12 0 8-4 16-12 20-22Z" fill="currentColor"/><rect x="34" y="78" width="12" height="16" rx="2" fill="currentColor"/><path d="m40 0 2.4 5 5.4.6-4 3.7 1.1 5.4L40 12l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6Z" fill="currentColor"/></svg>`;
@@ -101,9 +102,17 @@ const barra = document.querySelector<HTMLElement>("header.top-video");
 const portadaEl = document.querySelector<HTMLElement>(".hero");
 if (barra && portadaEl) {
   let pendiente = false;
+  // ?encabezado=1..6 cambia el diseño de esta barra, para compararlos. 1 es el de siempre.
+  const enc = new URLSearchParams(location.search).get("encabezado") ?? "1";
+  if (/^[2-6]$/.test(enc)) barra.dataset.encabezado = enc;
+  if (enc === "5") armarMenu(barra);
+  let antes = window.scrollY;
   const revisar = () => {
     pendiente = false;
-    barra.classList.toggle("solida", window.scrollY > portadaEl.offsetHeight - barra.offsetHeight * 2);
+    const y = window.scrollY;
+    barra.classList.toggle("solida", enc === "2" || y > portadaEl.offsetHeight - barra.offsetHeight * 2);
+    if (enc === "6") barra.classList.toggle("oculta", y > antes && y > barra.offsetHeight * 3);
+    antes = y;
   };
   window.addEventListener("scroll", () => {
     if (!pendiente) {
@@ -126,3 +135,36 @@ const TITULOS = [
 const titulo = Number(new URLSearchParams(location.search).get("titulo"));
 const h1 = document.querySelector<HTMLElement>(".hero h1");
 if (h1 && titulo >= 2 && titulo <= TITULOS.length) h1.innerHTML = TITULOS[titulo - 1]!;
+
+/** Encabezado 5: un botón abre las páginas a pantalla completa. */
+function armarMenu(barra: HTMLElement): void {
+  const ico = (d: string) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="${d}"/></svg>`;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "menu-btn";
+  btn.setAttribute("aria-label", "Abrir menú");
+  btn.innerHTML = ico("M4 7h16M4 12h16M4 17h10");
+  barra.querySelector(".wrap")?.append(btn);
+  const capa = document.createElement("div");
+  capa.className = "menu-capa";
+  capa.setAttribute("role", "dialog");
+  capa.setAttribute("aria-label", "Menú");
+  capa.innerHTML = [...barra.querySelectorAll<HTMLAnchorElement>(".nav a")].map((a) => a.outerHTML).join("");
+  const cerrar = document.createElement("button");
+  cerrar.type = "button";
+  cerrar.className = "menu-btn menu-cerrar";
+  cerrar.setAttribute("aria-label", "Cerrar menú");
+  cerrar.innerHTML = ico("M6 6l12 12M18 6L6 18");
+  capa.append(cerrar);
+  document.body.append(capa);
+  const poner = (v: boolean) => {
+    capa.classList.toggle("abierta", v);
+    document.documentElement.style.overflow = v ? "hidden" : "";
+    if (v) cerrar.focus();
+    else btn.focus();
+  };
+  btn.addEventListener("click", () => poner(true));
+  cerrar.addEventListener("click", () => poner(false));
+  capa.addEventListener("click", (e) => (e.target as HTMLElement).closest("a") && poner(false));
+  document.addEventListener("keydown", (e) => e.key === "Escape" && capa.classList.contains("abierta") && poner(false));
+}
