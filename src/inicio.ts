@@ -4,7 +4,8 @@ import { enlaceWhatsApp } from "./lib/pedido";
 import { iniciarComun } from "./comun";
 import { $ } from "./ui/dom";
 import { iniciarVisor } from "./ui/visor";
-import { iniciarCarrusel, iniciarFotos, pintarFotos } from "./ui/galeria";
+import { iniciarFotos, pintarFotos } from "./ui/galeria";
+import { iniciarCarrusel } from "./ui/carrusel";
 import { fotosPlatillos } from "./data/galeria";
 import { iniciarFondoVideo } from "./ui/fondo-video";
 import { iniciarApariciones } from "./ui/aparecer";
@@ -46,8 +47,15 @@ const visor = iniciarVisor();
 const pista = document.querySelector<HTMLElement>("#carrusel");
 if (pista) {
   pintarFotos(pista, fotosPlatillos.filter((f) => f.carrusel !== false));
-  iniciarCarrusel(pista);
+  iniciarCarrusel(pista.parentElement!, pista);
   iniciarFotos(visor, pista);
+  // Al cerrar el visor el foco regresa a la foto; se suelta para que el carrusel siga corriendo.
+  document.querySelector("#visor")?.addEventListener("close", () => {
+    setTimeout(() => {
+      const activo = document.activeElement;
+      if (activo instanceof HTMLElement && pista.contains(activo)) activo.blur();
+    });
+  });
 }
 
 const base = `${import.meta.env.BASE_URL}volante/`;

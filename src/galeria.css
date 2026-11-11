@@ -7,3 +7,26 @@
 .gal-rejilla .gal-foto{aspect-ratio:4/5;translate:none;display:flex;align-items:flex-end;background-color:var(--surface-2);color:var(--fg)}
 .gal-rejilla .gal-foto::after{display:none}
 @media (max-width:600px){.gal-rejilla{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+
+/* Cuadrícula de tarjetas escalonada (como las colecciones de tarjetas de Material 3):
+   tres columnas parejas; las fotos verticales miden dos filas, las horizontales una y las anchas dos columnas. */
+.gal-rejilla.mosaico{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:clamp(150px,17vw,240px);grid-auto-flow:dense;gap:12px}
+.mosaico .gal-foto{aspect-ratio:auto;translate:none;border-radius:20px;outline:0;box-shadow:none;background-image:none!important}
+.mosaico .gal-foto[data-forma="v"]{grid-row:span 2}
+.mosaico .gal-foto[data-ancha]{grid-column:span 2}
+/* La foto va en una capa propia para acercarla poquito con el mouse, sin mover la tarjeta */
+.mosaico .gal-foto.con-foto::before{content:"";position:absolute;inset:0;background:var(--foto) center/cover no-repeat;transition:transform .6s cubic-bezier(.2,0,0,1),filter .6s}
+.mosaico .gal-foto .gal-nombre{position:relative;z-index:1;width:100%;font-size:.9rem;padding:30px 14px 12px}
+.mosaico .gal-foto:hover,.mosaico .gal-foto:focus-visible{transform:none;animation:none;box-shadow:none}
+.mosaico .gal-foto:hover::before,.mosaico .gal-foto:focus-visible::before{transform:scale(1.04);filter:brightness(1.06)}
+.mosaico .gal-foto:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.gal-mas{display:none}
+@media (max-width:760px){
+  .gal-rejilla.mosaico{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:clamp(110px,30vw,150px);gap:8px}
+  /* En celular se ven solo las primeras fotos, con un degradado y el botón para ver las demás */
+  .gal-plegable{position:relative}
+  .gal-plegable.plegada .mosaico .gal-foto:nth-child(n+9){display:none}
+  .gal-plegable.plegada::after{content:"";position:absolute;left:0;right:0;bottom:56px;height:170px;background:linear-gradient(transparent,var(--bg));pointer-events:none}
+  .gal-plegable .gal-mas{display:flex;margin:14px auto 0;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 .95rem var(--font-body);padding:11px 20px;border-radius:999px;cursor:pointer;position:relative;z-index:1}
+  .gal-plegable:not(.plegada) .gal-mas{display:none}
+}
