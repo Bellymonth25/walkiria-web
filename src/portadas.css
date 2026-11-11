@@ -33,14 +33,16 @@
 .galeria-sec .sec-head{text-align:center;justify-content:center}
 .galeria-sec .sec-head p{margin-inline:auto}
 .galeria-sec .eyebrow{color:var(--gold-ink)}
-.carrusel{overflow:hidden;padding-block:26px 30px;margin-inline:calc(50% - 50vw);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.carrusel{overflow:hidden;padding-block:34px 64px;margin-inline:calc(50% - 50vw);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
 .carrusel-pista{display:flex;width:max-content;animation:carrusel 46s linear infinite}
 .carrusel:hover .carrusel-pista,.carrusel:focus-within .carrusel-pista{animation-play-state:paused}
 @keyframes carrusel{to{transform:translateX(-50%)}}
 .carrusel .gal-foto{flex:none;width:clamp(190px,21vw,290px);aspect-ratio:4/5;margin-right:20px;translate:none;display:flex;align-items:flex-end;transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s}
 .carrusel .gal-foto::after{display:none}
-.carrusel .gal-foto:hover,.carrusel .gal-foto:focus-visible{transform:scale(1.12);animation:none;z-index:2;box-shadow:0 24px 50px rgba(0,0,0,.35)}
-.ver-todas{text-align:center;margin:6px 0 0}
+.carrusel .gal-foto:hover,.carrusel .gal-foto:focus-visible{transform:scale(1.12);animation:none;z-index:2;box-shadow:0 16px 32px -8px rgba(0,0,0,.28)}
+.carrusel .gal-foto.con-foto{box-shadow:0 10px 22px -6px rgba(0,0,0,.2)}
+.carrusel .gal-foto.con-foto:hover,.carrusel .gal-foto.con-foto:focus-visible{box-shadow:0 16px 32px -8px rgba(0,0,0,.28)}
+.ver-todas{text-align:center;margin:-22px 0 0;position:relative}
 .ver-todas a{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:1.35rem;color:var(--brand);text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:7px}
 .ver-todas a span{color:var(--gold);transition:transform .25s}
 .ver-todas a:hover span{transform:translateX(5px)}
