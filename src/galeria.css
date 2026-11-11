@@ -1,0 +1,9 @@
+/* Página de la galería */
+.galeria-pag h1{font-size:clamp(2.2rem,5vw,3.2rem);margin:8px 0 0}
+.galeria-pag .eyebrow{color:var(--gold-ink)}
+.gal-titulo{font-size:clamp(1.5rem,3vw,2rem);margin:38px 0 16px}
+.gal-nota{margin:-8px 0 16px;color:var(--muted)}
+.gal-rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+.gal-rejilla .gal-foto{aspect-ratio:4/5;translate:none;display:flex;align-items:flex-end;background-color:var(--surface-2);color:var(--fg)}
+.gal-rejilla .gal-foto::after{display:none}
+@media (max-width:600px){.gal-rejilla{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}

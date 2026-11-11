@@ -4,6 +4,7 @@ import { enlaceWhatsApp } from "./lib/pedido";
 import { iniciarComun } from "./comun";
 import { $ } from "./ui/dom";
 import { iniciarVisor } from "./ui/visor";
+import { iniciarCarrusel, iniciarFotos } from "./ui/galeria";
 import { iniciarFondoVideo } from "./ui/fondo-video";
 import { iniciarApariciones } from "./ui/aparecer";
 import "./portadas.css";
@@ -40,32 +41,13 @@ $("#cal").innerHTML = temporada.diasEspeciales
   })
   .join("");
 
-// Galería: cada recuadro muestra public/img/galeria/<producto>.jpg. Mientras no exista la foto, se ve el recuadro de muestra.
+// Galería: un carrusel que corre solo; al picar una foto se abre en grande.
 const visor = iniciarVisor();
-const recuadros = [...document.querySelectorAll<HTMLElement>("[data-gal]")];
-const conFoto = new Set<string>();
-const urlFoto = (id: string) => `${import.meta.env.BASE_URL}img/galeria/${id}.jpg`;
-recuadros.forEach((el, n) => {
-  const id = el.dataset.gal!;
-  const img = new Image();
-  img.onload = () => {
-    conFoto.add(id);
-    el.style.backgroundImage = `url("${urlFoto(id)}")`;
-    el.classList.add("con-foto");
-  };
-  img.src = urlFoto(id);
-  // Al picar se abre la galería en grande, empezando por esa foto.
-  el.addEventListener("click", () =>
-    visor.abrir(
-      recuadros.map((r) => {
-        const rid = r.dataset.gal!;
-        const nombre = r.dataset.nombre ?? "";
-        return { titulo: nombre, alt: `Foto de ${nombre}`, media: conFoto.has(rid) ? urlFoto(rid) : undefined };
-      }),
-      n,
-    ),
-  );
-});
+const pista = document.querySelector<HTMLElement>("#carrusel");
+if (pista) {
+  iniciarCarrusel(pista);
+  iniciarFotos(visor, pista);
+}
 
 const base = `${import.meta.env.BASE_URL}volante/`;
 const abrirVolante = () =>
