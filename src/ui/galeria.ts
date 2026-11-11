@@ -19,6 +19,8 @@ export function iniciarFotos(visor: Visor, grupo: ParentNode): void {
     img.onload = () => {
       conFoto.add(id);
       el.style.backgroundImage = `url("${urlFoto(id)}")`;
+      // URL completa: dentro de una variable CSS una ruta relativa se resolvería contra la hoja de estilos.
+      el.style.setProperty("--foto", `url("${new URL(urlFoto(id), location.href).href}")`);
       el.classList.add("con-foto");
     };
     img.src = urlFoto(id);
@@ -46,6 +48,8 @@ export function pintarFotos(caja: HTMLElement, fotos: FotoGaleria[]): void {
         b.type = "button";
         b.dataset.gal = f.id;
         b.dataset.nombre = f.nombre;
+        b.dataset.forma = f.forma;
+        if (f.destacada) b.dataset.destacada = "";
         b.setAttribute("aria-label", `Ver foto de ${f.nombre} en grande`);
         const n = document.createElement("span");
         n.className = "gal-nombre";

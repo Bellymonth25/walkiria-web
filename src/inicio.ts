@@ -48,6 +48,13 @@ if (pista) {
   pintarFotos(pista, fotosPlatillos.filter((f) => f.carrusel !== false));
   iniciarCarrusel(pista);
   iniciarFotos(visor, pista);
+  // Al cerrar el visor el foco regresa a la foto; se suelta para que el carrusel siga corriendo.
+  document.querySelector("#visor")?.addEventListener("close", () => {
+    setTimeout(() => {
+      const activo = document.activeElement;
+      if (activo instanceof HTMLElement && pista.contains(activo)) activo.blur();
+    });
+  });
 }
 
 const base = `${import.meta.env.BASE_URL}volante/`;

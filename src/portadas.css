@@ -37,7 +37,9 @@
 .galeria-sec .eyebrow{color:var(--gold-ink)}
 .carrusel{overflow:hidden;padding-block:34px 64px;margin-inline:calc(50% - 50vw);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
 .carrusel-pista{display:flex;width:max-content;animation:carrusel 46s linear infinite}
-.carrusel:hover .carrusel-pista,.carrusel:focus-within .carrusel-pista{animation-play-state:paused}
+/* Se detiene con el mouse encima o al recorrerlo con el teclado (no se queda detenido al cerrar el visor) */
+@media (hover:hover){.carrusel:hover .carrusel-pista{animation-play-state:paused}}
+.carrusel:has(:focus-visible) .carrusel-pista{animation-play-state:paused}
 @keyframes carrusel{to{transform:translateX(-50%)}}
 .carrusel .gal-foto{flex:none;width:clamp(190px,21vw,290px);aspect-ratio:4/5;margin-right:20px;translate:none;display:flex;align-items:flex-end;transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s}
 .carrusel .gal-foto::after{display:none}
