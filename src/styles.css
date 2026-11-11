@@ -621,10 +621,10 @@ button.cal-day:hover{border-color:var(--primary)}
 .hero-fondo video.activo{opacity:1}
 .hero-fondo video.arriba{z-index:1}
 /* Máscara roja: un solo color parejo (un degradado tan suave se veía en franjas o "columnas").
-   Niveles para comparar con ?mascara=1, 2, 3 o 4 en la dirección (2 es el de siempre). */
-.hero{--m:78%}
+   Niveles para comparar con ?mascara=1, 2, 3 o 4 en la dirección (3 es el de siempre). */
+.hero{--m:85%}
 .hero[data-mascara="1"]{--m:70%}
-.hero[data-mascara="3"]{--m:85%}
+.hero[data-mascara="2"]{--m:78%}
 .hero[data-mascara="4"]{--m:91%}
 .hero-fondo::after{content:"";position:absolute;inset:0;z-index:2;transform:translateZ(0);background:color-mix(in srgb,var(--hero) var(--m),transparent)}
 /* Un poco de sombra para que el texto se lea sobre el video */

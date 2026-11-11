@@ -6,6 +6,7 @@ import { $ } from "./ui/dom";
 import { iniciarVisor } from "./ui/visor";
 import { iniciarFondoVideo } from "./ui/fondo-video";
 import { iniciarApariciones } from "./ui/aparecer";
+import "./portadas.css";
 
 // Medio árbol (24) y estrella de Belén (31) de fondo en la tarjeta, cortados por la orilla derecha.
 const ICONO_ARBOL = `<svg class="day-ico arbol" viewBox="0 0 80 120" aria-hidden="true"><path d="M40 6c4 10 12 18 20 22-4 1-8 1-12 0 7 10 15 17 24 21-6 2-13 2-19 0 8 11 17 19 27 23-12 4-27 5-40 5s-28-1-40-5c10-4 19-12 27-23-6 2-13 2-19 0 9-4 17-11 24-21-4 1-8 1-12 0 8-4 16-12 20-22Z" fill="currentColor"/><rect x="34" y="78" width="12" height="16" rx="2" fill="currentColor"/><path d="m40 0 2.4 5 5.4.6-4 3.7 1.1 5.4L40 12l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6Z" fill="currentColor"/></svg>`;
@@ -87,4 +88,10 @@ iniciarApariciones();
 // ?mascara=1..4 en la dirección cambia qué tan rojo se ve el video, para compararlas.
 const mascara = new URLSearchParams(location.search).get("mascara");
 if (mascara && /^[1-4]$/.test(mascara)) document.querySelector<HTMLElement>(".hero")?.setAttribute("data-mascara", mascara);
+// ?portada=1..6 cambia el diseño de la portada, para compararlos. 1 es el de siempre (arcos).
+const portada = new URLSearchParams(location.search).get("portada");
+if (portada && /^[2-6]$/.test(portada)) {
+  document.querySelector<HTMLElement>(".hero")?.setAttribute("data-portada", portada);
+  if (portada === "2") document.querySelector<HTMLElement>("#galeria")?.removeAttribute("data-estilo");
+}
 iniciarFondoVideo();
