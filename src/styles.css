@@ -247,7 +247,13 @@ footer .wrap{padding-block:28px calc(28px + env(safe-area-inset-bottom,0px));dis
 .seg button small{display:block;font-weight:500;font-size:.75rem;color:var(--muted)}
 .dfoot{flex-basis:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .dinfo{font-size:.9rem;font-weight:600;color:var(--gold-ink)}
-.del{background:none;border:0;color:var(--muted);font:600 .88rem var(--font-body);text-decoration:underline;cursor:pointer;padding:4px}
+.del{--rojo-quitar:#C62828;display:inline-flex;align-items:center;gap:7px;background:color-mix(in srgb,var(--rojo-quitar) 9%,transparent);border:1.5px solid color-mix(in srgb,var(--rojo-quitar) 55%,transparent);color:var(--rojo-quitar);font:700 .88rem var(--font-body);border-radius:999px;cursor:pointer;padding:8px 15px;transition:background .2s,color .2s,border-color .2s}
+.del svg{width:17px;height:17px;flex:none}
+.del:hover,.del:focus-visible{background:var(--rojo-quitar);border-color:var(--rojo-quitar);color:#fff}
+/* Tema oscuro: rojo semitransparente con borde rojo claro y letra blanca (discreto, pero se entiende que es "quitar") */
+:root[data-theme="dark"] .del{--rojo-quitar:#E53935;background:rgba(229,57,53,.45);border-color:#EF5350;color:#fff}
+:root[data-theme="dark"] .del:hover,:root[data-theme="dark"] .del:focus-visible{background:#D32F2F;border-color:#EF5350;color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .del{--rojo-quitar:#E53935;background:rgba(229,57,53,.45);border-color:#EF5350;color:#fff}:root:not([data-theme="light"]) .del:hover,:root:not([data-theme="light"]) .del:focus-visible{background:#D32F2F;border-color:#EF5350;color:#fff}}
 #send[aria-disabled="true"]{opacity:.5}
 
 /* Luces navideñas bajo la barra */
