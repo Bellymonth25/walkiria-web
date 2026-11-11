@@ -166,7 +166,7 @@ function detalle(p: Producto, id: string, l: Linea, numero: number, titulo = "")
 
   return `<div class="detail" data-line="${id}">${partes.join("")}
     <div class="dfoot"><span class="dinfo" data-info="${id}">${escapar(textoDetalle(p, l))}</span>
-    <button type="button" class="del" data-del="${id}">Quitar</button></div></div>`;
+    <button type="button" class="del" data-del="${id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>Quitar</button></div></div>`;
 }
 
 export function renglon(p: Producto, lineas: readonly [string, Linea][], agotado: boolean): string {
