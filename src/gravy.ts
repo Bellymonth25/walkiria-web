@@ -95,16 +95,17 @@ function ajustarArbol(): void {
   else addEventListener("resize", ajustar);
 }
 
-/** Arranca desde cero las animaciones de la escena que se acaba de mostrar, en cualquier navegador. */
+/**
+ * Arranca desde cero las animaciones de la escena que se acaba de mostrar. Las animaciones solo
+ * existen mientras la escena tiene la clase "ver", así que quitarla y ponerla las reinicia.
+ */
 function reiniciarEscena(n: number): void {
-  requestAnimationFrame(() => {
-    const esc = document.querySelector(`.esc[data-esc="${n}"]`);
-    esc?.querySelectorAll<SVGElement>("*").forEach((el) =>
-      el.getAnimations?.().forEach((a) => {
-        a.currentTime = 0;
-      }),
-    );
-  });
+  const escenas = document.querySelectorAll<SVGGElement>(".esc");
+  escenas.forEach((e) => e.classList.remove("ver"));
+  const esc = document.querySelector<SVGGElement>(`.esc[data-esc="${n}"]`);
+  if (!esc) return;
+  void esc.getBoundingClientRect();
+  esc.classList.add("ver");
 }
 
 function iniciarExplicacion(): void {
