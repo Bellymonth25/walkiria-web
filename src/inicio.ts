@@ -53,7 +53,7 @@ const abrirVolante = () =>
   visor.abrir([
     {
       titulo: `Menú ${temporada.anio}`,
-      alt: `Volante Cenas de fin de año ${temporada.anio} de La Walkiria`,
+      alt: `Volante Cenas de Fin de Año ${temporada.anio} de La Walkiria`,
       media: `${base}volante-2600.webp`,
       grande: `${base}volante-walkiria-2026.png`,
       descargas: [

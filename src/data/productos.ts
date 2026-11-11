@@ -3,7 +3,7 @@ import type { Categoria, Producto } from "../types";
 /**
  * Lista de precios pública.
  * Cada temporada solo hay que cambiar los precios aquí (y `notaPrecios` en temporada.ts).
- * Fuente actual: volante "Cenas de fin de año 2026" (volante-2026/ en la carpeta del proyecto).
+ * Fuente actual: volante "Cenas de Fin de Año 2026" (volante-2026/ en la carpeta del proyecto).
  * `firebaseIds` sale de products/productos.json de la app: confirmar contra Firestore.
  */
 export const categorias: readonly Categoria[] = [
