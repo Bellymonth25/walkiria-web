@@ -23,6 +23,8 @@ export interface Producto {
   pavoEntero?: boolean;
   /** Mínimo de kilos de este pavo completo, si es distinto al general (ej. el relleno empieza en 6 kg). */
   kgMinimoCompleto?: number;
+  /** Pavo que solo se vende completo (sin medio pavo), como el ahumado. */
+  soloCompleto?: boolean;
   /** Se pide por pieza (ej. patos) pero se cobra por kilo con un peso aproximado por pieza. */
   pieza?: PiezaPorPeso;
   /** Maquila: el cliente trae su carne y se cobra por kilo cocinado. Se puede agregar varias veces. */

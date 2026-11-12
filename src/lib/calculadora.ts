@@ -49,9 +49,9 @@ export function calcularCena(p: Personas): Cena {
 }
 
 /** Cómo repartir los kilos de carne en pavos enteros: [tamaño, kg por pavo][] (máximo ~10 kg por pavo). */
-export function pavosPara(kg: number, minimo: number = pavo.kgMinimoCompleto): Array<{ tamano: "completo" | "medio"; kgPorPavo: number }> {
+export function pavosPara(kg: number, minimo: number = pavo.kgMinimoCompleto, permitirMedio = true): Array<{ tamano: "completo" | "medio"; kgPorPavo: number }> {
   if (kg <= 0) return [];
-  if (kg < minimo) return [{ tamano: "medio", kgPorPavo: minimo }];
+  if (kg < minimo) return [{ tamano: permitirMedio ? "medio" : "completo", kgPorPavo: minimo }];
   const n = Math.ceil(kg / 10);
   const cada = Math.max(minimo, Math.ceil((kg / n) * 2) / 2);
   return Array.from({ length: n }, () => ({ tamano: "completo" as const, kgPorPavo: cada }));

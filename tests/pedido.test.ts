@@ -273,6 +273,8 @@ describe("calculadora de cena", () => {
   it("reparte la carne en pavos de máximo 10 kg", () => {
     expect(pavosPara(3)).toEqual([{ tamano: "medio", kgPorPavo: 5 }]);
     expect(pavosPara(5.5, 6)).toEqual([{ tamano: "medio", kgPorPavo: 6 }]);
+    // El ahumado no tiene medio pavo: si pide poco, se le da uno completo de 5 kg.
+    expect(pavosPara(3, 5, false)).toEqual([{ tamano: "completo", kgPorPavo: 5 }]);
     expect(pavosPara(7.2, 6)).toEqual([{ tamano: "completo", kgPorPavo: 7.5 }]);
     expect(pavosPara(7.2)).toEqual([{ tamano: "completo", kgPorPavo: 7.5 }]);
     expect(pavosPara(14)).toEqual([{ tamano: "completo", kgPorPavo: 7 }, { tamano: "completo", kgPorPavo: 7 }]);

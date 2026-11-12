@@ -120,7 +120,8 @@ function detalle(p: Producto, id: string, l: Linea, numero: number, titulo = "")
       ${l.tipoMaquila === "Otro" ? `<input type="text" id="otro-${id}" data-otro="${id}" value="${escapar(l.otroMaquila)}" placeholder="Especificar: qué carne y cómo la quiere">` : ""}</div>`);
   }
 
-  if (p.pavoEntero) {
+  // El pavo ahumado solo se vende completo: no se ofrece medio pavo.
+  if (p.pavoEntero && !p.soloCompleto) {
     partes.push(`<div class="dfield"><span class="dlabel">Tamaño</span>${seg("size", id, [
       ["completo", `Completo <small>desde ${kgMinimoPavo(p)} kg</small>`],
       ["medio", `Medio pavo <small>${pavo.kgMedio.min} a ${pavo.kgMedio.max} kg</small>`],
@@ -138,7 +139,7 @@ function detalle(p: Producto, id: string, l: Linea, numero: number, titulo = "")
       <span class="unit">${unidad}</span>
     </div></div>`);
 
-  if (p.pavoEntero && l.tamano === "completo") {
+  if (p.pavoEntero && (p.soloCompleto || l.tamano === "completo")) {
     partes.push(`<div class="dfield"><label class="dlabel" for="kgpavo-${id}">Kilos aprox. por pavo</label>
       <div class="qty">${campoNumero(id, "kgpavo", Math.max(kgMinimoPavo(p), l.kgPorPavo), String(kgMinimoPavo(p)), "0.5", "decimal", "Kilos por pavo")}<span class="unit">kg (mín. ${kgMinimoPavo(p)})</span></div></div>`);
   }

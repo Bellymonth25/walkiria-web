@@ -96,7 +96,7 @@ export function iniciarCalculadora(
       const kg = partes[n];
       if (!x || !kg) return;
       if (x.pavoEntero) {
-        const pavos = pavosPara(kg, kgMinimoPavo(x));
+        const pavos = pavosPara(kg, kgMinimoPavo(x), !x.soloCompleto);
         const lineas = pavos.map((v) => linea(x, { cantidad: 1, tamano: v.tamano, kgPorPavo: v.kgPorPavo }));
         filas.push({
           nombre: nombreCarne(ca),

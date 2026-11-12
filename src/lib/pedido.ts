@@ -116,7 +116,7 @@ export function nuevaLinea(p: Producto, version = ""): Linea {
 
 /** kg que se van a cobrar (estimado en pavos enteros). En piezas regresa 0. */
 export function kgDe(p: Producto, l: Linea): number {
-  if (p.pavoEntero) return l.cantidad * (l.tamano === "completo" ? Math.max(kgMinimoPavo(p), l.kgPorPavo) : pavo.kgMedio.estimado);
+  if (p.pavoEntero) return l.cantidad * (l.tamano === "completo" || p.soloCompleto ? Math.max(kgMinimoPavo(p), l.kgPorPavo) : pavo.kgMedio.estimado);
   if (p.pieza) return l.cantidad * p.pieza.kgEstimado;
   return p.unidad === "kg" ? l.cantidad : 0;
 }
@@ -138,7 +138,7 @@ export function textoCantidad(p: Producto, l: Linea): string {
   if (p.pavoEntero) {
     const n = l.cantidad;
     const cu = n === 1 ? "" : " c/u";
-    if (l.tamano === "medio") return `${n} ${n === 1 ? "medio pavo" : "medios pavos"} (${pavo.kgMedio.min} a ${pavo.kgMedio.max} kg${cu})`;
+    if (l.tamano === "medio" && !p.soloCompleto) return `${n} ${n === 1 ? "medio pavo" : "medios pavos"} (${pavo.kgMedio.min} a ${pavo.kgMedio.max} kg${cu})`;
     return `${n} ${n === 1 ? "pavo completo" : "pavos completos"} (aprox. ${kilos(Math.max(kgMinimoPavo(p), l.kgPorPavo))}${cu})`;
   }
   if (p.pieza) {
