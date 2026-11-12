@@ -18,8 +18,9 @@ const base: Pedido = { lineas: {}, nombre: "", modo: "tienda", zona: 0, direccio
 const ctx = { catalogo: productos, zonas: temporada.zonas, nombreDia: "Miércoles 23 de diciembre", tardio: false };
 
 describe("líneas nuevas", () => {
-  it("los pavos empiezan completos, de 5 kg y en bolsa o caja", () => {
-    expect(nuevaLinea(pavoR)).toMatchObject({ cantidad: 1, tamano: "completo", kgPorPavo: 5, presentacion: "bolsa" });
+  it("los pavos empiezan completos y en bolsa o caja; el relleno desde 6 kg y los demás desde 5", () => {
+    expect(nuevaLinea(pavoR)).toMatchObject({ cantidad: 1, tamano: "completo", kgPorPavo: 6, presentacion: "bolsa" });
+    expect(nuevaLinea(prod("pavo-adobado"))).toMatchObject({ cantidad: 1, tamano: "completo", kgPorPavo: 5, presentacion: "bolsa" });
   });
   it("lo demás empieza en acrílico", () => {
     expect(nuevaLinea(lomo).presentacion).toBe("acrilico");
@@ -38,8 +39,13 @@ describe("cantidades", () => {
     expect(normalizarCantidad(lomo, 0.1)).toBe(0.25);
     expect(normalizarCantidad(strudel, 2.6)).toBe(3);
     expect(normalizarCantidad(lomo, -1)).toBeNull();
-    expect(normalizarKgPavo(4)).toBe(5);
-    expect(normalizarKgPavo(6.3)).toBe(6.5);
+    expect(normalizarKgPavo(prod("pavo-adobado"), 4)).toBe(5);
+    expect(normalizarKgPavo(prod("pavo-adobado"), 6.3)).toBe(6.5);
+    // El pavo relleno empieza en 6 kg; los demás pavos, en 5.
+    expect(normalizarKgPavo(prod("pavo-relleno"), 5)).toBe(6);
+    expect(normalizarKgPavo(prod("pavo-relleno"), 6.3)).toBe(6.5);
+    expect(nuevaLinea(prod("pavo-relleno")).kgPorPavo).toBe(6);
+    expect(nuevaLinea(prod("pavo-ahumado")).kgPorPavo).toBe(5);
   });
 });
 
@@ -266,6 +272,10 @@ describe("calculadora de cena", () => {
   });
   it("reparte la carne en pavos de máximo 10 kg", () => {
     expect(pavosPara(3)).toEqual([{ tamano: "medio", kgPorPavo: 5 }]);
+    expect(pavosPara(5.5, 6)).toEqual([{ tamano: "medio", kgPorPavo: 6 }]);
+    // El ahumado no tiene medio pavo: si pide poco, se le da uno completo de 5 kg.
+    expect(pavosPara(3, 5, false)).toEqual([{ tamano: "completo", kgPorPavo: 5 }]);
+    expect(pavosPara(7.2, 6)).toEqual([{ tamano: "completo", kgPorPavo: 7.5 }]);
     expect(pavosPara(7.2)).toEqual([{ tamano: "completo", kgPorPavo: 7.5 }]);
     expect(pavosPara(14)).toEqual([{ tamano: "completo", kgPorPavo: 7 }, { tamano: "completo", kgPorPavo: 7 }]);
   });

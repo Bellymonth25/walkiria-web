@@ -2,7 +2,7 @@ import type { Linea, Presentacion, Producto } from "../types";
 import { calculadora as cfg } from "../data/temporada";
 import { calcularCena, pavosPara, repartirCarne, type Cena, type Grupo, type Personas } from "../lib/calculadora";
 import { dinero, escapar, kilos } from "../lib/formato";
-import { importeLinea, nuevaLinea, presentaciones } from "../lib/pedido";
+import { importeLinea, kgMinimoPavo, nuevaLinea, presentaciones } from "../lib/pedido";
 
 /** Lo que la calculadora agrega al pedido: un producto y cómo queda su línea. */
 export interface Agregado {
@@ -96,7 +96,7 @@ export function iniciarCalculadora(
       const kg = partes[n];
       if (!x || !kg) return;
       if (x.pavoEntero) {
-        const pavos = pavosPara(kg);
+        const pavos = pavosPara(kg, kgMinimoPavo(x), !x.soloCompleto);
         const lineas = pavos.map((v) => linea(x, { cantidad: 1, tamano: v.tamano, kgPorPavo: v.kgPorPavo }));
         filas.push({
           nombre: nombreCarne(ca),

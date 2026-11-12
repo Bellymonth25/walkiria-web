@@ -388,7 +388,7 @@ document.addEventListener("input", (e) => {
     const r = document.querySelector<HTMLInputElement>(`#relleno-${id}`);
     if (r && pedido.lineas[id]) r.value = String(pedido.lineas[id]!.kgRelleno);
   } else if (d.kgpavo) {
-    if (Number.isFinite(num) && num > 0) ponerLinea(id, { ...x.l, kgPorPavo: normalizarKgPavo(num) });
+    if (Number.isFinite(num) && num > 0) ponerLinea(id, { ...x.l, kgPorPavo: normalizarKgPavo(x.p, num) });
   } else if (d.relleno) {
     if (el.value.trim() !== "") ponerLinea(id, { ...x.l, kgRelleno: normalizarKgRelleno(num), rellenoManual: true });
   } else if (d.otro) {
