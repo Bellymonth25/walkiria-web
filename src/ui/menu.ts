@@ -1,7 +1,7 @@
 import type { Categoria, CategoriaId, Linea, Presentacion, Producto } from "../types";
 import { dinero, escapar, kilos, normalizar } from "../lib/formato";
 import {
-  empaquesDe, importeLinea, tieneCosto, variasLineas, llevaRelleno, nombrePresentacion, presentaciones, textoEmpaques,
+  empaquesDe, importeLinea, kgMinimoPavo, tieneCosto, variasLineas, llevaRelleno, nombrePresentacion, presentaciones, textoEmpaques,
 } from "../lib/pedido";
 import { maquila, pavo } from "../data/temporada";
 import { $ } from "./dom";
@@ -122,7 +122,7 @@ function detalle(p: Producto, id: string, l: Linea, numero: number, titulo = "")
 
   if (p.pavoEntero) {
     partes.push(`<div class="dfield"><span class="dlabel">Tamaño</span>${seg("size", id, [
-      ["completo", `Completo <small>desde ${pavo.kgMinimoCompleto} kg</small>`],
+      ["completo", `Completo <small>desde ${kgMinimoPavo(p)} kg</small>`],
       ["medio", `Medio pavo <small>${pavo.kgMedio.min} a ${pavo.kgMedio.max} kg</small>`],
     ], l.tamano)}</div>`);
   }
@@ -140,7 +140,7 @@ function detalle(p: Producto, id: string, l: Linea, numero: number, titulo = "")
 
   if (p.pavoEntero && l.tamano === "completo") {
     partes.push(`<div class="dfield"><label class="dlabel" for="kgpavo-${id}">Kilos aprox. por pavo</label>
-      <div class="qty">${campoNumero(id, "kgpavo", l.kgPorPavo, String(pavo.kgMinimoCompleto), "0.5", "decimal", "Kilos por pavo")}<span class="unit">kg (mín. ${pavo.kgMinimoCompleto})</span></div></div>`);
+      <div class="qty">${campoNumero(id, "kgpavo", Math.max(kgMinimoPavo(p), l.kgPorPavo), String(kgMinimoPavo(p)), "0.5", "decimal", "Kilos por pavo")}<span class="unit">kg (mín. ${kgMinimoPavo(p)})</span></div></div>`);
   }
 
   if (p.maquila && llevaRelleno(l)) {

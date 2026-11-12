@@ -94,13 +94,16 @@ export const variasLineas = (p: Producto): boolean => Boolean(p.maquila || p.pav
 export const idLinea = (p: Producto, version = ""): string =>
   version ? `${p.id}~${normalizar(version).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}` : p.id;
 
+/** Mínimo de kilos de un pavo completo: el propio del producto o el general. */
+export const kgMinimoPavo = (p: Producto): number => p.kgMinimoCompleto ?? pavo.kgMinimoCompleto;
+
 export function nuevaLinea(p: Producto, version = ""): Linea {
   return {
     productoId: p.id,
     // Maquila: el cliente escribe cuánto pesa su carne (empieza vacío).
     cantidad: p.maquila ? 0 : 1,
     tamano: "completo",
-    kgPorPavo: pavo.kgMinimoCompleto,
+    kgPorPavo: kgMinimoPavo(p),
     presentacion: presentaciones(p)[0] ?? "acrilico",
     tipoMaquila: "",
     otroMaquila: "",
@@ -113,7 +116,7 @@ export function nuevaLinea(p: Producto, version = ""): Linea {
 
 /** kg que se van a cobrar (estimado en pavos enteros). En piezas regresa 0. */
 export function kgDe(p: Producto, l: Linea): number {
-  if (p.pavoEntero) return l.cantidad * (l.tamano === "completo" ? l.kgPorPavo : pavo.kgMedio.estimado);
+  if (p.pavoEntero) return l.cantidad * (l.tamano === "completo" ? Math.max(kgMinimoPavo(p), l.kgPorPavo) : pavo.kgMedio.estimado);
   if (p.pieza) return l.cantidad * p.pieza.kgEstimado;
   return p.unidad === "kg" ? l.cantidad : 0;
 }
@@ -136,7 +139,7 @@ export function textoCantidad(p: Producto, l: Linea): string {
     const n = l.cantidad;
     const cu = n === 1 ? "" : " c/u";
     if (l.tamano === "medio") return `${n} ${n === 1 ? "medio pavo" : "medios pavos"} (${pavo.kgMedio.min} a ${pavo.kgMedio.max} kg${cu})`;
-    return `${n} ${n === 1 ? "pavo completo" : "pavos completos"} (aprox. ${kilos(l.kgPorPavo)}${cu})`;
+    return `${n} ${n === 1 ? "pavo completo" : "pavos completos"} (aprox. ${kilos(Math.max(kgMinimoPavo(p), l.kgPorPavo))}${cu})`;
   }
   if (p.pieza) {
     const { nombre, plural, kgMin, kgMax } = p.pieza;
@@ -164,9 +167,10 @@ export function normalizarCantidad(p: Producto, valor: number): number | null {
   return Math.max(0.25, Math.round(valor * 100) / 100);
 }
 
-export function normalizarKgPavo(valor: number): number {
-  if (!Number.isFinite(valor)) return pavo.kgMinimoCompleto;
-  return Math.max(pavo.kgMinimoCompleto, Math.round(valor * 2) / 2);
+export function normalizarKgPavo(p: Producto, valor: number): number {
+  const minimo = kgMinimoPavo(p);
+  if (!Number.isFinite(valor)) return minimo;
+  return Math.max(minimo, Math.round(valor * 2) / 2);
 }
 
 /** Kilos de relleno: 0 o más, en cuartos de kilo. */
