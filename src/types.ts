@@ -88,6 +88,8 @@ export interface Linea {
 export interface ZonaEnvio {
   nombre: string;
   costo: number;
+  /** Lo que el cliente elige en el pedido. Santa Fe va aparte porque cae en dos alcaldías. */
+  alcaldias: readonly string[];
 }
 
 /** Días especiales de diciembre. */
@@ -105,7 +107,8 @@ export interface Pedido {
   lineas: Readonly<Record<string, Linea>>;
   nombre: string;
   modo: ModoEntrega;
-  zona: number;
+  /** Alcaldía elegida para el envío: "" = sin elegir, "otra" = fuera de zona (se confirma por WhatsApp). */
+  alcaldia: string;
   direccion: string;
   referencias: string;
   nota: string;

@@ -46,9 +46,9 @@ export const temporada: Temporada = {
   diasAvisoDomicilio: 3,
   diasAnticipacionPedido: 2,
   zonas: [
-    { nombre: "Zona Sur", costo: 100 },
-    { nombre: "Zona Centro", costo: 150 },
-    { nombre: "Zona Norte", costo: 200 },
+    { nombre: "Zona Sur", costo: 100, alcaldias: ["Tlalpan", "Coyoacán", "Xochimilco", "Magdalena Contreras"] },
+    { nombre: "Zona Centro", costo: 150, alcaldias: ["Benito Juárez", "Álvaro Obregón (excepto Santa Fe)", "Iztapalapa"] },
+    { nombre: "Zona Norte", costo: 200, alcaldias: ["Santa Fe", "Cuajimalpa", "Miguel Hidalgo", "Cuauhtémoc", "Azcapotzalco"] },
   ],
 };
 

@@ -521,7 +521,12 @@ button.cal-day:hover{border-color:var(--primary)}
 .antes-c .aparte{font-size:.92em;color:var(--muted)}
 .antes-c table{width:100%;border-collapse:collapse;margin-top:10px}
 .antes-c td{padding:7px 0;border-top:1px dashed var(--line)}
-.antes-c td:last-child{text-align:right;font-weight:700}
+.antes-c td:last-child{text-align:right;font-weight:700;font-size:1.15em;vertical-align:top;white-space:nowrap;padding-left:12px;font-variant-numeric:tabular-nums}
+.antes-c td small{display:block;font-size:.88em;line-height:1.35;color:var(--muted);margin-top:2px}
+.antes-c .zona-otra{margin-top:10px}
+.antes-c .zona-otra a{color:inherit;font-weight:700;text-decoration-color:var(--gold)}
+.zona-info{margin:8px 0 0;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--gold) 16%,transparent);font-size:.95rem}
+.zona-info[data-tipo="otra"]{background:color-mix(in srgb,var(--primary) 10%,transparent)}
 @media (max-width:420px){.antes-c{padding:70px 18px 18px}}
 
 /* Calculadora dentro de la página de pedido */
@@ -567,6 +572,7 @@ button.cal-day:hover{border-color:var(--primary)}
 .antes-c .aparte,.antes-c td{transition:color .45s ease,border-color .45s ease}
 .antes-c:hover .aparte,.antes-c:focus-visible .aparte{color:color-mix(in srgb,var(--hero-fg) 82%,transparent)}
 .antes-c:hover td,.antes-c:focus-visible td{border-color:color-mix(in srgb,var(--hero-fg) 35%,transparent)}
+.antes-c:hover td small,.antes-c:focus-visible td small{color:color-mix(in srgb,var(--hero-fg) 82%,transparent)}
 .antes-ico{transition:transform .45s cubic-bezier(.3,1.5,.5,1)}
 .antes-c:hover .antes-ico,.antes-c:focus-visible .antes-ico{transform:scale(1.12) rotate(-8deg)}
 

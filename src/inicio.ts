@@ -23,7 +23,10 @@ $<HTMLAnchorElement>("#goMaps").href = `https://www.google.com/maps/dir/?api=1&t
 $<HTMLAnchorElement>("#goWaze").href = `https://waze.com/ul?navigate=yes&q=${destino}`;
 $<HTMLIFrameElement>("#mapFrame").src = `https://www.google.com/maps?q=${destino}&output=embed`;
 
-$("#zonesTable").innerHTML = temporada.zonas.map((z) => `<tr><td>${z.nombre}</td><td>${dinero(z.costo)}</td></tr>`).join("");
+$("#zonesTable").innerHTML = temporada.zonas
+  .map((z) => `<tr><td><b>${z.nombre}</b><small>${z.alcaldias.join(", ")}</small></td><td>${dinero(z.costo)}</td></tr>`)
+  .join("");
+$<HTMLAnchorElement>("#zonaOtraWa").href = enlaceWhatsApp(negocio.whatsapp, "Hola, ¿hacen envíos a mi zona? Mi dirección es: ");
 
 const textos = {
   limite: ["due", ""],

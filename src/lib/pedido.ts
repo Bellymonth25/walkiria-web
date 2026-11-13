@@ -214,9 +214,23 @@ export function renglones(pedido: Pedido, catalogo: readonly Producto[]): Renglo
   );
 }
 
+/** Valor de "Otra alcaldía": no tiene precio fijo, se confirma por WhatsApp. */
+export const OTRA_ALCALDIA = "otra";
+
+export const zonaDe = (alcaldia: string, zonas: readonly ZonaEnvio[]): ZonaEnvio | undefined =>
+  zonas.find((z) => z.alcaldias.includes(alcaldia));
+
+/** Alcaldía válida para guardar en el pedido; cualquier otra cosa queda sin elegir. */
+export const alcaldiaValida = (alcaldia: unknown, zonas: readonly ZonaEnvio[]): string =>
+  typeof alcaldia === "string" && (alcaldia === OTRA_ALCALDIA || zonaDe(alcaldia, zonas)) ? alcaldia : "";
+
 export function costoEnvio(pedido: Pedido, zonas: readonly ZonaEnvio[]): number {
-  return pedido.modo === "domicilio" ? (zonas[pedido.zona]?.costo ?? 0) : 0;
+  return pedido.modo === "domicilio" ? (zonaDe(pedido.alcaldia, zonas)?.costo ?? 0) : 0;
 }
+
+/** A domicilio fuera de las zonas: el envío se cotiza por WhatsApp. */
+export const envioPorConfirmar = (pedido: Pedido): boolean =>
+  pedido.modo === "domicilio" && pedido.alcaldia === OTRA_ALCALDIA;
 
 export function total(pedido: Pedido, catalogo: readonly Producto[], zonas: readonly ZonaEnvio[]): number {
   return renglones(pedido, catalogo).reduce((a, r) => a + r.importe, 0) + costoEnvio(pedido, zonas);
@@ -232,6 +246,7 @@ export function faltantes(pedido: Pedido, catalogo: readonly Producto[]): string
   if (maquilas.some((r) => r.linea.cantidad <= 0)) f.push("el peso aproximado de su carne");
   if (!pedido.nombre.trim()) f.push("tu nombre");
   if (pedido.fecha === null) f.push("el día de entrega");
+  if (pedido.modo === "domicilio" && !pedido.alcaldia) f.push("tu alcaldía");
   if (pedido.modo === "domicilio" && !pedido.direccion.trim()) f.push("la dirección de entrega");
   return f;
 }
@@ -269,7 +284,9 @@ export function mensaje(pedido: Pedido, ctx: ContextoMensaje): string {
   if (filas.some((r) => r.producto.maquila)) {
     lineas.push("", `Llevaré la carne para la maquila a la tienda al menos ${maquila.diasAnticipacion} días antes de la entrega.`);
   }
-  lineas.push("", `Entrega: ${pedido.modo === "tienda" ? "Recojo en tienda" : `A domicilio, ${ctx.zonas[pedido.zona]?.nombre ?? ""}`}`);
+  const zona = zonaDe(pedido.alcaldia, ctx.zonas);
+  const destino = zona ? `${pedido.alcaldia} (${zona.nombre})` : "otra zona, ¿me confirman si llegan y el costo del envío?";
+  lineas.push("", `Entrega: ${pedido.modo === "tienda" ? "Recojo en tienda" : `A domicilio, ${destino}`}`);
   if (pedido.modo === "domicilio") {
     lineas.push(`Dirección: ${pedido.direccion.trim()}`);
     if (pedido.referencias.trim()) lineas.push(`Referencias: ${pedido.referencias.trim()}`);
@@ -277,7 +294,8 @@ export function mensaje(pedido: Pedido, ctx: ContextoMensaje): string {
   lineas.push(`Día: ${ctx.nombreDia}${ctx.diaSujeto ? " (sujeto a disponibilidad)" : ""}`);
   if (pedido.nota.trim()) lineas.push(`Nota del pedido: ${pedido.nota.trim()}`);
   const t = total(pedido, ctx.catalogo, ctx.zonas);
-  lineas.push(`Total estimado: ${dinero(t)}${envio ? ` (incluye envío ${dinero(envio)})` : ""}`);
+  const notaEnvio = envio ? ` (incluye envío ${dinero(envio)})` : envioPorConfirmar(pedido) ? " más envío por confirmar" : "";
+  lineas.push(`Total estimado: ${dinero(t)}${notaEnvio}`);
   return lineas.join("\n");
 }
 

@@ -2,13 +2,13 @@ import "./styles.css";
 import type { Linea, ModoEntrega, Pedido, Presentacion, TamanoPavo } from "./types";
 import { categorias, productos } from "./data/productos";
 import { firebase, negocio, temporada } from "./data/temporada";
-import { dinero } from "./lib/formato";
+import { dinero, escapar } from "./lib/formato";
 import { esPedidoTardio } from "./lib/fechas";
 import { sinDomicilio } from "./lib/entrega";
 import { estaAgotado, leerAgotados } from "./lib/disponibilidad";
 import {
   aumentar, conRellenoSugerido, disminuir, enlaceWhatsApp, faltantes, normalizarCantidad, normalizarKgPavo,
-  idLinea, normalizarKgRelleno, nuevaLinea, textoFaltantes, variasLineas,
+  alcaldiaValida, idLinea, normalizarKgRelleno, nuevaLinea, OTRA_ALCALDIA, textoFaltantes, variasLineas,
 } from "./lib/pedido";
 import { $, aviso } from "./ui/dom";
 import { actualizarPreciosPresentacion, pintarChips, pintarFilaPorClave, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
@@ -23,7 +23,7 @@ const pedido: Pedido = {
   lineas: {},
   nombre: "",
   modo: "tienda",
-  zona: 0,
+  alcaldia: "",
   direccion: "",
   referencias: "",
   nota: "",
@@ -94,7 +94,7 @@ function restaurar(): void {
   pedido.lineas = lineas;
   pedido.nombre = typeof g.nombre === "string" ? g.nombre : "";
   pedido.modo = g.modo === "domicilio" ? "domicilio" : "tienda";
-  pedido.zona = typeof g.zona === "number" && temporada.zonas[g.zona] ? g.zona : 0;
+  pedido.alcaldia = alcaldiaValida(g.alcaldia, temporada.zonas);
   pedido.direccion = typeof g.direccion === "string" ? g.direccion : "";
   pedido.referencias = typeof g.referencias === "string" ? g.referencias : "";
   pedido.nota = typeof g.nota === "string" ? g.nota : "";
@@ -141,9 +141,17 @@ function actualizarInfo(id: string): void {
 // ---------- Textos y datos fijos ----------
 function llenarDatos(): void {
   $<HTMLAnchorElement>("#avisoWa").href = enlaceWhatsApp(negocio.whatsapp, "Hola, quiero saber si todavía hay disponibilidad para un pedido.");
-  $("#zone").innerHTML = temporada.zonas
-    .map((z, i) => `<option value="${i}">${z.nombre} · ${dinero(z.costo)}</option>`)
-    .join("");
+  $("#zone").innerHTML =
+    `<option value="">Elige tu alcaldía</option>` +
+    temporada.zonas
+      .map(
+        (z) =>
+          `<optgroup label="${escapar(z.nombre)} · ${dinero(z.costo)}">` +
+          z.alcaldias.map((a) => `<option value="${escapar(a)}">${escapar(a)} · ${dinero(z.costo)}</option>`).join("") +
+          `</optgroup>`,
+      )
+      .join("") +
+    `<optgroup label="Fuera de estas zonas"><option value="${OTRA_ALCALDIA}">Otra alcaldía o Edo. Méx.</option></optgroup>`;
 
   // Fotos de presentación: public/img/presentaciones/<tipo>.jpg. Mientras no existan, se ve el recuadro de muestra.
   document.querySelectorAll<HTMLElement>("[data-foto]").forEach((el) => {
@@ -436,7 +444,7 @@ enlazarTexto("#ref", "referencias");
 enlazarTexto("#nota", "nota");
 
 $<HTMLSelectElement>("#zone").addEventListener("change", (e) => {
-  pedido.zona = Number((e.target as HTMLSelectElement).value);
+  pedido.alcaldia = alcaldiaValida((e.target as HTMLSelectElement).value, temporada.zonas);
   pintarPedido();
 });
 window.addEventListener("resize", () => pintarPedido());
@@ -448,7 +456,7 @@ document.addEventListener("visibilitychange", () => {
 iniciarComun();
 restaurar();
 llenarDatos();
-$<HTMLSelectElement>("#zone").value = String(pedido.zona);
+$<HTMLSelectElement>("#zone").value = pedido.alcaldia;
 if (pedido.fecha) mesVisto = { anio: Number(pedido.fecha.slice(0, 4)), mes: Number(pedido.fecha.slice(5, 7)) - 1 };
 pintarChips(vista());
 pintarMenu(vista());
