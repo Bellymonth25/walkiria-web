@@ -83,7 +83,7 @@ const base = `${import.meta.env.BASE_URL}volante/`;
  * Versión del volante. Los archivos conservan su nombre, así que el navegador puede seguir mostrando
  * la imagen vieja que guardó. Al cambiar el volante, sube esta versión y la de index.html (?v=…).
  */
-const VERSION_VOLANTE = "20261113";
+const VERSION_VOLANTE = "20261114c";
 const archivoVolante = (nombre: string) => `${base}${nombre}?v=${VERSION_VOLANTE}`;
 const abrirVolante = () =>
   visor.abrir([
