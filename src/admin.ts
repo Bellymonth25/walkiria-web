@@ -77,7 +77,7 @@ function iniciar(): void {
     if (!correo || !clave) return error("Escribe tu correo y contraseña.");
     const btn = $<HTMLButtonElement>("#btnEntrar");
     btn.disabled = true;
-    btn.textContent = "Entrando…";
+    ocupado(btn, "Entrando");
     try {
       await signInWithEmailAndPassword(auth, correo, clave);
       errorEntrar.hidden = true;
@@ -390,7 +390,7 @@ function iniciar(): void {
     if (!porEliminar || !coincideNombre(elimEscribe.value, porEliminar.nombre)) return;
     const { id, nombre } = porEliminar;
     elimConfirmar.disabled = true;
-    elimConfirmar.textContent = "Eliminando…";
+    ocupado(elimConfirmar, "Eliminando");
     try {
       await deleteDoc(doc(db, "products", id));
       confirmar.close();
@@ -419,7 +419,7 @@ function iniciar(): void {
     }
     f.error.hidden = true;
     f.guardar.disabled = true;
-    f.guardar.textContent = "Guardando…";
+    ocupado(f.guardar, "Guardando");
     try {
       if (esNuevo) {
         const destino = doc(db, "products", p.id);
@@ -459,4 +459,9 @@ async function reducir(archivo: File): Promise<Blob> {
   lienzo.getContext("2d")!.drawImage(img, 0, 0, lienzo.width, lienzo.height);
   img.close();
   return new Promise((ok, mal) => lienzo.toBlob((b) => (b ? ok(b) : mal(new Error("toBlob"))), "image/jpeg", 0.85));
+}
+
+/** Botón en espera: spinner girando y el texto de lo que está pasando. */
+function ocupado(btn: HTMLButtonElement, texto: string): void {
+  btn.innerHTML = `<span class="adm-giro chico" aria-hidden="true"></span>${texto}`;
 }
