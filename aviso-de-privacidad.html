@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Aviso de privacidad · La Walkiria</title>
+  <meta name="description" content="Cómo La Walkiria cuida los datos personales de sus clientes y cómo ejercer sus derechos.">
+  <meta name="theme-color" content="#5E111C">
+  <script>
+    // Aplica el tema guardado antes de pintar, para que no parpadee.
+    try { var t = localStorage.getItem("walkiria-tema"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta property="og:title" content="Aviso de privacidad · La Walkiria">
+  <meta property="og:description" content="Cómo cuidamos sus datos personales.">
+  <meta property="og:image" content="/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600;700&display=swap">
+</head>
+<body>
+<header class="top" data-encabezado="4">
+  <div class="wrap">
+    <a class="logo" href="./"><img src="/img/logo.webp" alt="" width="44" height="39"><span class="logo-text">La <span>Walkiria</span></span></a>
+    <nav class="nav" aria-label="Páginas">
+      <a href="./">Inicio</a>
+      <a href="pedido.html">Haz tu pedido</a>
+      <a href="gravy.html">Gravy</a>
+      <a href="galeria.html">Galería</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Cambiar a tema oscuro">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      <span class="knob" aria-hidden="true"></span>
+    </button>
+    <a class="btn btn-wa btn-sm" id="topWa" href="#" target="_blank" rel="noopener">
+      <svg class="wa-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3a.5.5 0 0 0 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.7-1.2 2.2 2.2 0 0 0 .2-1.2c-.1-.1-.3-.2-.5-.3Z"/></svg>
+      <span class="wa-txt">WhatsApp</span>
+    </a>
+  </div>
+  <div class="lights" aria-hidden="true"></div>
+</header>
+<canvas id="snow" aria-hidden="true"></canvas>
+
+<main class="aviso-pag">
+  <!-- Texto basado en el aviso de 2015 del sitio anterior, actualizado a la Ley Federal de Protección de Datos
+       Personales en Posesión de los Particulares publicada en el DOF el 20 de marzo de 2025.
+       Los puntos marcados "REVISAR" en comentarios conviene confirmarlos con un abogado antes de publicar. -->
+  <section class="sec">
+    <div class="wrap aviso-wrap">
+      <div class="eyebrow">Sus datos, bien cuidados</div>
+      <h1>Aviso de privacidad</h1>
+      <p class="aviso-fecha">Última actualización: <time datetime="2026-11-14">14 de noviembre de 2026</time></p>
+
+      <div class="aviso-resumen" role="note" aria-labelledby="resumenTitulo">
+        <h2 id="resumenTitulo">En resumen</h2>
+        <ul>
+          <li>Pedimos <b>solo lo necesario para su pedido</b>: nombre, teléfono y, si es a domicilio, la dirección.</li>
+          <li>Esta página <b>no guarda sus datos</b>: el pedido se arma en su celular y usted lo manda por WhatsApp.</li>
+          <li><b>No vendemos ni compartimos</b> sus datos con nadie para publicidad.</li>
+          <li>Puede pedirnos <b>ver, corregir o borrar</b> sus datos en cualquier momento escribiendo a <a href="mailto:jose.manuel.belmont@gmail.com">jose.manuel.belmont@gmail.com</a>.</li>
+        </ul>
+      </div>
+
+      <nav class="aviso-indice" aria-label="Contenido del aviso">
+        <h2>Contenido</h2>
+        <ol>
+          <li><a href="#responsable">Quién es el responsable</a></li>
+          <li><a href="#datos">Qué datos recabamos</a></li>
+          <li><a href="#finalidades">Para qué los usamos</a></li>
+          <li><a href="#compartir">Con quién los compartimos</a></li>
+          <li><a href="#arco">Sus derechos (ARCO)</a></li>
+          <li><a href="#limitar">Cómo limitar el uso de sus datos</a></li>
+          <li><a href="#web">Esta página web</a></li>
+          <li><a href="#camaras">Cámaras de videovigilancia</a></li>
+          <li><a href="#cambios">Cambios a este aviso</a></li>
+          <li><a href="#autoridad">Autoridad</a></li>
+        </ol>
+      </nav>
+
+      <section class="aviso-sec" id="responsable">
+        <h2><span class="aviso-n">1</span> Quién es el responsable</h2>
+        <p>De acuerdo con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (la “Ley”), el responsable del tratamiento de sus datos personales es el <b>Sr. José Manuel Belmont López</b>, quien opera el negocio <b>La Walkiria Alimentos</b>.</p>
+        <!-- REVISAR: el aviso de 2015 decía "Clavel 3"; la web usa "Clavel Norte 3". Confirmar cuál es el domicilio oficial. -->
+        <dl class="aviso-datos">
+          <dt>Domicilio</dt><dd>Clavel Norte 3, Col. San Pedro Mártir, Alcaldía Tlalpan, C.P. 14650, Ciudad de México.</dd>
+          <dt>Oficina de privacidad</dt><dd>En el mismo domicilio.</dd>
+          <dt>Teléfono</dt><dd><a href="tel:+525555731277">55 5573 1277</a></dd>
+          <dt>Correo</dt><dd><a href="mailto:jose.manuel.belmont@gmail.com">jose.manuel.belmont@gmail.com</a></dd>
+        </dl>
+      </section>
+
+      <section class="aviso-sec" id="datos">
+        <h2><span class="aviso-n">2</span> Qué datos recabamos</h2>
+        <p>Recabamos sus datos cuando usted nos los da directamente: en el mostrador, por teléfono, por WhatsApp o al mandarnos un pedido desde esta página. Son los siguientes:</p>
+        <ul>
+          <li><b>Identificación y contacto:</b> nombre completo, teléfono celular, teléfono fijo y, si nos lo da, correo electrónico.</li>
+          <li><b>Entrega a domicilio:</b> dirección, alcaldía y referencias para encontrar su casa.</li>
+          <li><b>Su pedido:</b> productos, día de entrega, notas especiales y el anticipo o pago que deja.</li>
+          <!-- REVISAR: confirmar si se emiten facturas. Si no, quitar este renglón y "fines fiscales" de la sección 3. -->
+          <li><b>Si pide factura:</b> los datos fiscales que el SAT requiere (RFC, nombre o razón social, régimen fiscal, código postal y uso del CFDI).</li>
+        </ul>
+        <p><b>No recabamos datos personales sensibles</b> (como salud, religión u origen étnico) ni datos de tarjetas bancarias.</p>
+      </section>
+
+      <section class="aviso-sec" id="finalidades">
+        <h2><span class="aviso-n">3</span> Para qué los usamos</h2>
+        <h3>Finalidades necesarias para su pedido</h3>
+        <ul>
+          <li>Registrar, preparar y entregar su pedido.</li>
+          <li>Comunicarnos con usted para confirmar el pedido, el día de entrega, cambios o dudas.</li>
+          <li>Llevar a su domicilio el pedido cuando así lo solicite.</li>
+          <li>Registrar anticipos y pagos y, si lo pide, emitir su factura (fines fiscales).</li>
+          <li>Reconocerlo como cliente para que sus siguientes pedidos sean más rápidos.</li>
+        </ul>
+        <h3>Finalidades adicionales (opcionales)</h3>
+        <ul>
+          <li>Avisarle por WhatsApp, llamada o correo de la apertura de pedidos de temporada, promociones o productos nuevos.</li>
+        </ul>
+        <!-- REVISAR: el aviso de 2015 daba 5 días para negarse; aquí se permite en cualquier momento, que es más favorable al titular. -->
+        <p class="aviso-destacado">Si no quiere recibir estos avisos, díganoslo cuando haga su pedido o en cualquier momento por WhatsApp, teléfono o correo. Negarse <b>no afecta</b> su pedido.</p>
+      </section>
+
+      <section class="aviso-sec" id="compartir">
+        <h2><span class="aviso-n">4</span> Con quién los compartimos</h2>
+        <p><b>No vendemos, rentamos ni transferimos sus datos</b> a otras empresas para que los usen por su cuenta, salvo en los casos que la Ley permite sin su consentimiento, por ejemplo cuando lo pida una autoridad competente o para emitir una factura ante el SAT.</p>
+        <p>Para dar el servicio usamos proveedores que guardan o procesan la información únicamente por cuenta nuestra y bajo nuestras instrucciones:</p>
+        <ul>
+          <li><b>Google (Firebase):</b> almacena en la nube el sistema interno con el que registramos pedidos y clientes.</li>
+          <li><b>Algolia:</b> nos permite buscar clientes frecuentes por nombre o teléfono al levantar un pedido.</li>
+          <li><b>WhatsApp (Meta):</b> es el medio por el que usted nos manda su pedido y platicamos con usted. Su uso se rige también por las políticas de WhatsApp.</li>
+        </ul>
+        <!-- REVISAR: estos proveedores pueden guardar información fuera de México. Si se agrega analítica web, sumar al proveedor aquí y en la sección 7. -->
+        <p>Algunos de estos proveedores pueden guardar la información en servidores fuera de México.</p>
+      </section>
+
+      <section class="aviso-sec" id="arco">
+        <h2><span class="aviso-n">5</span> Sus derechos (ARCO)</h2>
+        <p>Usted puede, en cualquier momento:</p>
+        <ul class="aviso-arco">
+          <li><b>Acceder</b> a los datos que tenemos de usted.</li>
+          <li><b>Rectificarlos</b> si están mal o incompletos.</li>
+          <li><b>Cancelarlos</b> (pedir que los borremos) cuando ya no sean necesarios.</li>
+          <li><b>Oponerse</b> a que los usemos para algún fin.</li>
+          <li><b>Revocar</b> el consentimiento que nos haya dado.</li>
+        </ul>
+        <h3>Cómo hacerlo</h3>
+        <ol>
+          <li>Mande su solicitud a <a href="mailto:jose.manuel.belmont@gmail.com">jose.manuel.belmont@gmail.com</a> o entréguela en nuestro domicilio.</li>
+          <li>Incluya su nombre, un teléfono o correo para responderle, una copia de su identificación (o la de su representante) y qué derecho quiere ejercer sobre qué datos.</li>
+          <!-- REVISAR: plazos de la Ley (20 días hábiles para responder y 15 para hacerlo efectivo). El aviso de 2015 decía 10 días. -->
+          <li>Le responderemos en un máximo de <b>20 días hábiles</b>. Si la solicitud procede, la haremos efectiva dentro de los 15 días hábiles siguientes.</li>
+        </ol>
+        <p>Si en algún caso la Ley nos obliga a conservar sus datos (por ejemplo, por temas fiscales), se lo explicaremos en la respuesta.</p>
+      </section>
+
+      <section class="aviso-sec" id="limitar">
+        <h2><span class="aviso-n">6</span> Cómo limitar el uso de sus datos</h2>
+        <p>Además de los derechos ARCO, puede pedirnos que dejemos de contactarlo para promociones por el mismo correo, teléfono o WhatsApp. Lo anotaremos en su registro de cliente.</p>
+        <p>También puede inscribir su teléfono en el <a href="https://repep.profeco.gob.mx/" target="_blank" rel="noopener">Registro Público para Evitar Publicidad (REPEP)</a> de la Profeco.</p>
+      </section>
+
+      <section class="aviso-sec" id="web">
+        <h2><span class="aviso-n">7</span> Esta página web</h2>
+        <ul>
+          <li><b>No usamos cookies de rastreo ni web beacons</b> para saber quién es usted.</li>
+          <li>El pedido que arma aquí se guarda solo en su navegador mientras la pestaña está abierta. <b>No llega a nosotros</b> hasta que usted lo manda por WhatsApp.</li>
+          <li>Su navegador recuerda si prefiere el tema claro u oscuro y si quiere ver la nieve. Esa preferencia no sale de su equipo.</li>
+          <li>Para mostrar las letras y saber qué productos están agotados, la página se conecta a servicios de Google. Como cualquier sitio, estos servicios y el de alojamiento de la página pueden registrar datos técnicos de la visita, como su dirección IP y su navegador.</li>
+        </ul>
+        <!-- REVISAR: si se agrega analítica (p. ej. Google Analytics), cambiar el primer punto y explicar qué mide y cómo desactivarla. -->
+      </section>
+
+      <!-- REVISAR: confirmar si la tienda tiene cámaras. Si no, quitar esta sección y su renglón del índice. -->
+      <section class="aviso-sec" id="camaras">
+        <h2><span class="aviso-n">8</span> Cámaras de videovigilancia</h2>
+        <p>Las imágenes que graban las cámaras de nuestro local se usan solo para la seguridad de clientes, personal e instalaciones. En el área grabada hay un aviso de privacidad corto.</p>
+      </section>
+
+      <section class="aviso-sec" id="cambios">
+        <h2><span class="aviso-n">9</span> Cambios a este aviso</h2>
+        <p>Podemos actualizar este aviso por cambios en la ley, en nuestra forma de trabajar o en nuestros servicios. La versión vigente siempre estará en esta página, con la fecha de la última actualización arriba.</p>
+      </section>
+
+      <section class="aviso-sec" id="autoridad">
+        <h2><span class="aviso-n">10</span> Autoridad</h2>
+        <!-- REVISAR: con la Ley de 2025 desapareció el INAI (antes IFAI); la protección de datos en el sector privado pasó a la Secretaría Anticorrupción y Buen Gobierno. -->
+        <p>Si considera que su derecho a la protección de datos personales ha sido vulnerado, puede acudir a la <b>Secretaría Anticorrupción y Buen Gobierno</b>, autoridad encargada de aplicar la Ley.</p>
+      </section>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span data-cfg="anio"></span> La Walkiria Alimentos · Quality Food</span>
+    <a class="pie-aviso" href="aviso-de-privacidad.html" aria-current="page">Aviso de privacidad</a>
+    <button class="snow-toggle" id="snowToggle" type="button" aria-pressed="true">Nieve: encendida</button>
+  </div>
+</footer>
+<script type="module" src="/src/aviso.ts"></script>
+</body>
+</html>

@@ -211,6 +211,9 @@ td:last-child{text-align:right;font-weight:700}
 .cline .v{font-weight:600;font-size:1.1rem}
 footer{background:var(--hero);color:var(--hero-fg)}
 footer .wrap{padding-block:28px calc(28px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:.9rem}
+/* Link al aviso de privacidad: subrayado y con área cómoda para el dedo */
+footer .pie-aviso{color:var(--hero-fg);text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--gold) 70%,transparent);font-weight:600;padding-block:6px;margin-block:-6px}
+footer .pie-aviso:hover{color:var(--gold)}
 .toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:.92rem;z-index:40}
 .map{display:grid;grid-template-columns:1.4fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 @media (max-width:760px){.map{grid-template-columns:1fr}}
