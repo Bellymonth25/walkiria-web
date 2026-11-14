@@ -79,16 +79,22 @@ if (pista) {
 }
 
 const base = `${import.meta.env.BASE_URL}volante/`;
+/**
+ * Versión del volante. Los archivos conservan su nombre, así que el navegador puede seguir mostrando
+ * la imagen vieja que guardó. Al cambiar el volante, sube esta versión y la de index.html (?v=…).
+ */
+const VERSION_VOLANTE = "20261113";
+const archivoVolante = (nombre: string) => `${base}${nombre}?v=${VERSION_VOLANTE}`;
 const abrirVolante = () =>
   visor.abrir([
     {
       titulo: `Menú ${temporada.anio}`,
       alt: `Volante Cenas de Fin de Año ${temporada.anio} de La Walkiria`,
-      media: `${base}volante-2600.webp`,
-      grande: `${base}volante-walkiria-2026.png`,
+      media: archivoVolante("volante-2600.webp"),
+      grande: archivoVolante("volante-walkiria-2026.png"),
       descargas: [
-        { texto: "Descargar PDF", href: `${base}volante-walkiria-2026.pdf`, archivo: `Volante La Walkiria ${temporada.anio}.pdf` },
-        { texto: "Imagen", href: `${base}volante-walkiria-2026.png`, archivo: `Volante La Walkiria ${temporada.anio}.png` },
+        { texto: "Descargar PDF", href: archivoVolante("volante-walkiria-2026.pdf"), archivo: `Volante La Walkiria ${temporada.anio}.pdf` },
+        { texto: "Imagen", href: archivoVolante("volante-walkiria-2026.png"), archivo: `Volante La Walkiria ${temporada.anio}.png` },
       ],
     },
   ]);
