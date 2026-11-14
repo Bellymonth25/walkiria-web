@@ -188,6 +188,9 @@ export function cambios(antes: ProductoFirestore, despues: ProductoFirestore): R
   return Object.fromEntries(Object.entries(d).filter(([k, v]) => a[k] !== v));
 }
 
+/** Para eliminar hay que escribir el nombre exacto del producto (como en Firebase). */
+export const coincideNombre = (escrito: string, nombre: string): boolean => nombre.trim() !== "" && escrito.trim() === nombre.trim();
+
 /** Nombre del producto de la página web que usa este id, si hay. */
 export function nombreEnWeb(id: string, productos: readonly Producto[]): string | null {
   return productos.find((p) => p.firebaseIds.includes(id))?.nombre ?? null;

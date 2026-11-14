@@ -46,6 +46,9 @@ Página sin enlace en el menú (y con `noindex`) en `lawalkiria.com.mx/admin.htm
   y la ficha los muestra. Al crear se guarda también `creadoEn`. No se guarda el valor anterior.
 - El switch muestra un indicador mientras guarda y un aviso con el nombre del producto: "✓ Pavo Relleno
   quedó agotado" o el error.
+- **Editar** (botón amarillo) es la única forma de abrir la ficha. **Eliminar** (botón rojo de la fila)
+  borra el producto: hay que escribir su nombre exacto para confirmar (no se puede deshacer; los
+  pedidos ya hechos conservan nombre y precio).
 - **+ Nuevo producto** crea `PROD_0xx` con el siguiente número libre.
 - Mismo comportamiento en app y web: `estaDisponible == false` → "Agotado" y no se puede pedir;
   `oculto == true` → no aparece en ningún lado. Los pedidos ya hechos guardan su precio.
@@ -73,12 +76,12 @@ service cloud.firestore {
     match /{col}/{doc=**} {
       allow read, write: if esEmpleado() && !(col in ['products', 'publicWeb', 'superadmins']);
     }
-    // Productos: los empleados leen; solo el súper admin crea y edita. Nadie borra.
+    // Productos: los empleados leen; solo el súper admin crea, edita y elimina.
     match /products/{id} {
       allow read: if esEmpleado() || esSuperadmin();
       allow create: if esSuperadmin() && request.resource.data.id == id;
       allow update: if esSuperadmin() && request.resource.data.id == resource.data.id;
-      allow delete: if false;
+      allow delete: if esSuperadmin();
     }
     // Lista de súper admins: cada quien solo puede ver si está; se edita desde la consola.
     match /superadmins/{uid} {

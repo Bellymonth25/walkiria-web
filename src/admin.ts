@@ -2,7 +2,7 @@ import "./styles.css";
 import "./admin.css";
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { collection, doc, getDoc, getFirestore, onSnapshot, runTransaction, serverTimestamp, updateDoc, type Unsubscribe } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getFirestore, onSnapshot, runTransaction, serverTimestamp, updateDoc, type Unsubscribe } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { firebaseWeb } from "./data/temporada";
 import {
@@ -13,6 +13,7 @@ import {
   aDocumento,
   agrupar,
   cambios,
+  coincideNombre,
   fechaCorta,
   evaluarSuperadmin,
   leerProducto,
@@ -191,12 +192,12 @@ function iniciar(): void {
     const foto = p.imagen ? `<img class="adm-mini" src="${escapar(p.imagen)}" alt="" loading="lazy">` : `<span class="adm-mini" aria-hidden="true"></span>`;
     const mod = p.actualizadoEn ? `${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? `<small>${escapar(p.actualizadoPor.split("@")[0]!)}</small>` : ""}` : `<span class="adm-vacio">—</span>`;
     return `<tr class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}">
-      <td class="c-prod"><button class="adm-abrir" type="button" data-abrir="${id}">${foto}<span class="adm-nombre">${escapar(p.nombre)}</span></button></td>
+      <td class="c-prod"><div class="adm-abrir">${foto}<span class="adm-nombre">${escapar(p.nombre)}</span></div></td>
       <td class="c-precio" data-label="Precio">${dinero(p.menudeo)}${unidad}</td>
       ${celdaSwitch(p, "estaDisponible", "Disponible")}
       ${celdaSwitch(p, "oculto", "Mostrar")}
       <td class="c-mod" data-label="Modificado">${mod}</td>
-      <td class="c-acc"><button class="btn btn-ghost btn-sm" type="button" data-abrir="${id}">Editar</button></td>
+      <td class="c-acc"><div class="adm-acciones"><button class="add adm-editar" type="button" data-abrir="${id}" aria-label="Editar ${escapar(p.nombre)}">Editar</button><button class="adm-borrar" type="button" data-eliminar="${id}" aria-label="Eliminar ${escapar(p.nombre)}">Eliminar</button></div></td>
     </tr>`;
   }
 
@@ -232,9 +233,13 @@ function iniciar(): void {
   });
 
   $("#lista").addEventListener("click", (e) => {
-    const id = (e.target as HTMLElement).closest<HTMLElement>("[data-abrir]")?.dataset.abrir;
+    const el = e.target as HTMLElement;
+    const id = el.closest<HTMLElement>("[data-abrir]")?.dataset.abrir;
     const p = id && lista.find((x) => x.id === id);
-    if (p) abrirFicha(p, false);
+    if (p) return abrirFicha(p, false);
+    const idBorrar = el.closest<HTMLElement>("[data-eliminar]")?.dataset.eliminar;
+    const q = idBorrar && lista.find((x) => x.id === idBorrar);
+    if (q) pedirEliminar(q);
   });
   $("#nuevo").addEventListener("click", () => abrirFicha(productoNuevo(siguienteId(lista.map((p) => p.id))), true));
 
@@ -363,7 +368,42 @@ function iniciar(): void {
     }
   });
 
+  // ---------- Eliminar ----------
+  const confirmar = $<HTMLDialogElement>("#confirmarEliminar");
   const cerrar = (): void => ficha.close();
+  let porEliminar: ProductoFirestore | null = null;
+  const elimEscribe = $<HTMLInputElement>("#elimEscribe");
+  const elimConfirmar = $<HTMLButtonElement>("#elimConfirmar");
+  function pedirEliminar(p: ProductoFirestore): void {
+    porEliminar = p;
+    document.querySelectorAll(".elimNombre").forEach((el) => (el.textContent = p.nombre));
+    elimEscribe.value = "";
+    elimConfirmar.disabled = true;
+    $("#elimError").hidden = true;
+    confirmar.showModal();
+    elimEscribe.focus();
+  }
+  // El botón rojo solo se prende cuando el nombre escrito es idéntico.
+  elimEscribe.addEventListener("input", () => (elimConfirmar.disabled = !porEliminar || !coincideNombre(elimEscribe.value, porEliminar.nombre)));
+  $("#elimCancelar").addEventListener("click", () => confirmar.close());
+  elimConfirmar.addEventListener("click", async () => {
+    if (!porEliminar || !coincideNombre(elimEscribe.value, porEliminar.nombre)) return;
+    const { id, nombre } = porEliminar;
+    elimConfirmar.disabled = true;
+    elimConfirmar.textContent = "Eliminando…";
+    try {
+      await deleteDoc(doc(db, "products", id));
+      confirmar.close();
+      aviso(`✓ ${nombre} (${id}) se eliminó`);
+    } catch (err) {
+      console.error("admin: no se pudo eliminar " + id, err);
+      $("#elimError").textContent = `No se pudo eliminar "${nombre}" (${(err as { code?: string }).code ?? "error"}). Sigue en la lista.`;
+      $("#elimError").hidden = false;
+      elimConfirmar.disabled = !coincideNombre(elimEscribe.value, nombre);
+    } finally {
+      elimConfirmar.textContent = "Eliminar producto";
+    }
+  });
   $("#cerrarFicha").addEventListener("click", cerrar);
   $("#cancelarFicha").addEventListener("click", cerrar);
 
