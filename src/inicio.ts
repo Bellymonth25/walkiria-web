@@ -24,7 +24,7 @@ $<HTMLAnchorElement>("#goWaze").href = `https://waze.com/ul?navigate=yes&q=${des
 $<HTMLIFrameElement>("#mapFrame").src = `https://www.google.com/maps?q=${destino}&output=embed`;
 
 $("#zonesTable").innerHTML = temporada.zonas
-  .map((z) => `<tr><td><b>${z.nombre}</b><small>${z.alcaldias.join(", ")}</small></td><td>${dinero(z.costo)}</td></tr>`)
+  .map((z) => `<div class="zona"><div class="zona-top"><b>${z.nombre}</b><span class="num">${dinero(z.costo)}</span></div><small>${z.alcaldias.join(", ")}</small></div>`)
   .join("");
 $<HTMLAnchorElement>("#zonaOtraWa").href = enlaceWhatsApp(negocio.whatsapp, "Hola, ¿hacen envíos a mi zona? Mi dirección es: ");
 
