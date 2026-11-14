@@ -1,8 +1,8 @@
 import type { Linea, Presentacion, Producto } from "../types";
 import { calculadora as cfg } from "../data/temporada";
-import { calcularCena, pavosPara, repartirCarne, type Cena, type Grupo, type Personas } from "../lib/calculadora";
+import { calcularCena, pavoPermitido, pavosCena, repartirCarne, type Cena, type Grupo, type Personas } from "../lib/calculadora";
 import { dinero, escapar, kilos } from "../lib/formato";
-import { importeLinea, kgMinimoPavo, nuevaLinea, presentaciones } from "../lib/pedido";
+import { empaquesDe, importeProducto, kgMinimoPavo, nuevaLinea, presentaciones, tieneCosto, type Empaque } from "../lib/pedido";
 
 /** Lo que la calculadora agrega al pedido: un producto y cómo queda su línea. */
 export interface Agregado {
@@ -52,7 +52,11 @@ export function iniciarCalculadora(
 
   const personas: Personas = { personas: cfg.sugeridas[0], adolescentes: 0 };
   const total = () => personas.personas + personas.adolescentes;
-  const recomendada = () => (total() <= cfg.hastaPechuga ? "pechuga-pavo:Horneada" : "pavo-relleno");
+  /** Siempre se propone primero la pechuga de pavo horneada (si no hay, la primera carne disponible). */
+  const recomendada = () => {
+    const pechuga = carnes.find((c) => c.id === "pechuga-pavo:Horneada");
+    return pechuga && !agotado(p(pechuga.productoId)!) ? pechuga.id : (carnes.find((c) => permitida(c) && !agotado(p(c.productoId)!))?.id ?? carnes[0]!.id);
+  };
   /** La primera carne sigue a la recomendación hasta que el cliente la cambie. */
   let elegidas: string[] = [recomendada()];
   let primeraTocada = false;
@@ -64,10 +68,13 @@ export function iniciarCalculadora(
 
   const variasPermitidas = () => total() >= cfg.desdeVariasCarnes;
 
+  /** Las carnes que se ofrecen para este número de personas (el pavo entero solo en cenas más grandes). */
+  const permitida = (c: Carne) => pavoPermitido(p(c.productoId)!, total());
+
   const opcionesCarne = (actual: string) => {
     const grupo = (cat: string, titulo: string) =>
       `<optgroup label="${titulo}">${carnes
-        .filter((c) => p(c.productoId)?.categoria === cat)
+        .filter((c) => p(c.productoId)?.categoria === cat && permitida(c))
         .map((c) => {
           const x = p(c.productoId)!;
           const no = agotado(x);
@@ -84,6 +91,16 @@ export function iniciarCalculadora(
     return { ...nuevaLinea(x), presentacion: pres, ...cambios };
   };
 
+  /** "medio pavo (3 a 4 kg)", "1 pavo de aprox. 6 kg", "1 pavo de aprox. 6 kg + medio pavo (3 a 4 kg)". */
+  const textoPavos = (pavos: ReturnType<typeof pavosCena>): string => {
+    const enteros = pavos.filter((v) => v.tamano === "completo");
+    const medios = pavos.filter((v) => v.tamano === "medio").length;
+    const partes: string[] = [];
+    if (enteros.length) partes.push(`${enteros.length} ${enteros.length === 1 ? "pavo" : "pavos"} de aprox. ${kilos(enteros[0]!.kgPorPavo)}`);
+    if (medios) partes.push(medios === 1 ? "medio pavo (3 a 4 kg)" : `${medios} medios pavos (3 a 4 kg)`);
+    return partes.join(" + ");
+  };
+
   type Fila = { nombre: string; cantidad: string; importe: number; agregado: Agregado[] };
 
   /** Renglones del resultado con lo que se agregaría. */
@@ -96,24 +113,24 @@ export function iniciarCalculadora(
       const kg = partes[n];
       if (!x || !kg) return;
       if (x.pavoEntero) {
-        const pavos = pavosPara(kg, kgMinimoPavo(x), !x.soloCompleto);
+        const pavos = pavosCena(c.equivalentes, c.personas, elegidas.length, kgMinimoPavo(x), !x.soloCompleto);
         const lineas = pavos.map((v) => linea(x, { cantidad: 1, tamano: v.tamano, kgPorPavo: v.kgPorPavo }));
         filas.push({
           nombre: nombreCarne(ca),
-          cantidad: pavos[0]?.tamano === "medio" ? "medio pavo (3 a 4 kg)" : `${pavos.length} ${pavos.length === 1 ? "pavo" : "pavos"} de aprox. ${kilos(pavos[0]!.kgPorPavo)}`,
-          importe: lineas.reduce((a, l) => a + importeLinea(x, l), 0),
+          cantidad: textoPavos(pavos),
+          importe: lineas.reduce((a, l) => a + importeProducto(x, l), 0),
           agregado: lineas.map((l) => ({ productoId: x.id, cambios: l })),
         });
       } else {
         const l = linea(x, { cantidad: kg, version: ca.estilo ?? "" });
-        filas.push({ nombre: nombreCarne(ca), cantidad: kilos(kg), importe: importeLinea(x, l), agregado: [{ productoId: x.id, cambios: l }] });
+        filas.push({ nombre: nombreCarne(ca), cantidad: kilos(kg), importe: importeProducto(x, l), agregado: [{ productoId: x.id, cambios: l }] });
       }
     });
     const porKilo = (id: string, kg: number, version = "") => {
       const x = p(id);
       if (!x || !kg) return;
       const l = linea(x, { cantidad: kg, version });
-      filas.push({ nombre: version ? `${x.nombre} ${version.toLowerCase()}` : x.nombre, cantidad: kilos(kg), importe: importeLinea(x, l), agregado: [{ productoId: id, cambios: l }] });
+      filas.push({ nombre: version ? `${x.nombre} ${version.toLowerCase()}` : x.nombre, cantidad: kilos(kg), importe: importeProducto(x, l), agregado: [{ productoId: id, cambios: l }] });
     };
     const [pastaProd, pastaVer = ""] = pastaId.split(":") as [string, string?];
     porKilo(pastaProd, c.pasta, pastaVer);
@@ -144,6 +161,34 @@ export function iniciarCalculadora(
     return salida;
   };
 
+  /**
+   * Charolas o bolsas al vacío de todo lo que se agrega, en un solo renglón con su propio precio
+   * (así se ve qué cuesta el producto y qué cuesta el empaque). Sale de las líneas ya juntas,
+   * igual que lo que se agrega al pedido.
+   */
+  const renglonEmpaque = (items: Agregado[]): { nombre: string; detalle: string; cantidad: string; importe: number } | null => {
+    if (!tieneCosto(presentacion)) return null;
+    const porTamano = new Map<Empaque["tamano"], number>();
+    let importe = 0;
+    for (const it of items) {
+      const x = p(it.productoId);
+      if (!x) continue;
+      for (const e of empaquesDe(x, { ...nuevaLinea(x), ...it.cambios })) {
+        porTamano.set(e.tamano, (porTamano.get(e.tamano) ?? 0) + e.piezas);
+        importe += e.piezas * e.precio;
+      }
+    }
+    const n = [...porTamano.values()].reduce((a, b) => a + b, 0);
+    if (!n) return null;
+    const [uno, varios] = presentacion === "charola" ? ["charola", "charolas"] : ["bolsa al vacío", "bolsas al vacío"];
+    const plural = (t: string, k: number) => (k === 1 ? t : `${t}s`);
+    const detalle = (["chica", "mediana", "grande"] as const)
+      .filter((t) => porTamano.has(t))
+      .map((t) => `${porTamano.get(t)} ${plural(t, porTamano.get(t)!)}`)
+      .join(" · ");
+    return { nombre: presentacion === "charola" ? "Charolas de aluminio" : "Bolsas al vacío", detalle, cantidad: `${n} ${n === 1 ? uno : varios}`, importe };
+  };
+
   const res = () => raiz.querySelector<HTMLElement>("#calcRes")!;
 
   const pintarResultado = () => {
@@ -156,12 +201,14 @@ export function iniciarCalculadora(
       return;
     }
     const filas = plan(c);
-    const suma = filas.reduce((a, f) => a + f.importe, 0);
+    const emp = renglonEmpaque(juntar(filas.flatMap((f) => f.agregado)));
+    const suma = filas.reduce((a, f) => a + f.importe, 0) + (emp?.importe ?? 0);
     res().innerHTML = `
       <h3>Para ${c.personas} ${c.personas === 1 ? "persona" : "personas"} te sugerimos</h3>
       <ul class="calc-lista">${filas
         .map((f) => `<li><span>${escapar(f.nombre)}</span><b>${escapar(f.cantidad)}</b><span class="num">${dinero(Math.round(f.importe))}</span></li>`)
         .join("")}
+        ${emp ? `<li class="calc-emp"><span>${escapar(emp.nombre)}<small>${escapar(emp.detalle)}</small></span><b>${escapar(emp.cantidad)}</b><span class="num">${dinero(Math.round(emp.importe))}</span></li>` : ""}
         <li class="calc-pan"><span>Panecillo</span><b>${c.panes} ${c.panes === 1 ? "pza" : "pzas"}</b><span>1 por persona</span></li>
       </ul>
       <div class="calc-total"><span>Total aproximado</span><b class="num">${dinero(Math.round(suma))}</b></div>
@@ -191,6 +238,8 @@ export function iniciarCalculadora(
   /** Cuando cambia el número de personas: la carne recomendada y si se pueden poner varias. */
   const alCambiarPersonas = () => {
     if (!primeraTocada) elegidas[0] = recomendada();
+    // Si lo elegido ya no se ofrece con este número de personas (ej. un pavo en una cena de 4), se cambia por la recomendada.
+    elegidas = elegidas.map((id) => (permitida(carne(id)) ? id : permitida(carne(recomendada())) ? recomendada() : carnes.find(permitida)!.id));
     pintarCarnes();
     pintarResultado();
   };
@@ -255,7 +304,7 @@ export function iniciarCalculadora(
       alCambiarPersonas();
     } else if (t.id === "calcMas") {
       const usadas = new Set(elegidas);
-      const otra = carnes.find((c) => !usadas.has(c.id) && !agotado(p(c.productoId)!) && c.productoId !== carne(elegidas[0]!).productoId);
+      const otra = carnes.find((c) => !usadas.has(c.id) && permitida(c) && !agotado(p(c.productoId)!) && c.productoId !== carne(elegidas[0]!).productoId);
       elegidas.push(otra?.id ?? carnes[0]!.id);
       pintarCarnes();
       pintarResultado();

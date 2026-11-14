@@ -49,6 +49,14 @@ export function empaquesDe(p: Producto, l: Linea): Empaque[] {
   return [{ tamano, piezas, precio: precios[tamano] }];
 }
 
+/** Cómo va el producto, para que en el mensaje y en el pedido se entienda sin dudas: "en charola de aluminio". */
+export const vaEn: Record<Presentacion, string> = {
+  acrilico: "en acrílico",
+  bolsa: "en bolsa o caja de cartón",
+  vacio: "al vacío",
+  charola: "en charola de aluminio",
+};
+
 export function textoEmpaques(pr: Presentacion, es: readonly Empaque[]): string {
   if (!es.length) return nombrePresentacion[pr] + " (sin costo)";
   const tipo = pr === "vacio" ? ["bolsa al vacío", "bolsas al vacío"] : ["charola", "charolas"];
@@ -214,6 +222,45 @@ export function renglones(pedido: Pedido, catalogo: readonly Producto[]): Renglo
   );
 }
 
+export interface ResumenEmpaque {
+  presentacion: "vacio" | "charola";
+  /** "Charolas de aluminio" / "Bolsas al vacío". */
+  nombre: string;
+  piezas: number;
+  importe: number;
+  /** "2 chicas · 1 grande". */
+  tamanos: string;
+}
+
+/**
+ * Empaques con costo de todo el pedido, juntos por tipo (charolas, bolsas al vacío), para mostrarlos
+ * desglosados junto al total. `productos` es lo que cuestan los productos sin empaque.
+ */
+export function resumenEmpaques(pedido: Pedido, catalogo: readonly Producto[]): { productos: number; empaques: ResumenEmpaque[] } {
+  const filas = renglones(pedido, catalogo);
+  const grupos = new Map<"vacio" | "charola", { piezas: number; importe: number; tamanos: Map<TamanoEmpaque, number> }>();
+  for (const r of filas) {
+    for (const e of empaquesDe(r.producto, r.linea)) {
+      const pr = r.linea.presentacion as "vacio" | "charola";
+      const g = grupos.get(pr) ?? { piezas: 0, importe: 0, tamanos: new Map<TamanoEmpaque, number>() };
+      g.piezas += e.piezas;
+      g.importe += e.piezas * e.precio;
+      g.tamanos.set(e.tamano, (g.tamanos.get(e.tamano) ?? 0) + e.piezas);
+      grupos.set(pr, g);
+    }
+  }
+  const empaques = (["charola", "vacio"] as const).flatMap((pr) => {
+    const g = grupos.get(pr);
+    if (!g) return [];
+    const tamanos = (["chica", "mediana", "grande"] as const)
+      .filter((t) => g.tamanos.has(t))
+      .map((t) => `${g.tamanos.get(t)} ${g.tamanos.get(t) === 1 ? t : `${t}s`}`)
+      .join(" · ");
+    return [{ presentacion: pr, nombre: pr === "charola" ? "Charolas de aluminio" : "Bolsas al vacío", piezas: g.piezas, importe: g.importe, tamanos }];
+  });
+  return { productos: filas.reduce((a, r) => a + importeProducto(r.producto, r.linea), 0), empaques };
+}
+
 /** Valor de "Otra alcaldía": no tiene precio fijo, se confirma por WhatsApp. */
 export const OTRA_ALCALDIA = "otra";
 
@@ -278,7 +325,10 @@ export function mensaje(pedido: Pedido, ctx: ContextoMensaje): string {
     const { producto: p, linea: l } = r;
     lineas.push(`• ${nombreLinea(p, l)}, ${textoCantidad(p, l)}: ${dinero(importeProducto(p, l))}`);
     if (p.maquila && llevaRelleno(l)) lineas.push(`   Con ${kilos(l.kgRelleno)} de relleno`);
-    if (presentaciones(p).length) lineas.push(`   Presentación: ${textoEmpaques(l.presentacion, empaquesDe(p, l))}`);
+    if (presentaciones(p).length) {
+      const es = empaquesDe(p, l);
+      lineas.push(`   Va ${vaEn[l.presentacion]}${es.length ? `: ${textoEmpaques(l.presentacion, es)}` : " (sin costo)"}`);
+    }
     if (l.nota.trim()) lineas.push(`   Nota: ${l.nota.trim()}`);
   }
   if (filas.some((r) => r.producto.maquila)) {
@@ -293,6 +343,12 @@ export function mensaje(pedido: Pedido, ctx: ContextoMensaje): string {
   }
   lineas.push(`Día: ${ctx.nombreDia}${ctx.diaSujeto ? " (sujeto a disponibilidad)" : ""}`);
   if (pedido.nota.trim()) lineas.push(`Nota del pedido: ${pedido.nota.trim()}`);
+  // Con empaques de costo se desglosa de dónde sale el total: productos + charolas o bolsas (+ envío).
+  const { productos: sub, empaques: emp } = resumenEmpaques(pedido, ctx.catalogo);
+  if (emp.length) {
+    lineas.push("", `Productos: ${dinero(sub)}`);
+    for (const e of emp) lineas.push(`${e.nombre} (${e.piezas}): ${dinero(e.importe)}`);
+  }
   const t = total(pedido, ctx.catalogo, ctx.zonas);
   const notaEnvio = envio ? ` (incluye envío ${dinero(envio)})` : envioPorConfirmar(pedido) ? " más envío por confirmar" : "";
   lineas.push(`Total estimado: ${dinero(t)}${notaEnvio}`);

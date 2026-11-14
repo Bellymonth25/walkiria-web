@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Linea, Pedido, Producto } from "../src/types";
+import { pavoPermitido } from "../src/lib/calculadora";
 import { productos } from "../src/data/productos";
 import { temporada } from "../src/data/temporada";
 import {
-  aumentar, conRellenoSugerido, disminuir, empaquesDe, rellenoSugerido, faltantes, idLinea, importeLinea, mensaje, nombreLinea, normalizarCantidad, normalizarKgPavo, nuevaLinea, total, alcaldiaValida, zonaDe,
+  resumenEmpaques, aumentar, conRellenoSugerido, disminuir, empaquesDe, rellenoSugerido, faltantes, idLinea, importeLinea, mensaje, nombreLinea, normalizarCantidad, normalizarKgPavo, nuevaLinea, total, alcaldiaValida, zonaDe,
 } from "../src/lib/pedido";
 import { esPedidoTardio, nombreDia } from "../src/lib/fechas";
 import { estaAgotado, estaOculto, parsearAgotados, parsearOcultos } from "../src/lib/disponibilidad";
@@ -18,9 +19,9 @@ const base: Pedido = { lineas: {}, nombre: "", modo: "tienda", alcaldia: "", dir
 const ctx = { catalogo: productos, zonas: temporada.zonas, nombreDia: "Miércoles 23 de diciembre", tardio: false };
 
 describe("líneas nuevas", () => {
-  it("los pavos empiezan completos y en bolsa o caja; el relleno desde 6 kg y los demás desde 5", () => {
+  it("los pavos empiezan completos y en bolsa o caja; todos desde 6 kg", () => {
     expect(nuevaLinea(pavoR)).toMatchObject({ cantidad: 1, tamano: "completo", kgPorPavo: 6, presentacion: "bolsa" });
-    expect(nuevaLinea(prod("pavo-adobado"))).toMatchObject({ cantidad: 1, tamano: "completo", kgPorPavo: 5, presentacion: "bolsa" });
+    expect(nuevaLinea(prod("pavo-adobado"))).toMatchObject({ cantidad: 1, tamano: "completo", kgPorPavo: 6, presentacion: "bolsa" });
   });
   it("lo demás empieza en acrílico", () => {
     expect(nuevaLinea(lomo).presentacion).toBe("acrilico");
@@ -39,13 +40,13 @@ describe("cantidades", () => {
     expect(normalizarCantidad(lomo, 0.1)).toBe(0.25);
     expect(normalizarCantidad(strudel, 2.6)).toBe(3);
     expect(normalizarCantidad(lomo, -1)).toBeNull();
-    expect(normalizarKgPavo(prod("pavo-adobado"), 4)).toBe(5);
+    expect(normalizarKgPavo(prod("pavo-adobado"), 4)).toBe(6);
     expect(normalizarKgPavo(prod("pavo-adobado"), 6.3)).toBe(6.5);
-    // El pavo relleno empieza en 6 kg; los demás pavos, en 5.
+    // Todos los pavos empiezan en 6 kg.
     expect(normalizarKgPavo(prod("pavo-relleno"), 5)).toBe(6);
     expect(normalizarKgPavo(prod("pavo-relleno"), 6.3)).toBe(6.5);
     expect(nuevaLinea(prod("pavo-relleno")).kgPorPavo).toBe(6);
-    expect(nuevaLinea(prod("pavo-ahumado")).kgPorPavo).toBe(5);
+    expect(nuevaLinea(prod("pavo-ahumado")).kgPorPavo).toBe(6);
   });
 });
 
@@ -107,9 +108,12 @@ describe("mensaje de WhatsApp", () => {
     );
     expect(m.split("\n")[1]).toBe("Nombre: Ana López");
     expect(m).toContain("• Pavo Relleno, 1 medio pavo (3 a 4 kg): $1,400");
-    expect(m).toContain("Presentación: Bolsa o caja de cartón (sin costo)");
+    expect(m).toContain("Va en bolsa o caja de cartón (sin costo)");
     expect(m).toContain("• Lomo Adobado, 6 kg: $2,640");
-    expect(m).toContain("Presentación: 2 charolas grandes (+$80)");
+    expect(m).toContain("Va en charola de aluminio: 2 charolas grandes (+$80)");
+    // El total se explica: productos + charolas
+    expect(m).toContain("Productos: $4,040");
+    expect(m).toContain("Charolas de aluminio (2): $80");
     expect(m).toContain("Nota del pedido: Ensalada sin apio");
     expect(m).toContain("Total estimado: $4,120");
   });
@@ -194,7 +198,7 @@ describe("maquila", () => {
     expect(m).toContain("• Maquila de Cabrito, aprox. 3 kg: $510");
     expect(m).toContain("Llevaré la carne para la maquila a la tienda al menos 2 días antes de la entrega.");
     expect(m).toContain("Día: Miércoles 30 de diciembre (sujeto a disponibilidad)");
-    expect(m).not.toContain("Presentación");
+    expect(m).not.toContain("Va en");
   });
 });
 
@@ -249,7 +253,7 @@ describe("varios pavos y patos", () => {
   });
 });
 
-import { calcularCena, pavosPara, redondearKg, repartirCarne } from "../src/lib/calculadora";
+import { calcularCena, combinarPavos, pavosCena, pavosPara, redondearKg, repartirCarne } from "../src/lib/calculadora";
 
 describe("calculadora de cena", () => {
   it("redondea hacia arriba al cuarto de kilo", () => {
@@ -279,11 +283,11 @@ describe("calculadora de cena", () => {
     expect(repartirCarne(0.25, 2)).toEqual([0.25, 0.25]);
     expect(repartirCarne(0, 2)).toEqual([]);
   });
-  it("reparte la carne en pavos de máximo 10 kg", () => {
-    expect(pavosPara(3)).toEqual([{ tamano: "medio", kgPorPavo: 5 }]);
+  it("reparte la carne en pavos de máximo 9 kg", () => {
+    expect(pavosPara(3)).toEqual([{ tamano: "medio", kgPorPavo: 6 }]);
     expect(pavosPara(5.5, 6)).toEqual([{ tamano: "medio", kgPorPavo: 6 }]);
-    // El ahumado no tiene medio pavo: si pide poco, se le da uno completo de 5 kg.
-    expect(pavosPara(3, 5, false)).toEqual([{ tamano: "completo", kgPorPavo: 5 }]);
+    // El ahumado no tiene medio pavo: si pide poco, se le da uno completo del mínimo.
+    expect(pavosPara(3, 6, false)).toEqual([{ tamano: "completo", kgPorPavo: 6 }]);
     expect(pavosPara(7.2, 6)).toEqual([{ tamano: "completo", kgPorPavo: 7.5 }]);
     expect(pavosPara(7.2)).toEqual([{ tamano: "completo", kgPorPavo: 7.5 }]);
     expect(pavosPara(14)).toEqual([{ tamano: "completo", kgPorPavo: 7 }, { tamano: "completo", kgPorPavo: 7 }]);
@@ -339,5 +343,68 @@ describe("zonas de envío", () => {
     const otra = mensaje({ ...p, alcaldia: "otra" }, ctxZ);
     expect(otra).toContain("otra zona");
     expect(otra).toContain("Total estimado: $880 más envío por confirmar");
+  });
+});
+
+describe("desglose de empaques", () => {
+  it("junta charolas y bolsas al vacío por tipo, con productos aparte", () => {
+    const pedido: Pedido = {
+      ...base,
+      lineas: {
+        "lomo-adobado": linea(lomo, { cantidad: 6, presentacion: "charola" }),
+        "pavo-relleno": linea(pavoR, { tamano: "medio", presentacion: "vacio" }),
+      },
+    };
+    const r = resumenEmpaques(pedido, productos);
+    const charolas = r.empaques.find((e) => e.presentacion === "charola")!;
+    expect(charolas.piezas).toBe(2);
+    expect(charolas.importe).toBe(80);
+    expect(charolas.tamanos).toBe("2 grandes");
+    expect(r.empaques.find((e) => e.presentacion === "vacio")?.nombre).toBe("Bolsas al vacío");
+    const suma = r.empaques.reduce((a, e) => a + e.importe, 0);
+    expect(r.productos + suma).toBeCloseTo(total(pedido, productos, []), 2);
+  });
+
+  it("sin empaques con costo no hay desglose", () => {
+    const r = resumenEmpaques({ ...base, lineas: { "lomo-adobado": linea(lomo, { cantidad: 2 }) } }, productos);
+    expect(r.empaques).toEqual([]);
+  });
+});
+
+describe("pavo en la calculadora", () => {
+  const pavo = (id: string) => productos.find((x) => x.id === id)!;
+  it("no se ofrece en cenas de 4, desde 6 solo medio y el ahumado desde 10", () => {
+    expect(pavoPermitido(pavo("pavo-relleno"), 4)).toBe(false);
+    expect(pavoPermitido(pavo("pavo-relleno"), 6)).toBe(true);
+    expect(pavoPermitido(pavo("pavo-ahumado"), 6)).toBe(false);
+    expect(pavoPermitido(pavo("pavo-ahumado"), 10)).toBe(true);
+    expect(pavoPermitido(pavo("pechuga-pavo"), 4)).toBe(true);
+  });
+});
+
+describe("pavo por número de personas", () => {
+  const medio = [{ tamano: "medio", kgPorPavo: 6 }];
+  const completo = (kg: number, n = 1) => Array.from({ length: n }, () => ({ tamano: "completo", kgPorPavo: kg }));
+  it("de 6 a 8 personas, medio pavo", () => {
+    for (const n of [6, 7, 8]) expect(pavosCena(n, n, 1, 6, true)).toEqual(medio);
+  });
+  it("de 9 en adelante, pavo entero de 0.55 kg por persona y mínimo 6 kg", () => {
+    expect(pavosCena(9, 9, 1, 6, true)).toEqual(completo(6));
+    expect(pavosCena(10, 10, 1, 6, true)).toEqual(completo(6));
+    expect(pavosCena(11, 11, 1, 6, true)).toEqual(completo(6.5));
+    expect(pavosCena(12, 12, 1, 6, true)).toEqual(completo(7));
+    expect(pavosCena(14, 14, 1, 6, true)).toEqual(completo(8));
+  });
+  it("si pasa de 9 kg se reparte en dos pavos", () => {
+    expect(pavosCena(16, 16, 1, 6, true)).toEqual(completo(9)); // 8.8 kg → un pavo de 9
+    // Se prefiere un pavo y un medio pavo antes que dos pavos que sobren mucho.
+    expect(pavosCena(17, 17, 1, 6, true)).toEqual([...completo(6), medio[0]]); // 9.35 kg → 6 kg + medio pavo
+    expect(pavosCena(20, 20, 1, 6, true)).toEqual([...completo(7.5), medio[0]]); // 11 kg → 7.5 kg + medio pavo
+  });
+  it("el ahumado no tiene medio pavo: se reparte solo en pavos enteros", () => {
+    expect(combinarPavos(9.5, 6, false)).toEqual(completo(6, 2));
+  });
+  it("el ahumado (solo completo) nunca baja del mínimo", () => {
+    expect(pavosCena(9, 9, 1, 6, false)).toEqual(completo(6));
   });
 });
