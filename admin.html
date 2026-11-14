@@ -49,7 +49,11 @@
         <h1>Productos</h1>
         <button class="btn btn-gold btn-sm" id="nuevo" type="button">+ Nuevo producto</button>
       </div>
-      <p class="adm-sub">Lo que cambies aquí lo ven la app y la página. El interruptor prende o apaga <b>Disponible</b>; toca el producto para editarlo.</p>
+      <dl class="adm-leyenda">
+        <div><dt>Disponible</dt><dd>Prendido: se puede pedir. Apagado: sale <b>Agotado</b> en la app y en la página.</dd></div>
+        <div><dt>Mostrar</dt><dd>Prendido: aparece. Apagado: el producto se <b>oculta</b> en la app y en la página.</dd></div>
+        <div><dt>Editar</dt><dd>Nombre, precios, foto, grupo y demás. Cada cambio guarda quién y cuándo.</dd></div>
+      </dl>
       <div class="adm-resumen" id="resumen" aria-live="polite"></div>
       <label class="search adm-buscar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>

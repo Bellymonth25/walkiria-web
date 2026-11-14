@@ -13,6 +13,7 @@ import {
   aDocumento,
   agrupar,
   cambios,
+  fechaCorta,
   evaluarSuperadmin,
   leerProducto,
   motivoDeError,
@@ -26,6 +27,8 @@ import {
   type ResultadoRol,
 } from "./lib/admin";
 import { dinero, escapar } from "./lib/formato";
+
+type Campo = "estaDisponible" | "oculto";
 import { $ } from "./ui/dom";
 
 const vistas = { sinConfig: $("#sinConfig"), entrar: $("#entrar"), panel: $("#panel"), cargando: $("#cargando") };
@@ -58,7 +61,8 @@ function iniciar(): void {
   const db = getFirestore(app);
 
   let lista: ProductoFirestore[] = [];
-  const pendientes = new Set<string>();
+  /** id del producto → campo que se está guardando (muestra el circulito en esa celda). */
+  const pendientes = new Map<string, Campo>();
   let dejarDeEscuchar: Unsubscribe | null = null;
   const buscar = $<HTMLInputElement>("#buscar");
 
@@ -150,51 +154,74 @@ function iniciar(): void {
           .map(([g, ps]) => {
             const no = ps.filter((p) => !p.disponible && !p.oculto).length;
             return `<section class="adm-grupo"><h2>${escapar(nombreGrupo(g))}${no ? ` <small>${no} agotado${no > 1 ? "s" : ""}</small>` : ""}</h2>
-              <div class="adm-filas">${ps.map(fila).join("")}</div></section>`;
+              <table class="adm-tabla">
+                <thead><tr>
+                  <th class="c-prod" scope="col">Producto</th>
+                  <th class="c-precio" scope="col">Precio</th>
+                  <th class="c-sw" scope="col">Disponible<small>Apagado = Agotado</small></th>
+                  <th class="c-sw" scope="col">Mostrar<small>Apagado = Oculto</small></th>
+                  <th class="c-mod" scope="col">Modificado</th>
+                  <th class="c-acc" scope="col"><span class="vh">Editar</span></th>
+                </tr></thead>
+                <tbody>${ps.map(fila).join("")}</tbody>
+              </table></section>`;
           })
           .join("")
       : `<p class="adm-sub" style="margin-top:20px">No hay productos con ese nombre.</p>`;
   }
 
+  /** Celda con un switch y su palabra ("Sí"/"Agotado"), o el circulito mientras guarda. */
+  function celdaSwitch(p: ProductoFirestore, campo: Campo, etiqueta: string): string {
+    const activo = campo === "estaDisponible" ? p.disponible : !p.oculto;
+    const palabra = campo === "estaDisponible" ? (activo ? "Sí" : "Agotado") : activo ? "Visible" : "Oculto";
+    const cuerpo =
+      pendientes.get(p.id) === campo
+        ? `<span class="adm-giro" role="status" aria-label="Guardando ${escapar(p.nombre)}"></span><span class="adm-pal">Guardando…</span>`
+        : `<label class="adm-sw">
+            <input type="checkbox" role="switch" data-id="${escapar(p.id)}" data-campo="${campo}"${activo ? " checked" : ""}${pendientes.has(p.id) ? " disabled" : ""} aria-label="${escapar(p.nombre)}: ${etiqueta}">
+            <span class="adm-switch" aria-hidden="true"></span>
+            <span class="adm-pal${activo ? "" : " mal"}">${palabra}</span>
+          </label>`;
+    return `<td class="c-sw" data-label="${etiqueta}">${cuerpo}</td>`;
+  }
+
   function fila(p: ProductoFirestore): string {
-    const unidad = p.unidad ? ` / ${escapar(p.unidad)}` : "";
+    const unidad = p.unidad ? `<small>/ ${escapar(p.unidad)}</small>` : "";
     const id = escapar(p.id);
     const foto = p.imagen ? `<img class="adm-mini" src="${escapar(p.imagen)}" alt="" loading="lazy">` : `<span class="adm-mini" aria-hidden="true"></span>`;
-    return `<div class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}${pendientes.has(p.id) ? " pendiente" : ""}">
-      <button class="adm-abrir" type="button" data-abrir="${id}">
-        ${foto}
-        <span class="adm-info">
-          <span class="adm-nombre">${escapar(p.nombre)}</span>
-          <span class="adm-det"><span class="adm-precio">${dinero(p.menudeo)}${unidad}</span>${p.oculto ? `<span class="adm-oculto">Oculto</span>` : ""}${p.disponible ? "" : `<span class="adm-no">Agotado</span>`}</span>
-        </span>
-      </button>
-      ${
-        pendientes.has(p.id)
-          ? `<span class="adm-disp"><span class="adm-giro" role="status" aria-label="Guardando ${escapar(p.nombre)}"></span></span>`
-          : `<label class="adm-disp">
-        <input type="checkbox" role="switch" data-id="${id}"${p.disponible ? " checked" : ""} aria-label="${escapar(p.nombre)} disponible">
-        <span class="adm-switch" aria-hidden="true"></span>
-      </label>`
-      }
-    </div>`;
+    const mod = p.actualizadoEn ? `${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? `<small>${escapar(p.actualizadoPor.split("@")[0]!)}</small>` : ""}` : `<span class="adm-vacio">—</span>`;
+    return `<tr class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}">
+      <td class="c-prod"><button class="adm-abrir" type="button" data-abrir="${id}">${foto}<span class="adm-nombre">${escapar(p.nombre)}</span></button></td>
+      <td class="c-precio" data-label="Precio">${dinero(p.menudeo)}${unidad}</td>
+      ${celdaSwitch(p, "estaDisponible", "Disponible")}
+      ${celdaSwitch(p, "oculto", "Mostrar")}
+      <td class="c-mod" data-label="Modificado">${mod}</td>
+      <td class="c-acc"><button class="btn btn-ghost btn-sm" type="button" data-abrir="${id}">Editar</button></td>
+    </tr>`;
   }
 
   /** Quién y cuándo modificó el producto (la hora la pone el servidor). */
   const sello = () => ({ actualizadoEn: serverTimestamp(), actualizadoPor: auth.currentUser?.email ?? "" });
 
-  // Interruptor rápido de Disponible.
+  // Interruptores rápidos: Disponible y Mostrar.
   $("#lista").addEventListener("change", async (e) => {
     const input = e.target as HTMLInputElement;
     const id = input.dataset.id;
-    if (!id || pendientes.has(id)) return;
+    const campo = input.dataset.campo as Campo | undefined;
+    if (!id || !campo || pendientes.has(id)) return;
     const p = lista.find((x) => x.id === id);
-    const disponible = input.checked;
-    pendientes.add(id);
-    pintar();
     const n = p?.nombre ?? id;
+    const activo = input.checked;
+    pendientes.set(id, campo);
+    pintar();
     try {
-      await updateDoc(doc(db, "products", id), { estaDisponible: disponible, ...sello() });
-      aviso(disponible ? `✓ ${n} ya está disponible` : `✓ ${n} quedó agotado`);
+      // El switch "Mostrar" prendido significa oculto = false.
+      await updateDoc(doc(db, "products", id), { [campo]: campo === "oculto" ? !activo : activo, ...sello() });
+      aviso(
+        campo === "estaDisponible"
+          ? activo ? `✓ ${n} ya está disponible` : `✓ ${n} quedó agotado`
+          : activo ? `✓ ${n} se vuelve a mostrar` : `✓ ${n} quedó oculto (app y página)`,
+      );
     } catch (err) {
       console.error("admin: no se pudo cambiar " + id, err);
       aviso(`No se pudo cambiar "${n}" (${(err as { code?: string }).code ?? "error"}). Sigue como estaba.`, true);
