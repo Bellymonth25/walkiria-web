@@ -45,6 +45,13 @@ export interface Producto {
    * la web lo muestra como AGOTADO.
    */
   firebaseIds: readonly string[];
+  /**
+   * Foto del producto para verla en grande (~1400 px). Ruta del sitio (`img/galeria/bacalao.jpg`)
+   * o URL completa (`https://…`). Sin foto, la lista muestra el recuadro de "foto pronto".
+   */
+  imagen?: string;
+  /** Miniatura 4:3 de ~320 px para la lista. Si falta, se usa `imagen`. */
+  imagenMini?: string;
 }
 
 export interface PiezaPorPeso {

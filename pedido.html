@@ -151,6 +151,20 @@
             </div>
     </div>
   </section>
+  <dialog class="visor" id="visor" aria-label="Imagen en grande">
+    <div class="visor-barra">
+      <span class="visor-titulo" id="visorTitulo"></span>
+      <span class="visor-desc" id="visorDescargas"></span>
+      <button class="visor-cerrar" type="button" id="visorCerrar">Cerrar ✕</button>
+    </div>
+    <div class="visor-lienzo" id="visorLienzo">
+      <img id="visorImg" alt="">
+      <div class="visor-vacio" id="visorVacio" hidden></div>
+    </div>
+    <button class="visor-flecha ant" type="button" id="visorAnt" aria-label="Foto anterior" hidden>‹</button>
+    <button class="visor-flecha sig" type="button" id="visorSig" aria-label="Foto siguiente" hidden>›</button>
+    <p class="visor-ayuda" id="visorAyuda"></p>
+  </dialog>
 </main>
 <dialog class="confirmar" id="confirmarVaciar" aria-labelledby="confirmarTitulo" aria-describedby="confirmarTexto">
   <form method="dialog">
