@@ -1,7 +1,7 @@
 /** Cómo se vende un producto. Igual que `tipoVenta` en la app. */
 export type Unidad = "kg" | "pza";
 
-export type CategoriaId = "pavo" | "cerdo" | "trad" | "guarn" | "pan" | "maquila";
+export type CategoriaId = "pavo" | "cerdo" | "trad" | "guarn" | "pan" | "otros" | "maquila";
 
 export interface Categoria {
   id: CategoriaId;

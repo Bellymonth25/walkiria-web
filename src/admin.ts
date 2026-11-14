@@ -2,10 +2,28 @@ import "./styles.css";
 import "./admin.css";
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { collection, doc, getDoc, getFirestore, onSnapshot, query, updateDoc, where, type Unsubscribe } from "firebase/firestore";
-import { productos } from "./data/productos";
+import { collection, doc, getDoc, getFirestore, onSnapshot, runTransaction, updateDoc, type Unsubscribe } from "firebase/firestore";
+import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { firebaseWeb } from "./data/temporada";
-import { agrupar, evaluarRol, leerProducto, motivoDeError, nombreEnWeb, nombreGrupo, type ProductoFirestore, type ResultadoRol } from "./lib/admin";
+import {
+  CATEGORIAS,
+  GRUPOS,
+  PRESENTACIONES,
+  UNIDADES,
+  aDocumento,
+  agrupar,
+  cambios,
+  evaluarSuperadmin,
+  leerProducto,
+  motivoDeError,
+  nombreGrupo,
+  productoNuevo,
+  siguienteId,
+  validar,
+  type Categoria,
+  type ProductoFirestore,
+  type ResultadoRol,
+} from "./lib/admin";
 import { dinero, escapar } from "./lib/formato";
 import { $ } from "./ui/dom";
 
@@ -76,7 +94,7 @@ function iniciar(): void {
     dejarDeEscuchar = null;
     if (!usuario) return mostrar("entrar");
     mostrar("cargando");
-    const rol = await esAdmin(usuario);
+    const rol = await esSuperadmin(usuario);
     if (!rol.ok) {
       await signOut(auth);
       error(rol.motivo);
@@ -85,21 +103,20 @@ function iniciar(): void {
     escuchar();
   });
 
-  async function esAdmin(u: User): Promise<ResultadoRol> {
+  async function esSuperadmin(u: User): Promise<ResultadoRol> {
     try {
-      const snap = await getDoc(doc(db, "user", u.uid));
-      return evaluarRol(snap.exists(), snap.get("type"));
+      const snap = await getDoc(doc(db, "superadmins", u.uid));
+      return evaluarSuperadmin(snap.exists());
     } catch (e) {
-      console.error("admin: no se pudo leer user/" + u.uid, e);
+      console.error("admin: no se pudo leer superadmins/" + u.uid, e);
       return { ok: false, motivo: motivoDeError((e as { code?: string }).code) };
     }
   }
 
   // ---------- Lista en tiempo real ----------
   function escuchar(): void {
-    const q = query(collection(db, "products"), where("categoria", "==", "Comida"));
     dejarDeEscuchar = onSnapshot(
-      q,
+      collection(db, "products"),
       (snap) => {
         lista = snap.docs.map((d) => leerProducto(d.id, d.data()));
         mostrar("panel");
@@ -115,18 +132,23 @@ function iniciar(): void {
   buscar.addEventListener("input", pintar);
 
   function pintar(): void {
-    const apagados = lista.filter((p) => !p.disponible).length;
+    const visibles = lista.filter((p) => !p.oculto);
+    const apagados = visibles.filter((p) => !p.disponible).length;
+    const ocultos = lista.length - visibles.length;
     const resumen = $("#resumen");
     resumen.classList.toggle("hay", apagados > 0);
-    resumen.innerHTML =
-      apagados === 0 ? "Todo está disponible" : `<b>${apagados} ${apagados === 1 ? "producto no disponible" : "productos no disponibles"}</b>`;
+    const partes = [
+      apagados === 0 ? "Todo lo visible está disponible" : `<b>${apagados} ${apagados === 1 ? "agotado" : "agotados"}</b>`,
+      ocultos ? `${ocultos} ${ocultos === 1 ? "oculto" : "ocultos"}` : "",
+    ].filter(Boolean);
+    resumen.innerHTML = `${lista.length} productos · ${partes.join(" · ")}`;
 
     const grupos = agrupar(lista, buscar.value);
     $("#lista").innerHTML = grupos.length
       ? grupos
           .map(([g, ps]) => {
-            const no = ps.filter((p) => !p.disponible).length;
-            return `<section class="adm-grupo"><h2>${escapar(nombreGrupo(g))}${no ? ` <small>${no} no disponible${no > 1 ? "s" : ""}</small>` : ""}</h2>
+            const no = ps.filter((p) => !p.disponible && !p.oculto).length;
+            return `<section class="adm-grupo"><h2>${escapar(nombreGrupo(g))}${no ? ` <small>${no} agotado${no > 1 ? "s" : ""}</small>` : ""}</h2>
               <div class="adm-filas">${ps.map(fila).join("")}</div></section>`;
           })
           .join("")
@@ -134,41 +156,36 @@ function iniciar(): void {
   }
 
   function fila(p: ProductoFirestore): string {
-    const web = nombreEnWeb(p.id, productos);
     const unidad = p.unidad ? ` / ${escapar(p.unidad)}` : "";
+    const id = escapar(p.id);
+    const foto = p.imagen ? `<img class="adm-mini" src="${escapar(p.imagen)}" alt="" loading="lazy">` : `<span class="adm-mini" aria-hidden="true"></span>`;
     return `<div class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}${pendientes.has(p.id) ? " pendiente" : ""}">
-      <label class="adm-toque">
-      <span class="adm-info">
-        <span class="adm-nombre">${escapar(p.nombre)}</span>
-        <span class="adm-det"><span class="adm-precio">${dinero(p.precio)}${unidad}</span>${p.disponible ? "" : `<span class="adm-no">No disponible</span>`}${web ? "" : "<span>No aparece en la web</span>"}</span>
-      </span>
-      <input type="checkbox" role="switch" data-campo="estaDisponible" data-id="${escapar(p.id)}"${p.disponible ? " checked" : ""} aria-label="${escapar(p.nombre)} disponible">
-      <span class="adm-switch" aria-hidden="true"></span>
+      <button class="adm-abrir" type="button" data-abrir="${id}">
+        ${foto}
+        <span class="adm-info">
+          <span class="adm-nombre">${escapar(p.nombre)}</span>
+          <span class="adm-det"><span class="adm-precio">${dinero(p.menudeo)}${unidad}</span>${p.oculto ? `<span class="adm-oculto">Oculto</span>` : ""}${p.disponible ? "" : `<span class="adm-no">Agotado</span>`}</span>
+        </span>
+      </button>
+      <label class="adm-disp">
+        <input type="checkbox" role="switch" data-id="${id}"${p.disponible ? " checked" : ""} aria-label="${escapar(p.nombre)} disponible">
+        <span class="adm-switch" aria-hidden="true"></span>
       </label>
-      ${web ? `<label class="adm-web"><span>Mostrar en la web</span>
-        <input type="checkbox" role="switch" data-campo="ocultoEnWeb" data-id="${escapar(p.id)}"${p.oculto ? "" : " checked"} aria-label="${escapar(p.nombre)} mostrar en la web">
-        <span class="adm-switch mini" aria-hidden="true"></span></label>` : ""}
     </div>`;
   }
 
+  // Interruptor rápido de Disponible.
   $("#lista").addEventListener("change", async (e) => {
     const input = e.target as HTMLInputElement;
     const id = input.dataset.id;
     if (!id || pendientes.has(id)) return;
     const p = lista.find((x) => x.id === id);
-    const campo = input.dataset.campo === "ocultoEnWeb" ? "ocultoEnWeb" : "estaDisponible";
-    const activo = input.checked;
+    const disponible = input.checked;
     pendientes.add(id);
     pintar();
     try {
-      // Mostrar en la web activo = ocultoEnWeb false.
-      await updateDoc(doc(db, "products", id), { [campo]: campo === "ocultoEnWeb" ? !activo : activo });
-      const n = p?.nombre ?? id;
-      aviso(
-        campo === "ocultoEnWeb"
-          ? activo ? `${n} se vuelve a mostrar en la web` : `${n} ya no se muestra en la web`
-          : activo ? `${n} ya está disponible` : `${n} quedó como no disponible`,
-      );
+      await updateDoc(doc(db, "products", id), { estaDisponible: disponible });
+      aviso(disponible ? `${p?.nombre ?? id} ya está disponible` : `${p?.nombre ?? id} quedó agotado`);
     } catch {
       aviso(`No se pudo cambiar ${p?.nombre ?? id}. Revisa tu conexión o tus permisos.`, true);
     } finally {
@@ -176,4 +193,191 @@ function iniciar(): void {
       pintar();
     }
   });
+
+  $("#lista").addEventListener("click", (e) => {
+    const id = (e.target as HTMLElement).closest<HTMLElement>("[data-abrir]")?.dataset.abrir;
+    const p = id && lista.find((x) => x.id === id);
+    if (p) abrirFicha(p, false);
+  });
+  $("#nuevo").addEventListener("click", () => abrirFicha(productoNuevo(siguienteId(lista.map((p) => p.id))), true));
+
+  // ---------- Ficha ----------
+  const ficha = $<HTMLDialogElement>("#ficha");
+  const f = {
+    titulo: $("#fichaTitulo"),
+    id: $("#fId"),
+    imagen: $<HTMLInputElement>("#fImagen"),
+    vista: $<HTMLImageElement>("#fFotoVista"),
+    vacia: $("#fFotoVacia"),
+    archivo: $<HTMLInputElement>("#fFotoArchivo"),
+    quitar: $<HTMLButtonElement>("#fFotoQuitar"),
+    nombre: $<HTMLInputElement>("#fNombre"),
+    menudeo: $<HTMLInputElement>("#fMenudeo"),
+    mayoreo: $<HTMLInputElement>("#fMayoreo"),
+    categoria: $<HTMLSelectElement>("#fCategoria"),
+    grupo: $<HTMLSelectElement>("#fGrupo"),
+    unidad: $<HTMLSelectElement>("#fUnidad"),
+    presentacion: $<HTMLSelectElement>("#fPresentacion"),
+    disponible: $<HTMLInputElement>("#fDisponible"),
+    mostrar: $<HTMLInputElement>("#fMostrar"),
+    peso: $<HTMLInputElement>("#fPeso"),
+    maquila: $<HTMLInputElement>("#fMaquila"),
+    error: $("#errorFicha"),
+    guardar: $<HTMLButtonElement>("#guardarFicha"),
+  };
+  const opciones = (sel: HTMLSelectElement, valores: readonly string[], etiqueta: (v: string) => string = (v) => v): void => {
+    sel.innerHTML = valores.map((v) => `<option value="${escapar(v)}">${escapar(etiqueta(v) || "Sin definir")}</option>`).join("");
+  };
+  opciones(f.categoria, CATEGORIAS);
+  opciones(f.grupo, GRUPOS, nombreGrupo);
+  opciones(f.unidad, UNIDADES);
+  opciones(f.presentacion, PRESENTACIONES);
+
+  let original: ProductoFirestore | null = null;
+  let esNuevo = false;
+  let subiendo = false;
+
+  /** Si el valor guardado no está en la lista (dato viejo), se agrega para no perderlo al guardar. */
+  function elegir(sel: HTMLSelectElement, valor: string): void {
+    if (![...sel.options].some((o) => o.value === valor)) sel.add(new Option(valor || "Sin definir", valor));
+    sel.value = valor;
+  }
+
+  function abrirFicha(p: ProductoFirestore, nuevo: boolean): void {
+    original = p;
+    esNuevo = nuevo;
+    f.titulo.textContent = nuevo ? "Nuevo producto" : p.nombre;
+    f.id.textContent = nuevo ? `Se guardará como ${p.id}.` : `Id: ${p.id}`;
+    f.imagen.value = p.imagen;
+    verFoto(p.imagen);
+    f.nombre.value = p.nombre;
+    f.menudeo.value = nuevo ? "" : String(p.menudeo);
+    f.mayoreo.value = nuevo ? "" : String(p.mayoreo);
+    elegir(f.categoria, p.categoria);
+    elegir(f.grupo, p.grupo);
+    elegir(f.unidad, p.unidad);
+    elegir(f.presentacion, p.presentacion);
+    f.disponible.checked = p.disponible;
+    f.mostrar.checked = !p.oculto;
+    f.peso.checked = p.pesoAjustable;
+    f.maquila.checked = p.maquila;
+    f.error.hidden = true;
+    f.guardar.textContent = nuevo ? "Crear producto" : "Guardar";
+    ficha.showModal();
+    if (nuevo) f.nombre.focus();
+  }
+
+  function leerFicha(): ProductoFirestore {
+    const num = (i: HTMLInputElement): number => (i.value.trim() === "" ? 0 : Number(i.value));
+    return {
+      ...original!,
+      nombre: f.nombre.value.trim(),
+      imagen: f.imagen.value.trim(),
+      menudeo: num(f.menudeo),
+      mayoreo: num(f.mayoreo),
+      categoria: f.categoria.value as Categoria,
+      grupo: f.grupo.value,
+      unidad: f.unidad.value,
+      presentacion: f.presentacion.value,
+      disponible: f.disponible.checked,
+      oculto: !f.mostrar.checked,
+      pesoAjustable: f.peso.checked,
+      maquila: f.maquila.checked,
+    };
+  }
+
+  function verFoto(url: string): void {
+    f.vista.hidden = !url;
+    f.vacia.hidden = !!url;
+    if (url) f.vista.src = url;
+    else f.vista.removeAttribute("src");
+    f.quitar.hidden = !url;
+  }
+  f.imagen.addEventListener("change", () => verFoto(f.imagen.value.trim()));
+  f.quitar.addEventListener("click", () => {
+    f.imagen.value = "";
+    verFoto("");
+  });
+
+  f.archivo.addEventListener("change", async () => {
+    const archivo = f.archivo.files?.[0];
+    f.archivo.value = "";
+    if (!archivo || !original) return;
+    if (!firebaseWeb.storageBucket) return aviso("Falta activar Storage en Firebase para subir fotos. Puedes pegar el enlace de la foto.", true);
+    subiendo = true;
+    f.guardar.disabled = true;
+    f.vacia.textContent = "Subiendo…";
+    verFoto("");
+    try {
+      const jpg = await reducir(archivo);
+      const destino = ref(getStorage(app), `productos/${original.id}/${Date.now()}.jpg`);
+      await uploadBytes(destino, jpg, { contentType: "image/jpeg", cacheControl: "public,max-age=31536000" });
+      const url = await getDownloadURL(destino);
+      f.imagen.value = url;
+      verFoto(url);
+    } catch (e) {
+      console.error("admin: no se pudo subir la foto", e);
+      verFoto(f.imagen.value.trim());
+      aviso("No se pudo subir la foto. Revisa que Storage esté activo y sus reglas.", true);
+    } finally {
+      subiendo = false;
+      f.guardar.disabled = false;
+      f.vacia.textContent = "Sin foto";
+    }
+  });
+
+  const cerrar = (): void => ficha.close();
+  $("#cerrarFicha").addEventListener("click", cerrar);
+  $("#cancelarFicha").addEventListener("click", cerrar);
+
+  $<HTMLFormElement>("#formFicha").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!original || subiendo) return;
+    const p = leerFicha();
+    const problema = validar(p, lista);
+    if (problema) {
+      f.error.textContent = problema;
+      f.error.hidden = false;
+      return;
+    }
+    f.error.hidden = true;
+    f.guardar.disabled = true;
+    try {
+      if (esNuevo) {
+        const destino = doc(db, "products", p.id);
+        await runTransaction(db, async (t) => {
+          if ((await t.get(destino)).exists()) throw new Error("existe");
+          t.set(destino, aDocumento(p));
+        });
+        aviso(`${p.nombre} se creó como ${p.id}`);
+      } else {
+        const diff = cambios(original, p);
+        if (Object.keys(diff).length) {
+          await updateDoc(doc(db, "products", p.id), diff);
+          aviso(`${p.nombre} quedó guardado`);
+        }
+      }
+      cerrar();
+    } catch (err) {
+      const existe = (err as Error).message === "existe";
+      f.error.textContent = existe
+        ? `Ya hay un producto ${p.id}. Cierra y vuelve a tocar "Nuevo producto".`
+        : "No se pudo guardar. Revisa tu conexión o tus permisos.";
+      f.error.hidden = false;
+    } finally {
+      f.guardar.disabled = false;
+    }
+  });
+}
+
+/** Reduce la foto a 1200 px por lado como JPEG para que la app y la web carguen rápido. */
+async function reducir(archivo: File): Promise<Blob> {
+  const img = await createImageBitmap(archivo);
+  const escala = Math.min(1, 1200 / Math.max(img.width, img.height));
+  const lienzo = document.createElement("canvas");
+  lienzo.width = Math.round(img.width * escala);
+  lienzo.height = Math.round(img.height * escala);
+  lienzo.getContext("2d")!.drawImage(img, 0, 0, lienzo.width, lienzo.height);
+  img.close();
+  return new Promise((ok, mal) => lienzo.toBlob((b) => (b ? ok(b) : mal(new Error("toBlob"))), "image/jpeg", 0.85));
 }

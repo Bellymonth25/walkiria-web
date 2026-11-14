@@ -1,31 +1,72 @@
 import { describe, expect, it } from "vitest";
 import { productos } from "../src/data/productos";
-import { agrupar, evaluarRol, leerProducto, motivoDeError, nombreEnWeb } from "../src/lib/admin";
+import {
+  aDocumento,
+  agrupar,
+  cambios,
+  evaluarSuperadmin,
+  leerProducto,
+  motivoDeError,
+  nombreEnWeb,
+  productoNuevo,
+  siguienteId,
+  validar,
+} from "../src/lib/admin";
 
-describe("admin de disponibilidad", () => {
+describe("súper panel", () => {
   it("lee un documento de products sin confiar en los tipos", () => {
-    const p = leerProducto("PROD_001", { nombre: "Pavo Relleno", group: "aves", menudeo: 390, tipoVenta: "Kg", estaDisponible: true });
-    expect(p).toEqual({ id: "PROD_001", nombre: "Pavo Relleno", grupo: "AVES", precio: 390, unidad: "Kg", disponible: true, oculto: false });
+    const p = leerProducto("PROD_001", { nombre: "Pavo Relleno", group: "aves", menudeo: 390, mayoreo: 375, tipoVenta: "Kg", categoria: "Comida", estaDisponible: true, isWeightAdjustable: true });
+    expect(p).toMatchObject({ id: "PROD_001", nombre: "Pavo Relleno", grupo: "AVES", categoria: "Comida", menudeo: 390, mayoreo: 375, unidad: "Kg", disponible: true, oculto: false, pesoAjustable: true, maquila: false });
   });
 
-  it("sin estaDisponible cuenta como no disponible, igual que la app", () => {
+  it("sin estaDisponible cuenta como agotado, igual que la app", () => {
     expect(leerProducto("X", { nombre: "X" }).disponible).toBe(false);
     expect(leerProducto("X", { group: "raro" }).grupo).toBe("OTROS");
+    expect(leerProducto("X", { oculto: true }).oculto).toBe(true);
+    expect(leerProducto("X", { menudeo: "caro" }).menudeo).toBe(0);
   });
 
-  it("agrupa en el orden de la app y busca sin acentos", () => {
+  it("guarda con los nombres de campo de la app y solo lo que cambió", () => {
+    const antes = leerProducto("PROD_001", { nombre: "Pavo", menudeo: 390, categoria: "Comida", group: "AVES", tipoVenta: "Kg", estaDisponible: true });
+    const doc = aDocumento(antes);
+    expect(doc).toMatchObject({ id: "PROD_001", nombre: "Pavo", menudeo: 390, group: "AVES", tipoVenta: "Kg", estaDisponible: true, oculto: false, isMaquila: false });
+    expect(cambios(antes, { ...antes, menudeo: 400, oculto: true })).toEqual({ menudeo: 400, oculto: true });
+    expect(cambios(antes, antes)).toEqual({});
+  });
+
+  it("agrupa comida por grupo y luego envíos y empaques", () => {
     const lista = [
       leerProducto("a", { nombre: "Romeritos", group: "GUARNICIONES" }),
       leerProducto("b", { nombre: "Pavo Relleno", group: "AVES" }),
+      leerProducto("e", { nombre: "Envío Coyoacán", categoria: "Envio" }),
       leerProducto("c", { nombre: "Jamón", group: "CARNES" }),
+      leerProducto("f", { nombre: "Charola chica", categoria: "Empaque" }),
       leerProducto("d", { nombre: "Pato", group: "AVES", estaDisponible: true }),
     ];
     expect(agrupar(lista, "").map(([g, ps]) => [g, ps.map((p) => p.id)])).toEqual([
       ["AVES", ["d", "b"]],
       ["CARNES", ["c"]],
       ["GUARNICIONES", ["a"]],
+      ["ENVIO", ["e"]],
+      ["EMPAQUE", ["f"]],
     ]);
     expect(agrupar(lista, "jamon")[0]![1][0]!.id).toBe("c");
+  });
+
+  it("da el siguiente id consecutivo", () => {
+    expect(siguienteId(["PROD_001", "PROD_051", "PROD_009", "otro"])).toBe("PROD_052");
+    expect(siguienteId([])).toBe("PROD_001");
+  });
+
+  it("valida la ficha antes de guardar", () => {
+    const pavo = { ...productoNuevo("PROD_001"), nombre: "Pavo Relleno", menudeo: 390 };
+    const nuevo = productoNuevo("PROD_052");
+    expect(validar(nuevo, [pavo])).toContain("nombre");
+    expect(validar({ ...nuevo, nombre: "pavo relleno ", menudeo: 1 }, [pavo])).toContain("Ya existe");
+    expect(validar({ ...nuevo, nombre: "Costilla de Cerdo adobada" }, [pavo])).toContain("menudeo");
+    expect(validar({ ...nuevo, nombre: "Costilla de Cerdo adobada", menudeo: 370, imagen: "http://x" }, [pavo])).toContain("https");
+    expect(validar({ ...nuevo, nombre: "Costilla de Cerdo adobada", menudeo: 370 }, [pavo])).toBeNull();
+    expect(validar(pavo, [pavo])).toBeNull();
   });
 
   it("sabe con qué nombre sale en la web", () => {
@@ -33,10 +74,9 @@ describe("admin de disponibilidad", () => {
     expect(nombreEnWeb("PROD_999", productos)).toBeNull();
   });
 
-  it("dice por qué no entra: perfil faltante, rol distinto o error de Firebase", () => {
-    expect(evaluarRol(true, "admin")).toEqual({ ok: true });
-    expect(evaluarRol(false, undefined)).toMatchObject({ ok: false });
-    expect(evaluarRol(true, "WORKER")).toEqual({ ok: false, motivo: "Tu usuario es WORKER, no administrador." });
+  it("solo entra el súper administrador y explica los errores", () => {
+    expect(evaluarSuperadmin(true)).toEqual({ ok: true });
+    expect(evaluarSuperadmin(false)).toMatchObject({ ok: false });
     expect(motivoDeError("permission-denied")).toContain("permission-denied");
     expect(motivoDeError("unavailable")).toContain("unavailable");
     expect(motivoDeError(undefined)).toContain("error desconocido");

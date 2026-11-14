@@ -118,7 +118,7 @@ export const firebase = {
 
 /**
  * Configuración web de Firebase para la página admin.html. No es secreta: la seguridad está en las
- * reglas de Firestore (solo usuarios con type ADMIN en `user/{uid}` pueden cambiar productos).
+ * reglas de Firestore (solo quien esté en `superadmins/{uid}` puede cambiar productos).
  * Se copia de la consola: Configuración del proyecto → Tus apps → App web.
  */
 export const firebaseWeb = {
@@ -126,6 +126,8 @@ export const firebaseWeb = {
   authDomain: "walkiria-os.firebaseapp.com",
   projectId: "walkiria-os",
   appId: "1:663418170977:web:13532ab5181643e338c420",
+  // Fotos del súper panel. Confirmar en la consola: Storage → nombre del bucket (gs://…).
+  storageBucket: "walkiria-os.firebasestorage.app",
 } as const;
 
 /**

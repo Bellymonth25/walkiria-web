@@ -25,47 +25,63 @@ cambia, guarda la lista de ids con `estaDisponible == false`. Un producto de la 
 cuando todos sus `firebaseIds` (en `productos.ts`) están en esa lista.
 
 Reglas de Firestore necesarias: lectura abierta de `publicWeb` sin que otra regla general la tape. El
-texto completo está en la sección "Admin de disponibilidad", más abajo.
+texto completo está en la sección "Súper panel de productos", más abajo.
 
 Si no se puede leer el documento, la página muestra todo disponible.
 
 Para probar en local sin Firebase: `http://localhost:5173/?agotados=PROD_001,PROD_008`
 
-## Admin de disponibilidad (`admin.html`)
+## Súper panel de productos (`admin.html`)
 
-Página sin enlace en el menú (y con `noindex`) en `lawalkiria.com.mx/admin.html`. Se entra con
-el mismo correo y contraseña de la app; solo pasan usuarios con `type: "ADMIN"` en `user/{uid}`.
-Lista los productos de comida de Firestore con un interruptor por renglón: cambia
-`products/{id}.estaDisponible`, igual que la pantalla de la app. La web pública se entera por
-`onProductWritten` → `publicWeb/disponibilidad`.
+Página sin enlace en el menú (y con `noindex`) en `lawalkiria.com.mx/admin.html`. **Firestore
+(`products`) es la verdad**: lo que se cambia aquí lo ven la app y la web.
 
-Para que funcione:
+- Solo entra quien tenga un documento en `superadmins/{uid}` (se crea a mano en la consola, vacío
+  o con `{ nombre: "Carlos" }`). Ni un ADMIN de la app puede darse ese permiso.
+- Lista todos los productos (comida por grupo, envíos y empaques) con el interruptor rápido de
+  **Disponible**. Al tocar uno se abre su ficha: foto (se sube a Storage reducida a 1200 px),
+  nombre, menudeo, mayoreo, categoría, grupo, tipo de venta, presentación, Disponible, Mostrar
+  (`oculto`), peso ajustable y maquila.
+- **+ Nuevo producto** crea `PROD_0xx` con el siguiente número libre.
+- Mismo comportamiento en app y web: `estaDisponible == false` → "Agotado" y no se puede pedir;
+  `oculto == true` → no aparece en ningún lado. Los pedidos ya hechos guardan su precio.
+- La web se entera por `onProductWritten` → `publicWeb/disponibilidad` (nombre, precio de
+  menudeo, foto, grupo y unidad de cada producto de comida; nunca mayoreo). Ver `src/lib/catalogo.ts`.
 
-1. En la consola de Firebase: **Configuración del proyecto → Tus apps → Agregar app web** (si no
-   existe) y copia `apiKey` y `appId` a `firebaseWeb` en `src/data/temporada.ts`. No son secretos.
-2. Reglas de Firestore (lo que protege de verdad, no que la página esté escondida). Las reglas de
-   Firebase se suman: si una permite, pasa. Por eso la regla general de "cualquier usuario logueado"
-   debe excluir `products` y `publicWeb`:
+### Reglas de Firestore
+
+Las reglas de Firebase se suman (si una permite, pasa); por eso la regla general excluye
+`products`, `publicWeb` y `superadmins`. Reemplaza todo el texto de las reglas por:
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function esAdmin() {
+    function esEmpleado() {
       return request.auth != null
-        && get(/databases/$(database)/documents/user/$(request.auth.uid)).data.type.lower() == 'admin';
+        && request.auth.token.email.matches('.*@lawalkiria[.]com[.]mx$');
     }
-    // Todo como estaba (cualquier usuario logueado), menos products y publicWeb.
+    function esSuperadmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/superadmins/$(request.auth.uid));
+    }
+    // Todo lo demás: cualquier empleado con correo de La Walkiria.
     match /{col}/{doc=**} {
-      allow read, write: if request.auth != null && !(col in ['products', 'publicWeb']);
+      allow read, write: if esEmpleado() && !(col in ['products', 'publicWeb', 'superadmins']);
     }
-    // Productos: todos los logueados leen; solo un ADMIN puede prender o apagar.
+    // Productos: los empleados leen; solo el súper admin crea y edita. Nadie borra.
     match /products/{id} {
-      allow read: if request.auth != null;
-      allow update: if esAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estaDisponible', 'ocultoEnWeb']);
+      allow read: if esEmpleado() || esSuperadmin();
+      allow create: if esSuperadmin() && request.resource.data.id == id;
+      allow update: if esSuperadmin() && request.resource.data.id == resource.data.id;
+      allow delete: if false;
     }
-    // Lista de agotados para la web pública: la llena la Cloud Function.
+    // Lista de súper admins: cada quien solo puede ver si está; se edita desde la consola.
+    match /superadmins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+    // Catálogo público de la web: lo llena la Cloud Function.
     match /publicWeb/{doc} {
       allow read: if true;
       allow write: if false;
@@ -74,6 +90,24 @@ service cloud.firestore {
 }
 ```
 
+### Reglas de Storage (fotos)
+
+```
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /productos/{id}/{archivo} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && firestore.exists(/databases/(default)/documents/superadmins/$(request.auth.uid))
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}
+```
+
+El nombre del bucket va en `firebaseWeb.storageBucket` (`src/data/temporada.ts`).
 Firebase solo se carga en `admin.html`; las páginas públicas no cambian de peso.
 
 ## Fotos de los productos
@@ -84,7 +118,8 @@ diferida). Aceptan una ruta del sitio o una URL completa (por ejemplo de Firebas
 la lista muestra un recuadro de "Foto pronto". La miniatura es cuadrada en celular y crece en 4:3
 con la pantalla en compu, hasta 144 px.
 
-No uses el campo `imagen` de la colección `products` de la app: trae fotos de relleno de otros sitios.
+La web solo usa la foto de `products` si se subió desde el panel (Firebase Storage); las que ya
+traía la colección son de relleno de otros sitios y se ignoran.
 
 ## Foto de la cena
 

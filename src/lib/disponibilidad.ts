@@ -1,4 +1,5 @@
 import type { Producto } from "../types";
+import { parsearCatalogo, type ProductoPublico } from "./catalogo";
 
 /**
  * Lee de Firestore (REST, sin SDK) la lista de ids de `products` que están sin disponibilidad.
@@ -8,6 +9,24 @@ import type { Producto } from "../types";
 export interface Disponibilidad {
   agotados: Set<string>;
   ocultos: Set<string>;
+  catalogo: Map<string, ProductoPublico>;
+}
+
+export const parsearDisponibilidad = (doc: unknown): Disponibilidad => ({
+  agotados: parsearAgotados(doc),
+  ocultos: parsearOcultos(doc),
+  catalogo: parsearCatalogo(doc),
+});
+
+/** El último documento leído se guarda para pintar los precios correctos desde el inicio en la siguiente visita. */
+const CLAVE = "walkiria-catalogo";
+export function disponibilidadGuardada(): Disponibilidad | null {
+  try {
+    const crudo = localStorage.getItem(CLAVE);
+    return crudo ? parsearDisponibilidad(JSON.parse(crudo)) : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function leerDisponibilidad(proyecto: string, documento: string, timeoutMs = 5000): Promise<Disponibilidad | null> {
@@ -17,8 +36,13 @@ export async function leerDisponibilidad(proyecto: string, documento: string, ti
   try {
     const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
     if (!res.ok) return null;
-    const doc = await res.json();
-    return { agotados: parsearAgotados(doc), ocultos: parsearOcultos(doc) };
+    const doc: unknown = await res.json();
+    try {
+      localStorage.setItem(CLAVE, JSON.stringify(doc));
+    } catch {
+      /* sin almacenamiento: no pasa nada */
+    }
+    return parsearDisponibilidad(doc);
   } catch {
     return null;
   } finally {
@@ -45,7 +69,7 @@ export function estaAgotado(p: Producto, agotados: ReadonlySet<string>): boolean
   return p.firebaseIds.length > 0 && p.firebaseIds.every((id) => agotados.has(id));
 }
 
-/** Oculto en la web (`ocultoEnWeb` en Firestore): no se muestra ni se puede pedir. La app lo ignora. */
+/** Oculto (`oculto` en Firestore): no se muestra ni en la web ni en la app. */
 export function estaOculto(p: Producto, ocultos: ReadonlySet<string>): boolean {
   return p.firebaseIds.length > 0 && p.firebaseIds.every((id) => ocultos.has(id));
 }

@@ -1,8 +1,9 @@
 import type { Categoria, Producto } from "../types";
 
 /**
- * Lista de precios pública.
- * Cada temporada solo hay que cambiar los precios aquí (y `notaPrecios` en temporada.ts).
+ * Lista de productos de la web: descripciones, versiones y reglas de cada producto.
+ * Nombre, precio y foto los manda Firestore (súper panel, admin.html) y se aplican al cargar la
+ * página (lib/catalogo.ts). Los precios de aquí solo se usan si Firestore no responde.
  * Fuente actual: volante "Cenas de Fin de Año 2026" (volante-2026/ en la carpeta del proyecto).
  * `firebaseIds` sale de products/productos.json de la app: confirmar contra Firestore.
  */
@@ -15,6 +16,8 @@ export const categorias: readonly Categoria[] = [
   { id: "trad", nombre: "Bacalao y romeritos" },
   { id: "guarn", nombre: "Guarniciones y pastas" },
   { id: "pan", nombre: "Postres" },
+  // Lo que se da de alta en el panel y no cae en otra sección.
+  { id: "otros", nombre: "Más para su cena" },
   { id: "maquila", nombre: "Maquila: le cocinamos su carne a su gusto" },
 ];
 
