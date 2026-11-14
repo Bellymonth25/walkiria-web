@@ -37,6 +37,16 @@ Si no se puede leer el documento, la página muestra todo disponible.
 
 Para probar en local sin Firebase: `http://localhost:5173/?agotados=PROD_001,PROD_008`
 
+## Fotos de los productos
+
+Cada producto de `productos.ts` puede llevar `imagen` (foto grande, se abre al tocar la miniatura)
+e `imagenMini` (miniatura 4:3 de 320×240 en `public/img/productos/<id>-mini.webp`, ~10 KB, con carga
+diferida). Aceptan una ruta del sitio o una URL completa (por ejemplo de Firebase Storage). Sin foto,
+la lista muestra un recuadro de "Foto pronto". La miniatura es cuadrada en celular y crece en 4:3
+con la pantalla en compu, hasta 144 px.
+
+No uses el campo `imagen` de la colección `products` de la app: trae fotos de relleno de otros sitios.
+
 ## Foto de la cena
 
 Si existe `public/img/cena.jpg` se muestra como banda debajo del servicio de maquila

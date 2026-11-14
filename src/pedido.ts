@@ -11,13 +11,13 @@ import {
   alcaldiaValida, idLinea, normalizarKgRelleno, nuevaLinea, OTRA_ALCALDIA, textoFaltantes, variasLineas,
 } from "./lib/pedido";
 import { $, aviso } from "./ui/dom";
-import { actualizarPreciosPresentacion, ponerEstiloFoto, urlImagen, type EstiloFoto, pintarChips, pintarFilaPorClave, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
+import { actualizarPreciosPresentacion, urlImagen, pintarChips, pintarFilaPorClave, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
 import { pintarOrden, textoPedido, type ContextoOrden } from "./ui/orden";
 import { pintarCalendario, rangoMeses } from "./ui/calendario";
 import { iniciarHoja } from "./ui/hoja";
 import { iniciarCalculadora, type Agregado } from "./ui/calculadora";
 import { iniciarComun } from "./comun";
-import { iniciarVisor, type Lamina } from "./ui/visor";
+import { iniciarVisor } from "./ui/visor";
 
 // ---------- Estado ----------
 const pedido: Pedido = {
@@ -290,21 +290,13 @@ function pintarSugerido(): void {
 }
 
 // ---------- Fotos de los productos ----------
-// Propuestas de cómo se ve la foto: ?fotos=a (miniatura), b (enlace "Ver foto"), c (foto grande tipo menú).
-const estilo = new URLSearchParams(location.search).get("fotos");
-ponerEstiloFoto((["a", "b", "c"].includes(estilo ?? "") ? estilo : "a") as EstiloFoto);
-document.documentElement.dataset.fotos = estilo && ["a", "b", "c"].includes(estilo) ? estilo : "a";
 const visor = iniciarVisor();
 
-/** Abre la foto en grande; con las flechas se recorren los demás productos con foto. */
+/** Abre la foto del producto en grande. Una sola foto: no se pasa a otros productos. */
 function verFoto(productoId: string): void {
-  const conFoto = productos.filter((p) => p.imagen);
-  const laminas: Lamina[] = conFoto.map((p) => ({
-    titulo: `${p.nombre} · ${dinero(p.precio)}/${p.unidad}`,
-    alt: p.nombre,
-    media: urlImagen(p.imagen!),
-  }));
-  visor.abrir(laminas, Math.max(0, conFoto.findIndex((p) => p.id === productoId)));
+  const p = producto(productoId);
+  if (!p?.imagen) return;
+  visor.abrir([{ titulo: `${p.nombre} · ${dinero(p.precio)}/${p.unidad}`, alt: p.nombre, media: urlImagen(p.imagen) }]);
 }
 
 document.addEventListener("click", (e) => {
