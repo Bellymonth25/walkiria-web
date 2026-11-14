@@ -49,11 +49,11 @@ export function calcularCena(p: Personas): Cena {
   };
 }
 
-/** Cómo repartir los kilos de carne en pavos enteros: [tamaño, kg por pavo][] (máximo ~10 kg por pavo). */
+/** Cómo repartir los kilos de carne en pavos enteros: [tamaño, kg por pavo][] (máximo 9 kg por pavo). */
 export function pavosPara(kg: number, minimo: number = pavo.kgMinimoCompleto, permitirMedio = true): Array<{ tamano: "completo" | "medio"; kgPorPavo: number }> {
   if (kg <= 0) return [];
   if (kg < minimo) return [{ tamano: permitirMedio ? "medio" : "completo", kgPorPavo: minimo }];
-  const n = Math.ceil(kg / 10);
+  const n = Math.ceil(kg / pavo.kgMaximoSugerido);
   const cada = Math.max(minimo, Math.ceil((kg / n) * 2) / 2);
   return Array.from({ length: n }, () => ({ tamano: "completo" as const, kgPorPavo: cada }));
 }
@@ -67,7 +67,7 @@ export function repartirCarne(kg: number, partes: number): number[] {
 
 /**
  * Pavos de la cena. De 6 a 8 personas, medio pavo; desde 9, pavo entero de 0.55 kg por persona
- * (al medio kilo hacia arriba, nunca menos del mínimo) y, si pasa de ~10 kg, repartido en varios.
+ * (al medio kilo hacia arriba, nunca menos del mínimo) y, si pasa de 9 kg, repartido en varios.
  * Si la carne se reparte entre varias (`partes`), al pavo le toca su parte y puede quedar en medio pavo.
  */
 export function pavosCena(equivalentes: number, personas: number, partes: number, minimo: number, permitirMedio: boolean): ReturnType<typeof pavosPara> {

@@ -283,7 +283,7 @@ describe("calculadora de cena", () => {
     expect(repartirCarne(0.25, 2)).toEqual([0.25, 0.25]);
     expect(repartirCarne(0, 2)).toEqual([]);
   });
-  it("reparte la carne en pavos de máximo 10 kg", () => {
+  it("reparte la carne en pavos de máximo 9 kg", () => {
     expect(pavosPara(3)).toEqual([{ tamano: "medio", kgPorPavo: 6 }]);
     expect(pavosPara(5.5, 6)).toEqual([{ tamano: "medio", kgPorPavo: 6 }]);
     // El ahumado no tiene medio pavo: si pide poco, se le da uno completo del mínimo.
@@ -395,8 +395,10 @@ describe("pavo por número de personas", () => {
     expect(pavosCena(12, 12, 1, 6, true)).toEqual(completo(7));
     expect(pavosCena(14, 14, 1, 6, true)).toEqual(completo(8));
   });
-  it("si pasa de ~10 kg se reparte en dos pavos", () => {
-    expect(pavosCena(20, 20, 1, 6, true)).toEqual(completo(5.5 < 6 ? 6 : 5.5, 2));
+  it("si pasa de 9 kg se reparte en dos pavos", () => {
+    expect(pavosCena(16, 16, 1, 6, true)).toEqual(completo(9)); // 8.8 kg → un pavo de 9
+    expect(pavosCena(17, 17, 1, 6, true)).toEqual(completo(6, 2)); // 9.35 kg → dos de 6
+    expect(pavosCena(20, 20, 1, 6, true)).toEqual(completo(6, 2));
   });
   it("el ahumado (solo completo) nunca baja del mínimo", () => {
     expect(pavosCena(9, 9, 1, 6, false)).toEqual(completo(6));

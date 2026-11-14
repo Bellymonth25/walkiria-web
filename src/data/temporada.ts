@@ -56,6 +56,8 @@ export const temporada: Temporada = {
 export const pavo = {
   /** Mínimo de un pavo completo. */
   kgMinimoCompleto: 6,
+  /** Lo más que se sugiere por pavo (más grandes son difíciles de conseguir): arriba de esto se reparte en varios. */
+  kgMaximoSugerido: 9,
   /** Medio pavo pesa entre 3 y 4 kg; para el estimado se usa el punto medio. */
   kgMedio: { min: 3, max: 4, estimado: 3.5 },
 } as const;
