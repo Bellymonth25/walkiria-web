@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Linea, Pedido, Producto } from "../src/types";
+import { pavoPermitido } from "../src/lib/calculadora";
 import { productos } from "../src/data/productos";
 import { temporada } from "../src/data/temporada";
 import {
@@ -367,5 +368,16 @@ describe("desglose de empaques", () => {
   it("sin empaques con costo no hay desglose", () => {
     const r = resumenEmpaques({ ...base, lineas: { "lomo-adobado": linea(lomo, { cantidad: 2 }) } }, productos);
     expect(r.empaques).toEqual([]);
+  });
+});
+
+describe("pavo en la calculadora", () => {
+  const pavo = (id: string) => productos.find((x) => x.id === id)!;
+  it("no se ofrece en cenas de 4, desde 6 solo medio y el ahumado desde 10", () => {
+    expect(pavoPermitido(pavo("pavo-relleno"), 4)).toBe(false);
+    expect(pavoPermitido(pavo("pavo-relleno"), 6)).toBe(true);
+    expect(pavoPermitido(pavo("pavo-ahumado"), 6)).toBe(false);
+    expect(pavoPermitido(pavo("pavo-ahumado"), 10)).toBe(true);
+    expect(pavoPermitido(pavo("pechuga-pavo"), 4)).toBe(true);
   });
 });

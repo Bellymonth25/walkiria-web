@@ -1,6 +1,6 @@
 import type { Linea, Presentacion, Producto } from "../types";
 import { calculadora as cfg } from "../data/temporada";
-import { calcularCena, pavosPara, repartirCarne, type Cena, type Grupo, type Personas } from "../lib/calculadora";
+import { calcularCena, pavoPermitido, pavosPara, repartirCarne, type Cena, type Grupo, type Personas } from "../lib/calculadora";
 import { dinero, escapar, kilos } from "../lib/formato";
 import { empaquesDe, importeProducto, kgMinimoPavo, nuevaLinea, presentaciones, tieneCosto, type Empaque } from "../lib/pedido";
 
@@ -64,10 +64,13 @@ export function iniciarCalculadora(
 
   const variasPermitidas = () => total() >= cfg.desdeVariasCarnes;
 
+  /** Las carnes que se ofrecen para este número de personas (el pavo entero solo en cenas más grandes). */
+  const permitida = (c: Carne) => pavoPermitido(p(c.productoId)!, total());
+
   const opcionesCarne = (actual: string) => {
     const grupo = (cat: string, titulo: string) =>
       `<optgroup label="${titulo}">${carnes
-        .filter((c) => p(c.productoId)?.categoria === cat)
+        .filter((c) => p(c.productoId)?.categoria === cat && permitida(c))
         .map((c) => {
           const x = p(c.productoId)!;
           const no = agotado(x);
@@ -221,6 +224,8 @@ export function iniciarCalculadora(
   /** Cuando cambia el número de personas: la carne recomendada y si se pueden poner varias. */
   const alCambiarPersonas = () => {
     if (!primeraTocada) elegidas[0] = recomendada();
+    // Si lo elegido ya no se ofrece con este número de personas (ej. un pavo en una cena de 4), se cambia por la recomendada.
+    elegidas = elegidas.map((id) => (permitida(carne(id)) ? id : permitida(carne(recomendada())) ? recomendada() : carnes.find(permitida)!.id));
     pintarCarnes();
     pintarResultado();
   };
@@ -285,7 +290,7 @@ export function iniciarCalculadora(
       alCambiarPersonas();
     } else if (t.id === "calcMas") {
       const usadas = new Set(elegidas);
-      const otra = carnes.find((c) => !usadas.has(c.id) && !agotado(p(c.productoId)!) && c.productoId !== carne(elegidas[0]!).productoId);
+      const otra = carnes.find((c) => !usadas.has(c.id) && permitida(c) && !agotado(p(c.productoId)!) && c.productoId !== carne(elegidas[0]!).productoId);
       elegidas.push(otra?.id ?? carnes[0]!.id);
       pintarCarnes();
       pintarResultado();

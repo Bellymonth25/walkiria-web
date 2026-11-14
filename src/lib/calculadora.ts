@@ -1,3 +1,4 @@
+import type { Producto } from "../types";
 import { calculadora } from "../data/temporada";
 import { pavo } from "../data/temporada";
 
@@ -62,4 +63,15 @@ export function repartirCarne(kg: number, partes: number): number[] {
   if (kg <= 0 || partes < 1) return [];
   const cada = Math.max(0.25, redondearKg(kg / partes));
   return Array.from({ length: partes }, () => cada);
+}
+
+/**
+ * Si un producto se ofrece en la calculadora para cierto número de personas. El pavo entero no sale
+ * en cenas chicas (sobraría muchísimo): desde 6 personas solo medio pavo, y el que solo se vende
+ * completo (ahumado) desde 10.
+ */
+export function pavoPermitido(p: Producto, personas: number): boolean {
+  if (!p.pavoEntero) return true;
+  if (personas < calculadora.desdeMedioPavo) return false;
+  return !p.soloCompleto || personas >= calculadora.desdePavoCompleto;
 }

@@ -142,6 +142,10 @@ export const calculadora = {
   sugeridas: [4, 6, 10],
   /** Hasta este número de personas se recomienda pechuga en lugar de pavo entero. */
   hastaPechuga: 4,
+  /** El pavo entero (en la calculadora) se ofrece desde aquí, solo en medio pavo: con menos personas sobra. */
+  desdeMedioPavo: 6,
+  /** Desde aquí también se ofrece el pavo que solo se vende completo (el ahumado). */
+  desdePavoCompleto: 10,
   /** Desde este número de personas se puede repartir la carne en varias (mitad y mitad). */
   desdeVariasCarnes: 6,
   maxCarnes: 3,

@@ -312,7 +312,7 @@ function pintarSugerido(): void {
   barra.hidden = sugerido === null;
   if (sugerido) {
     const n = sugerido.personas;
-    $("#calcUsadaTxt").innerHTML = `<b>Ya agregaste lo sugerido para ${n} ${n === 1 ? "persona" : "personas"}.</b> Si lo retiras, lo que agregaste aparte se queda en tu pedido.`;
+    $("#calcUsadaTxt").innerHTML = `<b>Ya agregaste lo sugerido para ${n} ${n === 1 ? "persona" : "personas"}.</b> Al retirarlo solo se quita lo que sugerimos; lo que hayas subido o agregado aparte se queda en tu pedido.`;
   }
 }
 
