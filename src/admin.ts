@@ -2,7 +2,7 @@ import "./styles.css";
 import "./admin.css";
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { collection, doc, getDoc, getFirestore, onSnapshot, runTransaction, serverTimestamp, updateDoc, type Unsubscribe } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getFirestore, onSnapshot, runTransaction, serverTimestamp, updateDoc, type Unsubscribe } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { firebaseWeb } from "./data/temporada";
 import {
@@ -191,12 +191,12 @@ function iniciar(): void {
     const foto = p.imagen ? `<img class="adm-mini" src="${escapar(p.imagen)}" alt="" loading="lazy">` : `<span class="adm-mini" aria-hidden="true"></span>`;
     const mod = p.actualizadoEn ? `${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? `<small>${escapar(p.actualizadoPor.split("@")[0]!)}</small>` : ""}` : `<span class="adm-vacio">—</span>`;
     return `<tr class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}">
-      <td class="c-prod"><button class="adm-abrir" type="button" data-abrir="${id}">${foto}<span class="adm-nombre">${escapar(p.nombre)}</span></button></td>
+      <td class="c-prod"><div class="adm-abrir">${foto}<span class="adm-nombre">${escapar(p.nombre)}</span></div></td>
       <td class="c-precio" data-label="Precio">${dinero(p.menudeo)}${unidad}</td>
       ${celdaSwitch(p, "estaDisponible", "Disponible")}
       ${celdaSwitch(p, "oculto", "Mostrar")}
       <td class="c-mod" data-label="Modificado">${mod}</td>
-      <td class="c-acc"><button class="btn btn-ghost btn-sm" type="button" data-abrir="${id}">Editar</button></td>
+      <td class="c-acc"><button class="add adm-editar" type="button" data-abrir="${id}" aria-label="Editar ${escapar(p.nombre)}">Editar</button></td>
     </tr>`;
   }
 
@@ -300,6 +300,7 @@ function iniciar(): void {
     f.maquila.checked = p.maquila;
     f.error.hidden = true;
     f.guardar.textContent = nuevo ? "Crear producto" : "Guardar";
+    $("#eliminarProducto").hidden = nuevo;
     ficha.showModal();
     if (nuevo) f.nombre.focus();
   }
@@ -363,7 +364,36 @@ function iniciar(): void {
     }
   });
 
+  // ---------- Eliminar ----------
+  const confirmar = $<HTMLDialogElement>("#confirmarEliminar");
   const cerrar = (): void => ficha.close();
+  $("#eliminarProducto").addEventListener("click", () => {
+    if (!original || esNuevo) return;
+    $("#elimNombre").textContent = original.nombre;
+    $("#elimError").hidden = true;
+    confirmar.showModal();
+  });
+  $("#elimCancelar").addEventListener("click", () => confirmar.close());
+  $("#elimConfirmar").addEventListener("click", async () => {
+    if (!original) return;
+    const { id, nombre } = original;
+    const btn = $<HTMLButtonElement>("#elimConfirmar");
+    btn.disabled = true;
+    btn.textContent = "Eliminando…";
+    try {
+      await deleteDoc(doc(db, "products", id));
+      confirmar.close();
+      cerrar();
+      aviso(`✓ ${nombre} (${id}) se eliminó`);
+    } catch (err) {
+      console.error("admin: no se pudo eliminar " + id, err);
+      $("#elimError").textContent = `No se pudo eliminar "${nombre}" (${(err as { code?: string }).code ?? "error"}). Sigue en la lista.`;
+      $("#elimError").hidden = false;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Sí, eliminar";
+    }
+  });
   $("#cerrarFicha").addEventListener("click", cerrar);
   $("#cancelarFicha").addEventListener("click", cerrar);
 

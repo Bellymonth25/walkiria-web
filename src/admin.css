@@ -42,14 +42,19 @@
 .adm-tabla th small{display:block;font-weight:500;letter-spacing:0;text-transform:none;margin-top:2px}
 .adm-tabla td{padding:8px 12px;border-top:1px solid var(--line);vertical-align:middle}
 .adm-tabla tbody tr:first-child td{border-top:0}
-.adm-tabla tbody tr:hover td{background:color-mix(in srgb,var(--gold-soft) 35%,transparent)}
 .adm-tabla td small{display:block;color:var(--muted);font-size:.8rem}
 .c-prod{width:auto}.c-precio{width:110px}.c-sw{width:160px}.c-mod{width:150px;font-size:.88rem}.c-acc{width:100px;text-align:right}
 .adm-tabla td.c-sw{white-space:nowrap}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .adm-vacio{color:var(--muted)}
-.adm-abrir{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;padding:2px 0;color:inherit;font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.adm-abrir:focus-visible{outline:3px solid var(--primary);outline-offset:2px;border-radius:8px}
+.adm-abrir{display:flex;align-items:center;gap:12px;width:100%;padding:2px 0}
+.adm-editar{height:40px;white-space:nowrap}
+.adm-peligro{background:var(--alerta);color:var(--alerta-ink);margin-right:auto}
+.adm-peligro[hidden]{display:none}
+.adm-ficha.adm-confirmar{width:min(460px,100vw);height:fit-content;max-height:100dvh}
+.adm-confirmar h2{margin:0;font-size:1.4rem}
+.adm-confirmar p{margin:0}
+.adm-confirmar .adm-ficha-pie .adm-peligro{margin-right:0}
 .adm-mini{flex:none;width:48px;height:48px;border-radius:10px;object-fit:cover;background:var(--surface-3)}
 .adm-nombre{font-weight:600;min-width:0}
 .adm-fila.apagado .adm-nombre,.adm-fila.oculto .adm-nombre{color:var(--muted)}
@@ -84,7 +89,7 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
   .c-prod{grid-column:1/-1}
   .c-precio{grid-column:1}.c-mod{grid-column:2}
   .c-acc{grid-column:1/-1;text-align:left}
-  .c-acc .btn{width:100%}
+  .c-acc .adm-editar{width:100%}
 }
 
 .adm-titulo{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -120,3 +125,4 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;max-width:calc(100vw - 32px);z-index:10;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .adm-toast{display:flex;align-items:center;gap:8px}
 .adm-toast.error{background:var(--alerta);color:var(--alerta-ink)}
+@media (max-width:560px){.adm-ficha.adm-confirmar{height:fit-content;margin:auto 0 0;border-radius:var(--r) var(--r) 0 0}}
