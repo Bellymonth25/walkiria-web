@@ -91,6 +91,16 @@ export function iniciarCalculadora(
     return { ...nuevaLinea(x), presentacion: pres, ...cambios };
   };
 
+  /** "medio pavo (3 a 4 kg)", "1 pavo de aprox. 6 kg", "1 pavo de aprox. 6 kg + medio pavo (3 a 4 kg)". */
+  const textoPavos = (pavos: ReturnType<typeof pavosCena>): string => {
+    const enteros = pavos.filter((v) => v.tamano === "completo");
+    const medios = pavos.filter((v) => v.tamano === "medio").length;
+    const partes: string[] = [];
+    if (enteros.length) partes.push(`${enteros.length} ${enteros.length === 1 ? "pavo" : "pavos"} de aprox. ${kilos(enteros[0]!.kgPorPavo)}`);
+    if (medios) partes.push(medios === 1 ? "medio pavo (3 a 4 kg)" : `${medios} medios pavos (3 a 4 kg)`);
+    return partes.join(" + ");
+  };
+
   type Fila = { nombre: string; cantidad: string; importe: number; agregado: Agregado[] };
 
   /** Renglones del resultado con lo que se agregaría. */
@@ -107,7 +117,7 @@ export function iniciarCalculadora(
         const lineas = pavos.map((v) => linea(x, { cantidad: 1, tamano: v.tamano, kgPorPavo: v.kgPorPavo }));
         filas.push({
           nombre: nombreCarne(ca),
-          cantidad: pavos[0]?.tamano === "medio" ? "medio pavo (3 a 4 kg)" : `${pavos.length} ${pavos.length === 1 ? "pavo" : "pavos"} de aprox. ${kilos(pavos[0]!.kgPorPavo)}`,
+          cantidad: textoPavos(pavos),
           importe: lineas.reduce((a, l) => a + importeProducto(x, l), 0),
           agregado: lineas.map((l) => ({ productoId: x.id, cambios: l })),
         });

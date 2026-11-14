@@ -253,7 +253,7 @@ describe("varios pavos y patos", () => {
   });
 });
 
-import { calcularCena, pavosCena, pavosPara, redondearKg, repartirCarne } from "../src/lib/calculadora";
+import { calcularCena, combinarPavos, pavosCena, pavosPara, redondearKg, repartirCarne } from "../src/lib/calculadora";
 
 describe("calculadora de cena", () => {
   it("redondea hacia arriba al cuarto de kilo", () => {
@@ -397,8 +397,12 @@ describe("pavo por número de personas", () => {
   });
   it("si pasa de 9 kg se reparte en dos pavos", () => {
     expect(pavosCena(16, 16, 1, 6, true)).toEqual(completo(9)); // 8.8 kg → un pavo de 9
-    expect(pavosCena(17, 17, 1, 6, true)).toEqual(completo(6, 2)); // 9.35 kg → dos de 6
-    expect(pavosCena(20, 20, 1, 6, true)).toEqual(completo(6, 2));
+    // Se prefiere un pavo y un medio pavo antes que dos pavos que sobren mucho.
+    expect(pavosCena(17, 17, 1, 6, true)).toEqual([...completo(6), medio[0]]); // 9.35 kg → 6 kg + medio pavo
+    expect(pavosCena(20, 20, 1, 6, true)).toEqual([...completo(7.5), medio[0]]); // 11 kg → 7.5 kg + medio pavo
+  });
+  it("el ahumado no tiene medio pavo: se reparte solo en pavos enteros", () => {
+    expect(combinarPavos(9.5, 6, false)).toEqual(completo(6, 2));
   });
   it("el ahumado (solo completo) nunca baja del mínimo", () => {
     expect(pavosCena(9, 9, 1, 6, false)).toEqual(completo(6));
