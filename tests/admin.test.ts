@@ -4,6 +4,7 @@ import {
   aDocumento,
   agrupar,
   cambios,
+  coincideNombre,
   evaluarSuperadmin,
   leerProducto,
   motivoDeError,
@@ -97,5 +98,15 @@ describe("última modificación", () => {
   it("los sellos no cuentan como cambios de la ficha", () => {
     const a = leerProducto("X", { nombre: "X", menudeo: 1 });
     expect(cambios(a, { ...a, actualizadoEn: new Date(), actualizadoPor: "x" })).toEqual({});
+  });
+});
+
+describe("eliminar", () => {
+  it("pide escribir el nombre exacto", () => {
+    expect(coincideNombre("Pavo Relleno", "Pavo Relleno")).toBe(true);
+    expect(coincideNombre("  Pavo Relleno ", "Pavo Relleno")).toBe(true);
+    expect(coincideNombre("pavo relleno", "Pavo Relleno")).toBe(false);
+    expect(coincideNombre("Pavo", "Pavo Relleno")).toBe(false);
+    expect(coincideNombre("", "")).toBe(false);
   });
 });

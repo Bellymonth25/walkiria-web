@@ -106,24 +106,26 @@
       <p class="adm-error" id="errorFicha" role="alert" hidden></p>
     </div>
     <footer class="adm-ficha-pie">
-      <button class="btn adm-peligro" type="button" id="eliminarProducto">Eliminar</button>
       <button class="btn btn-ghost" type="button" id="cancelarFicha">Cancelar</button>
       <button class="btn btn-gold" type="submit" id="guardarFicha">Guardar</button>
     </footer>
   </form>
 </dialog>
 
-<!-- Confirmar eliminar -->
+<!-- Confirmar eliminar: hay que escribir el nombre -->
 <dialog id="confirmarEliminar" class="adm-ficha adm-confirmar" aria-labelledby="elimTitulo">
   <div class="adm-ficha-cuerpo">
-    <h2 id="elimTitulo">¿Eliminar <span id="elimNombre"></span>?</h2>
+    <h2 id="elimTitulo">Eliminar <span class="elimNombre"></span></h2>
     <p>Se borra de Firebase y <b>desaparece de la app y de la página</b>. No se puede deshacer.</p>
     <p class="adm-sub">Los pedidos ya hechos conservan su nombre y precio. Si solo quieres que no se vea por ahora, mejor apaga <b>Mostrar</b>.</p>
+    <label class="adm-escribe">Para confirmar, escribe <b class="elimNombre"></b>
+      <input id="elimEscribe" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </label>
     <p class="adm-error" id="elimError" role="alert" hidden></p>
   </div>
   <footer class="adm-ficha-pie">
     <button class="btn btn-ghost" type="button" id="elimCancelar">No, conservar</button>
-    <button class="btn adm-peligro" type="button" id="elimConfirmar">Sí, eliminar</button>
+    <button class="btn adm-peligro" type="button" id="elimConfirmar" disabled>Eliminar producto</button>
   </footer>
 </dialog>
 

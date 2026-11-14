@@ -46,8 +46,9 @@ Página sin enlace en el menú (y con `noindex`) en `lawalkiria.com.mx/admin.htm
   y la ficha los muestra. Al crear se guarda también `creadoEn`. No se guarda el valor anterior.
 - El switch muestra un indicador mientras guarda y un aviso con el nombre del producto: "✓ Pavo Relleno
   quedó agotado" o el error.
-- **Editar** (botón amarillo) es la única forma de abrir la ficha. Dentro, **Eliminar** borra el
-  producto tras una confirmación (no se puede deshacer; los pedidos ya hechos conservan nombre y precio).
+- **Editar** (botón amarillo) es la única forma de abrir la ficha. **Eliminar** (botón rojo de la fila)
+  borra el producto: hay que escribir su nombre exacto para confirmar (no se puede deshacer; los
+  pedidos ya hechos conservan nombre y precio).
 - **+ Nuevo producto** crea `PROD_0xx` con el siguiente número libre.
 - Mismo comportamiento en app y web: `estaDisponible == false` → "Agotado" y no se puede pedir;
   `oculto == true` → no aparece en ningún lado. Los pedidos ya hechos guardan su precio.
