@@ -417,8 +417,10 @@ button.cal-day:hover{border-color:var(--primary)}
 .volante-btns{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 14px}
 .volante-btns .btn-ghost{color:var(--fg)}
 .volante-mini{position:relative;display:block;padding:0;border:0;background:none;cursor:zoom-in;border-radius:10px;overflow:hidden;
-  box-shadow:0 18px 40px rgba(0,0,0,.22),0 0 0 1px var(--line);transition:transform .25s ease,box-shadow .25s ease}
-.volante-mini:hover,.volante-mini:focus-visible{transform:scale(1.03);box-shadow:0 24px 50px rgba(0,0,0,.28),0 0 0 1px var(--line)}
+  /* El volante es blanco: el filo usa el color del texto (no --line) para que se note sobre fondos blancos o crema, en cualquier paleta. */
+  --filo:color-mix(in srgb,var(--fg) 22%,transparent);
+  box-shadow:0 0 0 1px var(--filo),0 2px 6px rgba(0,0,0,.10),0 18px 40px rgba(0,0,0,.22);transition:transform .25s ease,box-shadow .25s ease}
+.volante-mini:hover,.volante-mini:focus-visible{transform:scale(1.03);box-shadow:0 0 0 1px var(--filo),0 4px 10px rgba(0,0,0,.12),0 24px 50px rgba(0,0,0,.28)}
 .volante-mini img{display:block;width:100%;height:auto}
 .volante-lupa{position:absolute;right:12px;bottom:12px;background:rgba(20,10,10,.78);color:#fff;font:600 .85rem var(--font-body);padding:8px 12px;border-radius:999px}
 @media (max-width:760px){
