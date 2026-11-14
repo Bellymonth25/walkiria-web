@@ -153,6 +153,18 @@
     </div>
   </section>
 </main>
+<dialog class="confirmar" id="confirmarVaciar" aria-labelledby="confirmarTitulo" aria-describedby="confirmarTexto">
+  <form method="dialog">
+    <span class="confirmar-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v7M14 10v7"/></svg></span>
+    <h2 id="confirmarTitulo">¿Vaciar tu pedido?</h2>
+    <p id="confirmarTexto">Se quitan todos los productos de tu pedido. Tu nombre, fecha y dirección se quedan.</p>
+    <div class="confirmar-botones">
+      <button class="btn btn-ghost" value="no" autofocus>No, conservarlo</button>
+      <button class="btn btn-alerta" value="si">Sí, vaciar</button>
+    </div>
+  </form>
+</dialog>
+
 
 <footer>
   <div class="wrap">
