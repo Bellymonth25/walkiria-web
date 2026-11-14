@@ -117,6 +117,18 @@ export const firebase = {
 } as const;
 
 /**
+ * Configuración web de Firebase para la página admin.html. No es secreta: la seguridad está en las
+ * reglas de Firestore (solo usuarios con type ADMIN en `user/{uid}` pueden cambiar productos).
+ * Se copia de la consola: Configuración del proyecto → Tus apps → App web.
+ */
+export const firebaseWeb = {
+  apiKey: "",
+  authDomain: "lwk-app-a583b.firebaseapp.com",
+  projectId: "lwk-app-a583b",
+  appId: "",
+} as const;
+
+/**
  * Calculadora "¿Cuánto pido?". Porciones por adulto y cuánto come cada grupo comparado con un adulto.
  * Para ajustar las porciones solo hay que cambiar estos números.
  */
