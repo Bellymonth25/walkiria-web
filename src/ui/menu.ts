@@ -13,7 +13,7 @@ export const urlImagen = (s: string): string => (/^https?:\/\//.test(s) ? s : `$
 
 const CLOCHE = `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 33a15 15 0 0 1 30 0"/><path d="M5 33h38"/><path d="M8 37h32"/><path d="M24 18v-2.5"/><circle cx="24" cy="13.5" r="2"/><path d="M15.5 26.5a10 10 0 0 1 5-5"/></svg>`;
 
-const LUPA = `<span class="lupa" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5M10.5 8v5M8 10.5h5"/></svg></span>`;
+const LUPA = `<span class="lupa" aria-hidden="true"><svg class="i-exp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg><svg class="i-lupa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5M10.5 8v5M8 10.5h5"/></svg></span>`;
 
 /**
  * Foto a la izquierda del renglón: cuadrada en celular, 4:3 y más grande en compu (ver styles.css).

@@ -826,10 +826,20 @@ button.thumb{cursor:zoom-in;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--f
 .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}
 button.thumb:hover img{transform:scale(1.06)}
 button.thumb:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
-/* Lupita: siempre visible (en celular no hay "hover") para que se note que la foto se abre. */
-.lupa{position:absolute;right:5px;bottom:5px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,#1C0F11 62%,transparent);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35);transition:background .2s,transform .2s}
-.lupa svg{width:15px;height:15px}
-button.thumb:hover .lupa{background:var(--brand);transform:scale(1.1)}
+/* Indicador de "se abre": con mouse, la foto va limpia y al pasar el mouse aparece una lupa al centro.
+   En pantallas táctiles (sin hover) queda un glifo chiquito de expandir en la esquina. */
+.lupa{position:absolute;inset:0;display:grid;place-items:center;color:#fff;pointer-events:none;transition:background .2s}
+.lupa svg{display:none}
+.lupa .i-lupa{width:32%;max-width:38px;opacity:0;transition:opacity .2s;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+@media (hover:hover){
+  .lupa .i-lupa{display:block}
+  button.thumb:hover .lupa,button.thumb:focus-visible .lupa{background:rgba(28,15,17,.38)}
+  button.thumb:hover .lupa .i-lupa,button.thumb:focus-visible .lupa .i-lupa{opacity:1}
+}
+@media (hover:none){
+  .lupa{inset:auto 4px 4px auto;width:16px;height:16px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+  .lupa .i-exp{display:block;width:100%;height:100%}
+}
 .thumb-vacia{color:var(--gold-ink);border:1.5px dashed color-mix(in srgb,var(--gold-ink) 45%,transparent);background:color-mix(in srgb,var(--gold-soft) 55%,var(--surface));gap:3px;align-content:center;justify-items:center}
 .thumb-vacia svg{width:50%;height:auto;opacity:.8}
 .thumb-vacia span{display:none;font:700 .62rem/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;opacity:.85}
@@ -840,7 +850,5 @@ button.thumb:hover .lupa{background:var(--brand);transform:scale(1.1)}
   .row{grid-template-columns:var(--thumb-w) minmax(0,1fr) auto;column-gap:12px}
   .row .thumb{grid-row:span 2;align-self:start;border-radius:10px}
   .row .action{grid-column:2/-1}
-  .lupa{width:22px;height:22px;right:4px;bottom:4px}
-  .lupa svg{width:13px;height:13px}
 }
 @media (max-width:560px){.visor-producto .visor-titulo{display:block;font-size:1.05rem}}
