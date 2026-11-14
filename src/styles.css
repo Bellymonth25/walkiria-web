@@ -560,15 +560,15 @@ button.cal-day:hover{border-color:var(--primary)}
 .gal-foto:hover,.gal-foto:focus-visible{transform:translateY(-5px) scale(1.035);box-shadow:0 16px 34px rgba(0,0,0,.4);border-color:var(--gold);animation:sacudir .55s ease-in-out;z-index:1}
 @keyframes sacudir{0%{rotate:0deg}20%{rotate:-2.5deg}45%{rotate:2deg}70%{rotate:-1deg}100%{rotate:0deg}}
 
-/* Antes de pedir: al pasar el cursor el color se abre desde el ícono */
-.antes-c{overflow:hidden;isolation:isolate;transition:color .45s ease,transform .45s ease,box-shadow .45s ease,border-color .45s ease}
-.antes-c::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--hero);clip-path:circle(0 at 41px 41px);transition:clip-path .65s cubic-bezier(.4,0,.2,1)}
-.antes-c:hover,.antes-c:focus-visible{color:var(--hero-fg);transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.22)}
+/* Antes de pedir: al pasar el cursor se abre desde el ícono un fondo crema dorado.
+   El texto no cambia de color, así los avisos en rojo se siguen leyendo. */
+.antes-c{overflow:hidden;isolation:isolate;--antes-hover:color-mix(in srgb,var(--gold-soft) 70%,var(--surface));--antes-sombra:rgba(60,20,10,.14);transition:transform .45s ease,box-shadow .45s ease,border-color .45s ease}
+.antes-c::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--antes-hover);clip-path:circle(0 at 41px 41px);transition:clip-path .65s cubic-bezier(.4,0,.2,1)}
+.antes-c:hover,.antes-c:focus-visible{transform:translateY(-4px);box-shadow:0 16px 34px var(--antes-sombra);border-color:var(--gold)}
 .antes-c:hover::before,.antes-c:focus-visible::before{clip-path:circle(150% at 41px 41px)}
-.antes-c .aparte,.antes-c td{transition:color .45s ease,border-color .45s ease}
-.antes-c:hover .aparte,.antes-c:focus-visible .aparte{color:color-mix(in srgb,var(--hero-fg) 82%,transparent)}
-.antes-c:hover td,.antes-c:focus-visible td{border-color:color-mix(in srgb,var(--hero-fg) 35%,transparent)}
-.antes-c:hover td small,.antes-c:focus-visible td small{color:color-mix(in srgb,var(--hero-fg) 82%,transparent)}
+/* En oscuro la sombra suave no se ve */
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .antes-c{--antes-sombra:rgba(0,0,0,.5)}}
+:root[data-theme="dark"] .antes-c{--antes-sombra:rgba(0,0,0,.5)}
 .antes-ico{transition:transform .45s cubic-bezier(.3,1.5,.5,1)}
 .antes-c:hover .antes-ico,.antes-c:focus-visible .antes-ico{transform:scale(1.12) rotate(-8deg)}
 
@@ -748,8 +748,6 @@ button.cal-day:hover{border-color:var(--primary)}
 .zona-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .zona-top .num{font-weight:700;font-size:1.25em;font-variant-numeric:tabular-nums}
 .zona small{display:block;font-size:.88em;line-height:1.35;color:var(--muted);margin-top:4px}
-.antes-c:hover .zona,.antes-c:focus-visible .zona{border-color:color-mix(in srgb,var(--hero-fg) 35%,transparent);background:color-mix(in srgb,var(--hero-fg) 8%,transparent)}
-.antes-c:hover .zona small,.antes-c:focus-visible .zona small{color:color-mix(in srgb,var(--hero-fg) 82%,transparent)}
 .semaforo{list-style:none;margin:10px 0 12px;padding:6px 12px;display:grid;border-radius:10px;background:color-mix(in srgb,var(--gold-soft) 55%,transparent)}
 .semaforo li{display:grid;grid-template-columns:7.5em 1fr;gap:8px;align-items:baseline;padding:6px 0 6px 18px;position:relative;border-top:1px dotted color-mix(in srgb,var(--gold-ink) 40%,transparent)}
 .semaforo li:first-child{border-top:0}
@@ -758,11 +756,8 @@ button.cal-day:hover{border-color:var(--primary)}
 .semaforo .mid::before{background:#D9A21B}
 .semaforo .no::before{background:var(--brand)}
 .semaforo .no>b{color:var(--brand)}
-.antes-c:hover .semaforo,.antes-c:focus-visible .semaforo{background:color-mix(in srgb,var(--hero-fg) 10%,transparent)}
-.antes-c:hover .semaforo .no>b,.antes-c:focus-visible .semaforo .no>b{color:inherit}
 @media (max-width:420px){.semaforo li{grid-template-columns:1fr;gap:0}}
 .aviso-rojo{font-weight:700;color:var(--brand)}
-.antes-c:hover .aviso-rojo,.antes-c:focus-visible .aviso-rojo{color:inherit}
 .regalo-aviso{font-weight:700}
 
 /* Fechas de la temporada: una fila por fiesta, con el semáforo del volante */
