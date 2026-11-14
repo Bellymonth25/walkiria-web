@@ -30,9 +30,10 @@
 .adm-filas{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 
 /* Todo el renglón es el interruptor: área grande para el dedo. */
-.adm-fila{display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 16px;border-top:1px solid var(--line);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.adm-fila{border-top:1px solid var(--line)}
+.adm-toque{display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .adm-fila:first-child{border-top:0}
-.adm-fila:hover{background:color-mix(in srgb,var(--gold-soft) 45%,transparent)}
+.adm-fila:hover .adm-toque{background:color-mix(in srgb,var(--gold-soft) 45%,transparent)}
 .adm-fila input{position:absolute;opacity:0;pointer-events:none}
 .adm-info{flex:1;min-width:0}
 .adm-nombre{font-weight:600;display:block}
@@ -46,6 +47,14 @@
 .adm-fila input:checked + .adm-switch{background:var(--ok);box-shadow:none}
 .adm-fila input:checked + .adm-switch::after{transform:translateX(20px)}
 .adm-fila input:focus-visible + .adm-switch{outline:3px solid var(--primary);outline-offset:2px}
+.adm-web{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:0 16px 10px;font-size:.82rem;color:var(--muted);cursor:pointer}
+.adm-web input{position:absolute;opacity:0;pointer-events:none}
+.adm-switch.mini{width:40px;height:24px}
+.adm-switch.mini::after{top:3px;left:3px;width:18px;height:18px}
+.adm-web input:checked + .adm-switch{background:var(--ok);box-shadow:none}
+.adm-web input:checked + .adm-switch::after{transform:translateX(16px)}
+.adm-web input:focus-visible + .adm-switch{outline:3px solid var(--primary);outline-offset:2px}
+.adm-fila.oculto .adm-nombre{color:var(--muted)}
 .adm-fila.pendiente{opacity:.6;pointer-events:none}
 
 .adm-toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;max-width:calc(100vw - 32px);z-index:10;box-shadow:0 8px 24px rgba(0,0,0,.25)}

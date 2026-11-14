@@ -5,7 +5,7 @@ import { agrupar, evaluarRol, leerProducto, motivoDeError, nombreEnWeb } from ".
 describe("admin de disponibilidad", () => {
   it("lee un documento de products sin confiar en los tipos", () => {
     const p = leerProducto("PROD_001", { nombre: "Pavo Relleno", group: "aves", menudeo: 390, tipoVenta: "Kg", estaDisponible: true });
-    expect(p).toEqual({ id: "PROD_001", nombre: "Pavo Relleno", grupo: "AVES", precio: 390, unidad: "Kg", disponible: true });
+    expect(p).toEqual({ id: "PROD_001", nombre: "Pavo Relleno", grupo: "AVES", precio: 390, unidad: "Kg", disponible: true, oculto: false });
   });
 
   it("sin estaDisponible cuenta como no disponible, igual que la app", () => {

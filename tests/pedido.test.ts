@@ -6,7 +6,7 @@ import {
   aumentar, conRellenoSugerido, disminuir, empaquesDe, rellenoSugerido, faltantes, idLinea, importeLinea, mensaje, nombreLinea, normalizarCantidad, normalizarKgPavo, nuevaLinea, total, alcaldiaValida, zonaDe,
 } from "../src/lib/pedido";
 import { esPedidoTardio, nombreDia } from "../src/lib/fechas";
-import { estaAgotado, parsearAgotados } from "../src/lib/disponibilidad";
+import { estaAgotado, estaOculto, parsearAgotados, parsearOcultos } from "../src/lib/disponibilidad";
 import { fechaElegible, sinDomicilio, tipoDeFecha } from "../src/lib/entrega";
 
 const prod = (id: string): Producto => productos.find((p) => p.id === id)!;
@@ -134,6 +134,11 @@ describe("agotados", () => {
     const doc = { fields: { agotados: { arrayValue: { values: [{ stringValue: "PROD_001" }, { stringValue: "PROD_017" }] } } } };
     expect([...parsearAgotados(doc)]).toEqual(["PROD_001", "PROD_017"]);
     expect([...parsearAgotados({})]).toEqual([]);
+    expect([...parsearOcultos(doc)]).toEqual([]);
+    const conOcultos = { fields: { ocultos: { arrayValue: { values: [{ stringValue: "PROD_001" }] } } } };
+    expect([...parsearOcultos(conOcultos)]).toEqual(["PROD_001"]);
+    expect(estaOculto(pavoR, new Set(["PROD_001"]))).toBe(true);
+    expect(estaOculto(pavoR, new Set())).toBe(false);
   });
   it("un producto con varios ids solo se agota si todos lo están", () => {
     const pechuga = prod("pechuga-pavo");

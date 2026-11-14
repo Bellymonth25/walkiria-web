@@ -63,7 +63,7 @@ service cloud.firestore {
     match /products/{id} {
       allow read: if request.auth != null;
       allow update: if esAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estaDisponible']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estaDisponible', 'ocultoEnWeb']);
     }
     // Lista de agotados para la web pública: la llena la Cloud Function.
     match /publicWeb/{doc} {

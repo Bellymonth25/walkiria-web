@@ -136,14 +136,19 @@ function iniciar(): void {
   function fila(p: ProductoFirestore): string {
     const web = nombreEnWeb(p.id, productos);
     const unidad = p.unidad ? ` / ${escapar(p.unidad)}` : "";
-    return `<label class="adm-fila${p.disponible ? "" : " apagado"}${pendientes.has(p.id) ? " pendiente" : ""}">
+    return `<div class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}${pendientes.has(p.id) ? " pendiente" : ""}">
+      <label class="adm-toque">
       <span class="adm-info">
         <span class="adm-nombre">${escapar(p.nombre)}</span>
         <span class="adm-det"><span class="adm-precio">${dinero(p.precio)}${unidad}</span>${p.disponible ? "" : `<span class="adm-no">No disponible</span>`}${web ? "" : "<span>No aparece en la web</span>"}</span>
       </span>
-      <input type="checkbox" role="switch" data-id="${escapar(p.id)}"${p.disponible ? " checked" : ""} aria-label="${escapar(p.nombre)} disponible">
+      <input type="checkbox" role="switch" data-campo="estaDisponible" data-id="${escapar(p.id)}"${p.disponible ? " checked" : ""} aria-label="${escapar(p.nombre)} disponible">
       <span class="adm-switch" aria-hidden="true"></span>
-    </label>`;
+      </label>
+      ${web ? `<label class="adm-web"><span>Mostrar en la web</span>
+        <input type="checkbox" role="switch" data-campo="ocultoEnWeb" data-id="${escapar(p.id)}"${p.oculto ? "" : " checked"} aria-label="${escapar(p.nombre)} mostrar en la web">
+        <span class="adm-switch mini" aria-hidden="true"></span></label>` : ""}
+    </div>`;
   }
 
   $("#lista").addEventListener("change", async (e) => {
@@ -151,12 +156,19 @@ function iniciar(): void {
     const id = input.dataset.id;
     if (!id || pendientes.has(id)) return;
     const p = lista.find((x) => x.id === id);
-    const disponible = input.checked;
+    const campo = input.dataset.campo === "ocultoEnWeb" ? "ocultoEnWeb" : "estaDisponible";
+    const activo = input.checked;
     pendientes.add(id);
     pintar();
     try {
-      await updateDoc(doc(db, "products", id), { estaDisponible: disponible });
-      aviso(disponible ? `${p?.nombre ?? id} ya está disponible` : `${p?.nombre ?? id} quedó como no disponible`);
+      // Mostrar en la web activo = ocultoEnWeb false.
+      await updateDoc(doc(db, "products", id), { [campo]: campo === "ocultoEnWeb" ? !activo : activo });
+      const n = p?.nombre ?? id;
+      aviso(
+        campo === "ocultoEnWeb"
+          ? activo ? `${n} se vuelve a mostrar en la web` : `${n} ya no se muestra en la web`
+          : activo ? `${n} ya está disponible` : `${n} quedó como no disponible`,
+      );
     } catch {
       aviso(`No se pudo cambiar ${p?.nombre ?? id}. Revisa tu conexión o tus permisos.`, true);
     } finally {

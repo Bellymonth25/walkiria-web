@@ -8,6 +8,8 @@ export interface ProductoFirestore {
   precio: number;
   unidad: string;
   disponible: boolean;
+  /** Oculto en la web (`ocultoEnWeb`). Solo afecta a la página; la app lo ignora. */
+  oculto: boolean;
 }
 
 /** Orden de los grupos igual que en la app (GroupType). */
@@ -29,6 +31,7 @@ export function leerProducto(id: string, d: Record<string, unknown>): ProductoFi
     unidad: typeof d.tipoVenta === "string" ? d.tipoVenta : "",
     // Igual que la app: sin el campo, no se ofrece al levantar pedidos.
     disponible: d.estaDisponible === true,
+    oculto: d.ocultoEnWeb === true,
   };
 }
 

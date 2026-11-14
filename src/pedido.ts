@@ -1,11 +1,11 @@
 import "./styles.css";
-import type { Linea, ModoEntrega, Pedido, Presentacion, TamanoPavo } from "./types";
+import type { Linea, ModoEntrega, Pedido, Presentacion, Producto, TamanoPavo } from "./types";
 import { categorias, productos } from "./data/productos";
 import { firebase, negocio, temporada } from "./data/temporada";
 import { dinero, escapar } from "./lib/formato";
 import { esPedidoTardio } from "./lib/fechas";
 import { sinDomicilio } from "./lib/entrega";
-import { estaAgotado, leerAgotados } from "./lib/disponibilidad";
+import { estaAgotado, estaOculto, leerDisponibilidad } from "./lib/disponibilidad";
 import {
   aumentar, conRellenoSugerido, disminuir, enlaceWhatsApp, faltantes, normalizarCantidad, normalizarKgPavo,
   alcaldiaValida, idLinea, normalizarKgRelleno, nuevaLinea, OTRA_ALCALDIA, textoFaltantes, variasLineas,
@@ -32,7 +32,10 @@ const pedido: Pedido = {
 };
 let filtro: Filtro = "todo";
 let busqueda = "";
-let agotados: ReadonlySet<string> = new Set(pruebaAgotados());
+let agotados: ReadonlySet<string> = new Set(pruebaLista("agotados"));
+let ocultos: ReadonlySet<string> = new Set(pruebaLista("ocultos"));
+/** No se puede pedir: agotado u oculto en la web. */
+const noDisponible = (p: Producto): boolean => estaAgotado(p, agotados) || estaOculto(p, ocultos);
 const hoy = new Date();
 let mesVisto = { anio: hoy.getFullYear(), mes: hoy.getMonth() };
 /** Siguiente número de línea para productos que se agregan varias veces (maquila-1, pavo-relleno-2…). */
@@ -54,7 +57,7 @@ const ctx: ContextoOrden = {
 
 const vista = (): VistaMenu => ({
   categorias,
-  catalogo: productos,
+  catalogo: productos.filter((p) => !estaOculto(p, ocultos)),
   filtro,
   busqueda,
   lineas: pedido.lineas,
@@ -205,29 +208,30 @@ function revisarDia(): void {
 
 // ---------- Agotados ----------
 async function cargarDisponibilidad(): Promise<void> {
-  const leidos = await leerAgotados(firebase.proyecto, firebase.documento);
+  const leidos = await leerDisponibilidad(firebase.proyecto, firebase.documento);
   if (!leidos) return;
-  agotados = new Set([...leidos, ...pruebaAgotados()]);
+  agotados = new Set([...leidos.agotados, ...pruebaLista("agotados")]);
+  ocultos = new Set([...leidos.ocultos, ...pruebaLista("ocultos")]);
   const quitados = Object.entries(pedido.lineas).filter(([, l]) => {
     const p = producto(l.productoId);
-    return p && estaAgotado(p, agotados);
+    return p && noDisponible(p);
   });
   quitados.forEach(([id]) => ponerLinea(id, null));
   const nombres = [...new Set(quitados.map(([, l]) => producto(l.productoId)!.nombre))];
-  if (nombres.length) aviso(`Se agotó: ${nombres.join(", ")}. Lo quitamos de tu pedido.`);
+  if (nombres.length) aviso(`Ya no está disponible: ${nombres.join(", ")}. Lo quitamos de tu pedido.`);
   pintarMenu(vista());
   pintarPedido();
 }
 
-/** Para probar en local: ?agotados=PROD_001,PROD_008 */
-function pruebaAgotados(): string[] {
-  return (new URLSearchParams(location.search).get("agotados") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+/** Para probar en local: ?agotados=PROD_001,PROD_008 y ?ocultos=PROD_002 */
+function pruebaLista(nombre: "agotados" | "ocultos"): string[] {
+  return (new URLSearchParams(location.search).get(nombre) ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 }
 
 // ---------- Eventos ----------
 function agregar(productoId: string, version = ""): void {
   const p = producto(productoId);
-  if (!p || estaAgotado(p, agotados)) return;
+  if (!p || noDisponible(p)) return;
   let id = idLinea(p, version);
   if (variasLineas(p)) {
     siguiente[p.id] = (siguiente[p.id] ?? 0) + 1;
@@ -248,7 +252,7 @@ function agregarDeCalculadora(items: readonly Agregado[], personas: number): voi
   const sumado: Record<string, number> = {};
   for (const { productoId, cambios } of items) {
     const p = producto(productoId);
-    if (!p || estaAgotado(p, agotados)) continue;
+    if (!p || noDisponible(p)) continue;
     let id = idLinea(p, cambios.version ?? "");
     if (variasLineas(p)) {
       siguiente[p.id] = (siguiente[p.id] ?? 0) + 1;
@@ -487,7 +491,7 @@ pintarMenu(vista());
 pintarDias();
 revisarDia();
 pintarPedido();
-iniciarCalculadora($("#calc"), productos, (p) => estaAgotado(p, agotados), agregarDeCalculadora);
+iniciarCalculadora($("#calc"), productos, noDisponible, agregarDeCalculadora);
 iniciarHoja($("#order"), $<HTMLButtonElement>("#bar"), $("#barBtn"));
 
 
