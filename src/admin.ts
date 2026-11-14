@@ -2,7 +2,7 @@ import "./styles.css";
 import "./admin.css";
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { collection, doc, getDoc, getFirestore, onSnapshot, runTransaction, updateDoc, type Unsubscribe } from "firebase/firestore";
+import { collection, doc, getDoc, getFirestore, onSnapshot, runTransaction, serverTimestamp, updateDoc, type Unsubscribe } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { firebaseWeb } from "./data/temporada";
 import {
@@ -19,6 +19,7 @@ import {
   nombreGrupo,
   productoNuevo,
   siguienteId,
+  textoModificacion,
   validar,
   type Categoria,
   type ProductoFirestore,
@@ -167,12 +168,19 @@ function iniciar(): void {
           <span class="adm-det"><span class="adm-precio">${dinero(p.menudeo)}${unidad}</span>${p.oculto ? `<span class="adm-oculto">Oculto</span>` : ""}${p.disponible ? "" : `<span class="adm-no">Agotado</span>`}</span>
         </span>
       </button>
-      <label class="adm-disp">
+      ${
+        pendientes.has(p.id)
+          ? `<span class="adm-disp"><span class="adm-giro" role="status" aria-label="Guardando ${escapar(p.nombre)}"></span></span>`
+          : `<label class="adm-disp">
         <input type="checkbox" role="switch" data-id="${id}"${p.disponible ? " checked" : ""} aria-label="${escapar(p.nombre)} disponible">
         <span class="adm-switch" aria-hidden="true"></span>
-      </label>
+      </label>`
+      }
     </div>`;
   }
+
+  /** Quién y cuándo modificó el producto (la hora la pone el servidor). */
+  const sello = () => ({ actualizadoEn: serverTimestamp(), actualizadoPor: auth.currentUser?.email ?? "" });
 
   // Interruptor rápido de Disponible.
   $("#lista").addEventListener("change", async (e) => {
@@ -183,11 +191,13 @@ function iniciar(): void {
     const disponible = input.checked;
     pendientes.add(id);
     pintar();
+    const n = p?.nombre ?? id;
     try {
-      await updateDoc(doc(db, "products", id), { estaDisponible: disponible });
-      aviso(disponible ? `${p?.nombre ?? id} ya está disponible` : `${p?.nombre ?? id} quedó agotado`);
-    } catch {
-      aviso(`No se pudo cambiar ${p?.nombre ?? id}. Revisa tu conexión o tus permisos.`, true);
+      await updateDoc(doc(db, "products", id), { estaDisponible: disponible, ...sello() });
+      aviso(disponible ? `✓ ${n} ya está disponible` : `✓ ${n} quedó agotado`);
+    } catch (err) {
+      console.error("admin: no se pudo cambiar " + id, err);
+      aviso(`No se pudo cambiar "${n}" (${(err as { code?: string }).code ?? "error"}). Sigue como estaba.`, true);
     } finally {
       pendientes.delete(id);
       pintar();
@@ -247,7 +257,7 @@ function iniciar(): void {
     original = p;
     esNuevo = nuevo;
     f.titulo.textContent = nuevo ? "Nuevo producto" : p.nombre;
-    f.id.textContent = nuevo ? `Se guardará como ${p.id}.` : `Id: ${p.id}`;
+    f.id.textContent = nuevo ? `Se guardará como ${p.id}.` : `Id: ${p.id}. ${textoModificacion(p)}`;
     f.imagen.value = p.imagen;
     verFoto(p.imagen);
     f.nombre.value = p.nombre;
@@ -342,19 +352,20 @@ function iniciar(): void {
     }
     f.error.hidden = true;
     f.guardar.disabled = true;
+    f.guardar.textContent = "Guardando…";
     try {
       if (esNuevo) {
         const destino = doc(db, "products", p.id);
         await runTransaction(db, async (t) => {
           if ((await t.get(destino)).exists()) throw new Error("existe");
-          t.set(destino, aDocumento(p));
+          t.set(destino, { ...aDocumento(p), creadoEn: serverTimestamp(), ...sello() });
         });
-        aviso(`${p.nombre} se creó como ${p.id}`);
+        aviso(`✓ ${p.nombre} se creó como ${p.id}`);
       } else {
         const diff = cambios(original, p);
         if (Object.keys(diff).length) {
-          await updateDoc(doc(db, "products", p.id), diff);
-          aviso(`${p.nombre} quedó guardado`);
+          await updateDoc(doc(db, "products", p.id), { ...diff, ...sello() });
+          aviso(`✓ ${p.nombre} quedó guardado`);
         }
       }
       cerrar();
@@ -362,10 +373,11 @@ function iniciar(): void {
       const existe = (err as Error).message === "existe";
       f.error.textContent = existe
         ? `Ya hay un producto ${p.id}. Cierra y vuelve a tocar "Nuevo producto".`
-        : "No se pudo guardar. Revisa tu conexión o tus permisos.";
+        : `No se pudo guardar "${p.nombre}" (${(err as { code?: string }).code ?? "error"}). Revisa tu conexión o tus permisos.`;
       f.error.hidden = false;
     } finally {
       f.guardar.disabled = false;
+      f.guardar.textContent = esNuevo ? "Crear producto" : "Guardar";
     }
   });
 }

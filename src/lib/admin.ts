@@ -20,6 +20,9 @@ export interface ProductoFirestore {
   disponible: boolean;
   /** No se muestra ni en la app ni en la web. */
   oculto: boolean;
+  /** Última modificación hecha desde el panel (null si nunca se ha tocado desde ahí). */
+  actualizadoEn: Date | null;
+  actualizadoPor: string;
 }
 
 /** Mismos valores que los enums de la app (CategoryType, GroupType, SaleType, PresentationType). */
@@ -73,7 +76,29 @@ export function leerProducto(id: string, d: Record<string, unknown>): ProductoFi
     // Igual que la app: sin el campo, cuenta como agotado.
     disponible: d.estaDisponible === true,
     oculto: d.oculto === true,
+    actualizadoEn: aFecha(d.actualizadoEn),
+    actualizadoPor: texto(d.actualizadoPor),
   };
+}
+
+/** Acepta un Timestamp de Firestore (con toDate) o una fecha; cualquier otra cosa es null. */
+function aFecha(v: unknown): Date | null {
+  if (v instanceof Date) return v;
+  const t = (v as { toDate?: () => Date } | null)?.toDate;
+  return typeof t === "function" ? t.call(v) : null;
+}
+
+/** "14 nov 2026, 10:41" en hora de México. */
+export function fechaCorta(f: Date): string {
+  return new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Mexico_City" })
+    .format(f)
+    .replace(/\./g, "");
+}
+
+/** Texto de "última modificación" para la ficha. */
+export function textoModificacion(p: ProductoFirestore): string {
+  if (!p.actualizadoEn) return "Sin cambios registrados desde el panel.";
+  return `Última modificación: ${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? ` por ${p.actualizadoPor}` : ""}.`;
 }
 
 /** Lo que se guarda en Firestore, con los nombres de campo de la app. */
@@ -140,6 +165,8 @@ export function productoNuevo(id: string): ProductoFirestore {
     pesoAjustable: true,
     disponible: true,
     oculto: false,
+    actualizadoEn: null,
+    actualizadoPor: "",
   };
 }
 

@@ -10,6 +10,7 @@ import {
   nombreEnWeb,
   productoNuevo,
   siguienteId,
+  textoModificacion,
   validar,
 } from "../src/lib/admin";
 
@@ -80,5 +81,21 @@ describe("súper panel", () => {
     expect(motivoDeError("permission-denied")).toContain("permission-denied");
     expect(motivoDeError("unavailable")).toContain("unavailable");
     expect(motivoDeError(undefined)).toContain("error desconocido");
+  });
+});
+
+describe("última modificación", () => {
+  it("lee el Timestamp de Firestore y arma el texto", () => {
+    const f = new Date("2026-11-14T16:41:00Z");
+    const p = leerProducto("PROD_001", { nombre: "Pavo", actualizadoEn: { toDate: () => f }, actualizadoPor: "carlos.belmont@lawalkiria.com.mx" });
+    expect(p.actualizadoEn).toEqual(f);
+    expect(textoModificacion(p)).toBe("Última modificación: 14 nov 2026, 10:41 por carlos.belmont@lawalkiria.com.mx.");
+    expect(textoModificacion(leerProducto("X", {}))).toContain("Sin cambios");
+    expect(leerProducto("X", { actualizadoEn: "ayer" }).actualizadoEn).toBeNull();
+  });
+
+  it("los sellos no cuentan como cambios de la ficha", () => {
+    const a = leerProducto("X", { nombre: "X", menudeo: 1 });
+    expect(cambios(a, { ...a, actualizadoEn: new Date(), actualizadoPor: "x" })).toEqual({});
   });
 });

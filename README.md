@@ -42,6 +42,10 @@ Página sin enlace en el menú (y con `noindex`) en `lawalkiria.com.mx/admin.htm
   **Disponible**. Al tocar uno se abre su ficha: foto (se sube a Storage reducida a 1200 px),
   nombre, menudeo, mayoreo, categoría, grupo, tipo de venta, presentación, Disponible, Mostrar
   (`oculto`), peso ajustable y maquila.
+- Cada cambio guarda `actualizadoEn` (hora del servidor) y `actualizadoPor` (correo) en el producto,
+  y la ficha los muestra. Al crear se guarda también `creadoEn`. No se guarda el valor anterior.
+- El switch muestra un indicador mientras guarda y un aviso con el nombre del producto: "✓ Pavo Relleno
+  quedó agotado" o el error.
 - **+ Nuevo producto** crea `PROD_0xx` con el siguiente número libre.
 - Mismo comportamiento en app y web: `estaDisponible == false` → "Agotado" y no se puede pedir;
   `oculto == true` → no aparece en ningún lado. Los pedidos ya hechos guardan su precio.
