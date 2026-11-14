@@ -122,10 +122,10 @@ export const firebase = {
  * Se copia de la consola: Configuración del proyecto → Tus apps → App web.
  */
 export const firebaseWeb = {
-  apiKey: "",
+  apiKey: "AIzaSyDiZYeCsVZIAkqQr_rYYI3_5hh1UDcTmoI",
   authDomain: "lwk-app-a583b.firebaseapp.com",
   projectId: "lwk-app-a583b",
-  appId: "",
+  appId: "1:663418170977:web:13532ab5181643e338c420",
 } as const;
 
 /**
