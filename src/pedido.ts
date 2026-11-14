@@ -315,14 +315,7 @@ document.addEventListener("click", (e) => {
     } else agregar(pid, version);
   } else if (t.id === "vaciar") {
     // Empezar de cero: se quitan todos los productos. Nombre, fecha y dirección se quedan.
-    if (!confirm("¿Vaciar tu pedido? Se quitan todos los productos.")) return;
-    pedido.lineas = {};
-    sugerido = null;
-    for (const k of Object.keys(siguiente)) delete siguiente[k];
-    abiertos.clear();
-    pintarMenu(vista());
-    pintarPedido();
-    aviso("Listo, tu pedido quedó vacío.");
+    pedirConfirmacionVaciar();
   } else if (t.id === "calcRetirar") {
     quitarSugerido();
     pintarMenu(vista());
@@ -478,3 +471,30 @@ if (pedir && producto(pedir)) {
   requestAnimationFrame(() => document.querySelector(`[data-row="${pedir}"]`)?.scrollIntoView({ block: "center" }));
 }
 void cargarDisponibilidad();
+
+/**
+ * Vaciar pedido con diálogo propio (no confirm()), para que siga los colores de la página y de la paleta.
+ * "No, conservarlo" tiene el foco al abrir, así un Enter por error no borra nada.
+ */
+function pedirConfirmacionVaciar(): void {
+  const dlg = $<HTMLDialogElement>("#confirmarVaciar");
+  const n = Object.keys(pedido.lineas).length;
+  $("#confirmarTexto").textContent =
+    `Se ${n === 1 ? "quita el producto" : `quitan los ${n} productos`} de tu pedido. Tu nombre, fecha y dirección se quedan.`;
+  dlg.returnValue = "";
+  dlg.addEventListener(
+    "close",
+    () => {
+      if (dlg.returnValue !== "si") return;
+      pedido.lineas = {};
+      sugerido = null;
+      for (const k of Object.keys(siguiente)) delete siguiente[k];
+      abiertos.clear();
+      pintarMenu(vista());
+      pintarPedido();
+      aviso("Listo, tu pedido quedó vacío.");
+    },
+    { once: true },
+  );
+  dlg.showModal();
+}
