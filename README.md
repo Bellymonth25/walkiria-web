@@ -24,14 +24,8 @@ lo escribe la Cloud Function `onProductWritten` del repo de la app: cada vez que
 cambia, guarda la lista de ids con `estaDisponible == false`. Un producto de la web está agotado
 cuando todos sus `firebaseIds` (en `productos.ts`) están en esa lista.
 
-Reglas de Firestore necesarias:
-
-```
-match /publicWeb/{doc} {
-  allow read: if true;
-  allow write: if false;
-}
-```
+Reglas de Firestore necesarias: lectura abierta de `publicWeb` sin que otra regla general la tape. El
+texto completo está en la sección "Admin de disponibilidad", más abajo.
 
 Si no se puede leer el documento, la página muestra todo disponible.
 
@@ -49,21 +43,34 @@ Para que funcione:
 
 1. En la consola de Firebase: **Configuración del proyecto → Tus apps → Agregar app web** (si no
    existe) y copia `apiKey` y `appId` a `firebaseWeb` en `src/data/temporada.ts`. No son secretos.
-2. Reglas de Firestore (lo que protege de verdad, no que la página esté escondida):
+2. Reglas de Firestore (lo que protege de verdad, no que la página esté escondida). Las reglas de
+   Firebase se suman: si una permite, pasa. Por eso la regla general de "cualquier usuario logueado"
+   debe excluir `products` y `publicWeb`:
 
 ```
-function esAdmin() {
-  return request.auth != null
-    && get(/databases/$(database)/documents/user/$(request.auth.uid)).data.type.lower() == "admin";
-}
-match /products/{id} {
-  allow read: if request.auth != null;
-  // Desde la web/app solo se puede prender o apagar; precios y nombres no.
-  allow update: if esAdmin()
-    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["estaDisponible"]);
-}
-match /user/{uid} {
-  allow read: if request.auth != null && request.auth.uid == uid;
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function esAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/user/$(request.auth.uid)).data.type.lower() == 'admin';
+    }
+    // Todo como estaba (cualquier usuario logueado), menos products y publicWeb.
+    match /{col}/{doc=**} {
+      allow read, write: if request.auth != null && !(col in ['products', 'publicWeb']);
+    }
+    // Productos: todos los logueados leen; solo un ADMIN puede prender o apagar.
+    match /products/{id} {
+      allow read: if request.auth != null;
+      allow update: if esAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estaDisponible']);
+    }
+    // Lista de agotados para la web pública: la llena la Cloud Function.
+    match /publicWeb/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
 }
 ```
 
