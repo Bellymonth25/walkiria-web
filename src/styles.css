@@ -521,7 +521,12 @@ button.cal-day:hover{border-color:var(--primary)}
 .antes-c .aparte{font-size:.92em;color:var(--muted)}
 .antes-c table{width:100%;border-collapse:collapse;margin-top:10px}
 .antes-c td{padding:7px 0;border-top:1px dashed var(--line)}
-.antes-c td:last-child{text-align:right;font-weight:700}
+.antes-c td:last-child{text-align:right;font-weight:700;font-size:1.15em;vertical-align:top;white-space:nowrap;padding-left:12px;font-variant-numeric:tabular-nums}
+.antes-c td small{display:block;font-size:.88em;line-height:1.35;color:var(--muted);margin-top:2px}
+.antes-c .zona-otra{margin-top:10px}
+.antes-c .zona-otra a{color:inherit;font-weight:700;text-decoration-color:var(--gold)}
+.zona-info{margin:8px 0 0;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--gold) 16%,transparent);font-size:.95rem}
+.zona-info[data-tipo="otra"]{background:color-mix(in srgb,var(--primary) 10%,transparent)}
 @media (max-width:420px){.antes-c{padding:70px 18px 18px}}
 
 /* Calculadora dentro de la página de pedido */
@@ -567,6 +572,7 @@ button.cal-day:hover{border-color:var(--primary)}
 .antes-c .aparte,.antes-c td{transition:color .45s ease,border-color .45s ease}
 .antes-c:hover .aparte,.antes-c:focus-visible .aparte{color:color-mix(in srgb,var(--hero-fg) 82%,transparent)}
 .antes-c:hover td,.antes-c:focus-visible td{border-color:color-mix(in srgb,var(--hero-fg) 35%,transparent)}
+.antes-c:hover td small,.antes-c:focus-visible td small{color:color-mix(in srgb,var(--hero-fg) 82%,transparent)}
 .antes-ico{transition:transform .45s cubic-bezier(.3,1.5,.5,1)}
 .antes-c:hover .antes-ico,.antes-c:focus-visible .antes-ico{transform:scale(1.12) rotate(-8deg)}
 
@@ -733,3 +739,48 @@ button.cal-day:hover{border-color:var(--primary)}
 .vaciar:hover{color:var(--fg)}
 /* Menú en celulares angostos: las opciones se achican un poco en lugar de salirse de la pantalla */
 @media (max-width:760px){.nav a{padding-inline:clamp(6px,2.6vw,14px);font-size:clamp(.8rem,3.6vw,.92rem)}}
+
+/* Antes de pedir: mismo orden que el volante (¿Cuándo pedir? y Empaque a la izquierda, Envío a la derecha) */
+.antes{align-items:start}
+@media (min-width:761px){
+  .a-cuando{grid-column:1;grid-row:1}
+  .a-empaque{grid-column:1;grid-row:2}
+  .a-envio{grid-column:2;grid-row:1 / span 2}
+}
+.semaforo{list-style:none;margin:10px 0 12px;padding:6px 12px;display:grid;border-radius:10px;background:color-mix(in srgb,var(--gold-soft) 55%,transparent)}
+.semaforo li{display:grid;grid-template-columns:7.5em 1fr;gap:8px;align-items:baseline;padding:6px 0 6px 18px;position:relative;border-top:1px dotted color-mix(in srgb,var(--gold-ink) 40%,transparent)}
+.semaforo li:first-child{border-top:0}
+.semaforo li::before{content:"";position:absolute;left:0;top:.72em;width:10px;height:10px;border-radius:50%}
+.semaforo .ok::before{background:var(--ok)}
+.semaforo .mid::before{background:#D9A21B}
+.semaforo .no::before{background:var(--brand)}
+.semaforo .no>b{color:var(--brand)}
+.antes-c:hover .semaforo,.antes-c:focus-visible .semaforo{background:color-mix(in srgb,var(--hero-fg) 10%,transparent)}
+.antes-c:hover .semaforo .no>b,.antes-c:focus-visible .semaforo .no>b{color:inherit}
+@media (max-width:420px){.semaforo li{grid-template-columns:1fr;gap:0}}
+.aviso-rojo{font-weight:700;color:var(--brand)}
+.antes-c:hover .aviso-rojo,.antes-c:focus-visible .aviso-rojo{color:inherit}
+.regalo-aviso{font-weight:700}
+
+/* Fechas de la temporada: una fila por fiesta, con el semáforo del volante */
+.cal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+@media (max-width:900px){.cal{grid-template-columns:1fr}}
+.fiesta h3{font-size:1.35rem;margin:0 0 10px}
+.fiesta-dias{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fiesta .day{min-height:200px;padding:18px 16px}
+.day .chip{display:inline-block;margin-top:10px;padding:3px 9px;border-radius:999px;font-size:.78rem;font-weight:700;letter-spacing:.02em;color:#fff}
+.day.ok{border-color:var(--ok)}
+.day.ok .chip{background:var(--ok);color:var(--ok-ink)}
+.day.mid{border-color:#D9A21B;border-style:dashed;border-width:2px}
+.day.mid .chip{background:#D9A21B;color:#2B1D00}
+.day.no .chip{background:var(--brand);color:var(--brand-ink,#fff)}
+.day.ok small,.day.mid small{color:var(--fg)}
+.day.no small{color:var(--brand)}
+@media (max-width:560px){
+  .fiesta-dias{grid-template-columns:1fr}
+  .fiesta .day{min-height:0;display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center}
+  .fiesta .day>b{grid-row:1 / span 3}
+  .fiesta .day .chip{justify-self:start;margin-top:6px}
+  .fiesta .day small{grid-column:2}
+  .fiesta .day .mes{grid-column:2}
+}

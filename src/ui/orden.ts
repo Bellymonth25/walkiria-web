@@ -2,8 +2,8 @@ import type { Pedido, Producto } from "../types";
 import type { Temporada } from "../data/temporada";
 import { dinero, escapar } from "../lib/formato";
 import {
-  costoEnvio, empaquesDe, enlaceWhatsApp, faltantes, mensaje, nombreLinea, presentaciones, renglones, textoCantidad,
-  textoEmpaques, textoFaltantes, total,
+  costoEnvio, empaquesDe, enlaceWhatsApp, envioPorConfirmar, faltantes, mensaje, nombreLinea, presentaciones, renglones, textoCantidad,
+  textoEmpaques, textoFaltantes, total, zonaDe,
 } from "../lib/pedido";
 import { nombreFecha } from "../lib/fechas";
 import { tipoDeFecha } from "../lib/entrega";
@@ -43,7 +43,11 @@ export function pintarOrden(pedido: Pedido, ctx: ContextoOrden): void {
         return `<li><span>${escapar(nombreLinea(r.producto, r.linea))} <span class="q">· ${escapar(textoCantidad(r.producto, r.linea))}</span>${pres}</span><span class="num">${dinero(r.importe)}</span></li>`;
       })
       .join("") +
-    (envio ? `<li><span>Envío ${escapar(ctx.temporada.zonas[pedido.zona]!.nombre)}</span><span class="num">${dinero(envio)}</span></li>` : "");
+    (envio
+      ? `<li><span>Envío ${escapar(zonaDe(pedido.alcaldia, ctx.temporada.zonas)!.nombre)} <span class="q">· ${escapar(pedido.alcaldia)}</span></span><span class="num">${dinero(envio)}</span></li>`
+      : envioPorConfirmar(pedido)
+        ? `<li><span>Envío <span class="q">· otra zona</span></span><span class="num">Por confirmar</span></li>`
+        : "");
   $("#total").textContent = dinero(t);
   $("#barTotal").textContent = dinero(t);
   $("#barCount").textContent = n ? `${n} ${n === 1 ? "producto" : "productos"}` : "Tu pedido";
@@ -62,6 +66,20 @@ export function pintarOrden(pedido: Pedido, ctx: ContextoOrden): void {
     b.setAttribute("aria-pressed", String(b.dataset.mode === pedido.modo)),
   );
   $("#zoneField").hidden = !domicilio;
+  pintarZona(pedido, ctx);
   $("#domNote").hidden = !domicilio;
   $("#addrField").hidden = !domicilio;
+}
+
+/** Debajo de la alcaldía: la zona y el precio, o cómo preguntar si está fuera de zona. */
+function pintarZona(pedido: Pedido, ctx: ContextoOrden): void {
+  const info = $("#zoneInfo");
+  const zona = zonaDe(pedido.alcaldia, ctx.temporada.zonas);
+  info.dataset.tipo = zona ? "zona" : pedido.alcaldia ? "otra" : "";
+  info.innerHTML = zona
+    ? `<b>${escapar(zona.nombre)}</b> · envío <b class="num">${dinero(zona.costo)}</b>`
+    : pedido.alcaldia
+      ? `¿Otra zona? Pregúntanos por WhatsApp: al mandar tu pedido te confirmamos si llegamos y el costo del envío.`
+      : "";
+  info.hidden = !info.innerHTML;
 }

@@ -3,7 +3,7 @@ import type { Linea, Pedido, Producto } from "../src/types";
 import { productos } from "../src/data/productos";
 import { temporada } from "../src/data/temporada";
 import {
-  aumentar, conRellenoSugerido, disminuir, empaquesDe, rellenoSugerido, faltantes, idLinea, importeLinea, mensaje, nombreLinea, normalizarCantidad, normalizarKgPavo, nuevaLinea, total,
+  aumentar, conRellenoSugerido, disminuir, empaquesDe, rellenoSugerido, faltantes, idLinea, importeLinea, mensaje, nombreLinea, normalizarCantidad, normalizarKgPavo, nuevaLinea, total, alcaldiaValida, zonaDe,
 } from "../src/lib/pedido";
 import { esPedidoTardio, nombreDia } from "../src/lib/fechas";
 import { estaAgotado, parsearAgotados } from "../src/lib/disponibilidad";
@@ -14,7 +14,7 @@ const lomo = prod("lomo-adobado");
 const pavoR = prod("pavo-relleno");
 const strudel = prod("strudel");
 const linea = (p: Producto, cambios: Partial<Linea> = {}): Linea => ({ ...nuevaLinea(p), ...cambios });
-const base: Pedido = { lineas: {}, nombre: "", modo: "tienda", zona: 0, direccion: "", referencias: "", nota: "", fecha: "2026-12-23" };
+const base: Pedido = { lineas: {}, nombre: "", modo: "tienda", alcaldia: "", direccion: "", referencias: "", nota: "", fecha: "2026-12-23" };
 const ctx = { catalogo: productos, zonas: temporada.zonas, nombreDia: "Miércoles 23 de diciembre", tardio: false };
 
 describe("líneas nuevas", () => {
@@ -78,12 +78,16 @@ describe("total y faltantes", () => {
   it("suma envío solo a domicilio", () => {
     const p: Pedido = { ...base, lineas: { "lomo-adobado": linea(lomo, { cantidad: 2 }) } };
     expect(total(p, productos, temporada.zonas)).toBe(880);
-    expect(total({ ...p, modo: "domicilio", zona: 2 }, productos, temporada.zonas)).toBe(1080);
+    expect(total({ ...p, modo: "domicilio", alcaldia: "Azcapotzalco" }, productos, temporada.zonas)).toBe(1080);
+    expect(total({ ...p, modo: "domicilio", alcaldia: "Coyoacán" }, productos, temporada.zonas)).toBe(980);
+    expect(total({ ...p, modo: "tienda", alcaldia: "Azcapotzalco" }, productos, temporada.zonas)).toBe(880);
+    expect(total({ ...p, modo: "domicilio", alcaldia: "otra" }, productos, temporada.zonas)).toBe(880);
   });
   it("pide día y dirección cuando aplica", () => {
     const p: Pedido = { ...base, lineas: { bacalao: linea(prod("bacalao")) }, nombre: "Ana", fecha: null };
     expect(faltantes(p, productos)).toEqual(["el día de entrega"]);
-    expect(faltantes({ ...p, fecha: "2026-12-22", modo: "domicilio" }, productos)).toEqual(["la dirección de entrega"]);
+    expect(faltantes({ ...p, fecha: "2026-12-22", modo: "domicilio" }, productos)).toEqual(["tu alcaldía", "la dirección de entrega"]);
+    expect(faltantes({ ...p, fecha: "2026-12-22", modo: "domicilio", alcaldia: "Tlalpan", direccion: "Clavel 3" }, productos)).toEqual([]);
   });
 });
 
@@ -221,7 +225,7 @@ describe("varios pavos y patos", () => {
         "pavo-relleno-1": linea(pavoR, { kgPorPavo: 7 }),
         "pavo-relleno-2": linea(pavoR, { kgPorPavo: 9, presentacion: "charola" as const }),
       },
-      nombre: "Ana", modo: "tienda" as const, zona: 0, direccion: "", referencias: "", nota: "", fecha: "2026-12-23",
+      nombre: "Ana", modo: "tienda" as const, alcaldia: "", direccion: "", referencias: "", nota: "", fecha: "2026-12-23",
     };
     expect(total(pedido, productos, [])).toBe(7 * 400 + 9 * 400 + 35);
     const m = mensaje(pedido, { catalogo: productos, zonas: [], nombreDia: "Miércoles 23 de diciembre", tardio: false });
@@ -306,5 +310,29 @@ describe("versiones (pechuga, pierna, espagueti)", () => {
     const m = mensaje(p, ctx);
     expect(m).toContain("Pechuga de Pavo horneada, 0.5 kg");
     expect(m).toContain("Pechuga de Pavo adobada, 0.5 kg");
+  });
+});
+
+describe("zonas de envío", () => {
+  it("cada alcaldía está en una sola zona y Santa Fe va en Norte", () => {
+    const todas = temporada.zonas.flatMap((z) => z.alcaldias);
+    expect(new Set(todas).size).toBe(todas.length);
+    expect(zonaDe("Santa Fe", temporada.zonas)?.nombre).toBe("Zona Norte");
+    expect(zonaDe("Magdalena Contreras", temporada.zonas)?.costo).toBe(100);
+    expect(zonaDe("Milpa Alta", temporada.zonas)).toBeUndefined();
+  });
+  it("solo guarda alcaldías conocidas u \"otra\"", () => {
+    expect(alcaldiaValida("Iztapalapa", temporada.zonas)).toBe("Iztapalapa");
+    expect(alcaldiaValida("otra", temporada.zonas)).toBe("otra");
+    expect(alcaldiaValida("Narnia", temporada.zonas)).toBe("");
+    expect(alcaldiaValida(2, temporada.zonas)).toBe("");
+  });
+  it("el mensaje lleva alcaldía y zona, o pide confirmar el envío", () => {
+    const p: Pedido = { ...base, lineas: { "lomo-adobado": linea(lomo, { cantidad: 2 }) }, nombre: "Ana", modo: "domicilio", direccion: "Calle 1" };
+    const ctxZ = { ...ctx, zonas: temporada.zonas };
+    expect(mensaje({ ...p, alcaldia: "Coyoacán" }, ctxZ)).toContain("Entrega: A domicilio, Coyoacán (Zona Sur)");
+    const otra = mensaje({ ...p, alcaldia: "otra" }, ctxZ);
+    expect(otra).toContain("otra zona");
+    expect(otra).toContain("Total estimado: $880 más envío por confirmar");
   });
 });

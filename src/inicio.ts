@@ -1,4 +1,4 @@
-import { negocio, temporada } from "./data/temporada";
+import { empaques, negocio, temporada } from "./data/temporada";
 import { dinero } from "./lib/formato";
 import { enlaceWhatsApp } from "./lib/pedido";
 import { iniciarComun } from "./comun";
@@ -23,22 +23,42 @@ $<HTMLAnchorElement>("#goMaps").href = `https://www.google.com/maps/dir/?api=1&t
 $<HTMLAnchorElement>("#goWaze").href = `https://waze.com/ul?navigate=yes&q=${destino}`;
 $<HTMLIFrameElement>("#mapFrame").src = `https://www.google.com/maps?q=${destino}&output=embed`;
 
-$("#zonesTable").innerHTML = temporada.zonas.map((z) => `<tr><td>${z.nombre}</td><td>${dinero(z.costo)}</td></tr>`).join("");
+$("#zonesTable").innerHTML = temporada.zonas
+  .map((z) => `<tr><td><b>${z.nombre}</b><small>${z.alcaldias.join(", ")}</small></td><td>${dinero(z.costo)}</td></tr>`)
+  .join("");
+$<HTMLAnchorElement>("#zonaOtraWa").href = enlaceWhatsApp(negocio.whatsapp, "Hola, ¿hacen envíos a mi zona? Mi dirección es: ");
 
-const textos = {
-  limite: ["due", ""],
-  sujeto: ["", "Sujeto a disponibilidad"],
-  tienda: ["hot", "Sólo entrega en tienda"],
+// Empaque con costo: mismo precio al vacío o en charola, según el tamaño.
+const nombresTamano = { chica: "Chica", mediana: "Mediana", grande: "Grande" } as const;
+$("#empaqueTabla").innerHTML = (Object.keys(nombresTamano) as (keyof typeof nombresTamano)[])
+  .map((t) => `<tr><td><b>${nombresTamano[t]}</b><small>hasta ${empaques.capacidad[t]} kg</small></td><td>+${dinero(empaques.precio.charola[t])}</td></tr>`)
+  .join("");
+
+// Fechas: cada fiesta con el mismo semáforo del volante (2 días antes, 1 día antes, el mismo día).
+const semaforo = {
+  limite: { clase: "ok", chip: "Apartado", texto: (fiesta: string) => `Último día para apartar tu cena de ${fiesta}.` },
+  sujeto: { clase: "mid", chip: "Sin garantía", texto: () => "Pedidos según disponibilidad." },
+  tienda: {
+    clase: "no hot",
+    chip: "Solo en tienda",
+    texto: () => "Recoge tu pedido en tienda. No hay envío a domicilio.",
+  },
 } as const;
-$("#cal").innerHTML = temporada.diasEspeciales
-  .map((d) => {
-    const corte = temporada.cortes.find((c) => c.limite === d.dia);
-    const [clase, base] = textos[d.tipo];
-    const texto = corte ? `Último día para pedir en línea la cena de ${corte.para}` : base;
-    const extra = d.tipo === "tienda" ? `<small class="sujeto">*Sujeto a disponibilidad</small>` : "";
-    // 24: árbol de Navidad; 31: estrella de Año Nuevo.
-    const icono = d.tipo === "tienda" ? (d.dia === 24 ? ICONO_ARBOL : ICONO_ESTRELLA) : "";
-    return `<div class="day ${clase}">${icono}<b class="num">${d.dia}</b><span class="mes">de diciembre</span><small>${texto}</small>${extra}</div>`;
+const fiestas = [
+  { para: "Navidad", dia: 24, icono: ICONO_ARBOL },
+  { para: "Año Nuevo", dia: 31, icono: ICONO_ESTRELLA },
+];
+$("#cal").innerHTML = fiestas
+  .map((f) => {
+    const dias = temporada.diasEspeciales.filter((d) => d.dia > f.dia - 3 && d.dia <= f.dia);
+    const tarjetas = dias
+      .map((d) => {
+        const s = semaforo[d.tipo];
+        const icono = d.tipo === "tienda" ? f.icono : "";
+        return `<div class="day ${s.clase}">${icono}<b class="num">${d.dia}</b><span class="mes">de diciembre</span><span class="chip">${s.chip}</span><small>${s.texto(f.para)}</small></div>`;
+      })
+      .join("");
+    return `<div class="fiesta"><h3>${f.para}</h3><div class="fiesta-dias">${tarjetas}</div></div>`;
   })
   .join("");
 
