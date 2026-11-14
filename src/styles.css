@@ -118,6 +118,8 @@ section{scroll-margin-top:72px}
 .row.in{background:color-mix(in srgb,var(--gold-soft) 45%,var(--surface))}
 .name{font-weight:600;font-size:1.05rem;min-width:0}
 .tag{display:inline-block;margin-left:8px;font:700 .68rem/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold-soft);padding:4px 7px;border-radius:4px;vertical-align:2px}
+/* En una fila ya agregada (fondo dorado) el pill se invierte para no perderse */
+.row.in .tag{background:var(--gold-ink);color:var(--surface)}
 .meta{display:block;color:var(--muted);font-size:.88rem;font-weight:500;margin-top:2px}
 .price{text-align:right;white-space:nowrap}
 .price b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;color:var(--brand);letter-spacing:.01em}
@@ -429,6 +431,14 @@ button.cal-day:hover{border-color:var(--primary)}
 .visor-cerrar{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:999px;border:0;background:#fff;color:var(--visor-bg);font:700 .92rem var(--font-body);cursor:pointer}
 .visor-lienzo{flex:1;min-height:0;overflow:auto;display:grid;place-items:center;padding:14px;-webkit-overflow-scrolling:touch}
 .visor-lienzo img{display:block;width:auto;height:auto;max-width:100%;max-height:calc(100dvh - 2*var(--vp) - 136px);background:#fff;border-radius:6px;user-select:none;-webkit-user-drag:none}
+.visor.cargando .visor-lienzo img{opacity:0}
+.visor-lienzo img{transition:opacity .25s}
+.visor-cargando{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none;color:#fff}
+.visor-cargando[hidden]{display:none}
+.visor-spinner{width:46px;height:46px;border-radius:50%;border:4px solid rgba(255,255,255,.22);border-top-color:var(--gold,#D9AE52);animation:visor-gira .8s linear infinite}
+.visor-cargando-txt{font:600 .92rem var(--font-body);opacity:.85}
+@keyframes visor-gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.visor-spinner{animation:visor-late 1.4s ease-in-out infinite;border-top-color:rgba(255,255,255,.22);background:var(--gold,#D9AE52)}@keyframes visor-late{50%{opacity:.35}}}
 .visor-lienzo.zoom{place-items:start start}
 .visor-lienzo.zoom img{max-width:none;max-height:none;cursor:grab;margin:auto}
 .visor-lienzo.zoom.arrastrando img{cursor:grabbing}
@@ -844,3 +854,9 @@ button.thumb:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
   .row .action{grid-column:2/-1}
 }
 @media (max-width:560px){.visor-producto .visor-titulo{display:block;font-size:1.05rem}}
+
+/* Después de mandar el pedido: aviso y botón para empezar otro */
+.enviado{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;margin-top:12px;padding:14px;border:1.5px dashed var(--line);border-radius:var(--r);background:color-mix(in srgb,var(--ok) 9%,var(--surface))}
+.enviado[hidden]{display:none}
+.enviado p{margin:0;font-size:.92rem;color:var(--fg)}
+.enviado .btn{width:100%;justify-content:center}
