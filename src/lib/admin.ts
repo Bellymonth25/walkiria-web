@@ -55,4 +55,27 @@ export function nombreEnWeb(id: string, productos: readonly Producto[]): string 
   return productos.find((p) => p.firebaseIds.includes(id))?.nombre ?? null;
 }
 
+export type ResultadoRol = { ok: true } | { ok: false; motivo: string };
+
+/** Decide si el perfil de `user/{uid}` es de un administrador y, si no, por qué. */
+export function evaluarRol(existe: boolean, tipo: unknown): ResultadoRol {
+  if (!existe) return { ok: false, motivo: "No encontramos tu perfil en la colección user. Revisa que el id del documento sea tu UID." };
+  if (typeof tipo !== "string" || tipo.toUpperCase() !== "ADMIN") {
+    const rol = typeof tipo === "string" && tipo ? tipo : "sin rol";
+    return { ok: false, motivo: `Tu usuario es ${rol}, no administrador.` };
+  }
+  return { ok: true };
+}
+
+/** Explica en español por qué falló la lectura del perfil (el código de error de Firebase). */
+export function motivoDeError(codigo: string | undefined): string {
+  if (codigo === "permission-denied") {
+    return "Firestore no te dejó leer tu perfil (permission-denied). Revisa las reglas y que tu correo sea @lawalkiria.com.mx.";
+  }
+  if (codigo === "unavailable") {
+    return "No se pudo conectar con Firebase (unavailable). Revisa tu conexión o desactiva el bloqueador de anuncios.";
+  }
+  return `No se pudo verificar tu rol (${codigo ?? "error desconocido"}).`;
+}
+
 const quitarAcentos = (s: string): string => s.normalize("NFD").replace(/[̀-ͯ]/g, "");

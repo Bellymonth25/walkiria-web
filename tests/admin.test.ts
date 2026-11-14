@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { productos } from "../src/data/productos";
-import { agrupar, leerProducto, nombreEnWeb } from "../src/lib/admin";
+import { agrupar, evaluarRol, leerProducto, motivoDeError, nombreEnWeb } from "../src/lib/admin";
 
 describe("admin de disponibilidad", () => {
   it("lee un documento de products sin confiar en los tipos", () => {
@@ -31,5 +31,14 @@ describe("admin de disponibilidad", () => {
   it("sabe con qué nombre sale en la web", () => {
     expect(nombreEnWeb("PROD_018", productos)).toBe("Pechuga de Pavo");
     expect(nombreEnWeb("PROD_999", productos)).toBeNull();
+  });
+
+  it("dice por qué no entra: perfil faltante, rol distinto o error de Firebase", () => {
+    expect(evaluarRol(true, "admin")).toEqual({ ok: true });
+    expect(evaluarRol(false, undefined)).toMatchObject({ ok: false });
+    expect(evaluarRol(true, "WORKER")).toEqual({ ok: false, motivo: "Tu usuario es WORKER, no administrador." });
+    expect(motivoDeError("permission-denied")).toContain("permission-denied");
+    expect(motivoDeError("unavailable")).toContain("unavailable");
+    expect(motivoDeError(undefined)).toContain("error desconocido");
   });
 });

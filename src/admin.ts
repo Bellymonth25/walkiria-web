@@ -5,7 +5,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, type 
 import { collection, doc, getDoc, getFirestore, onSnapshot, query, updateDoc, where, type Unsubscribe } from "firebase/firestore";
 import { productos } from "./data/productos";
 import { firebaseWeb } from "./data/temporada";
-import { agrupar, leerProducto, nombreEnWeb, nombreGrupo, type ProductoFirestore } from "./lib/admin";
+import { agrupar, evaluarRol, leerProducto, motivoDeError, nombreEnWeb, nombreGrupo, type ProductoFirestore, type ResultadoRol } from "./lib/admin";
 import { dinero, escapar } from "./lib/formato";
 import { $ } from "./ui/dom";
 
@@ -76,21 +76,22 @@ function iniciar(): void {
     dejarDeEscuchar = null;
     if (!usuario) return mostrar("entrar");
     mostrar("cargando");
-    if (!(await esAdmin(usuario))) {
+    const rol = await esAdmin(usuario);
+    if (!rol.ok) {
       await signOut(auth);
-      error("Tu usuario no es administrador.");
+      error(rol.motivo);
       return;
     }
     escuchar();
   });
 
-  async function esAdmin(u: User): Promise<boolean> {
+  async function esAdmin(u: User): Promise<ResultadoRol> {
     try {
       const snap = await getDoc(doc(db, "user", u.uid));
-      const tipo = snap.get("type");
-      return typeof tipo === "string" && tipo.toUpperCase() === "ADMIN";
-    } catch {
-      return false;
+      return evaluarRol(snap.exists(), snap.get("type"));
+    } catch (e) {
+      console.error("admin: no se pudo leer user/" + u.uid, e);
+      return { ok: false, motivo: motivoDeError((e as { code?: string }).code) };
     }
   }
 
