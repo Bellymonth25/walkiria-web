@@ -560,12 +560,9 @@ button.cal-day:hover{border-color:var(--primary)}
 .gal-foto:hover,.gal-foto:focus-visible{transform:translateY(-5px) scale(1.035);box-shadow:0 16px 34px rgba(0,0,0,.4);border-color:var(--gold);animation:sacudir .55s ease-in-out;z-index:1}
 @keyframes sacudir{0%{rotate:0deg}20%{rotate:-2.5deg}45%{rotate:2deg}70%{rotate:-1deg}100%{rotate:0deg}}
 
-/* Antes de pedir: al pasar el cursor se abre desde el ícono un fondo crema dorado.
-   El texto no cambia de color, así los avisos en rojo se siguen leyendo. */
-.antes-c{overflow:hidden;isolation:isolate;--antes-hover:color-mix(in srgb,var(--gold-soft) 70%,var(--surface));--antes-sombra:rgba(60,20,10,.14);transition:transform .45s ease,box-shadow .45s ease,border-color .45s ease}
-.antes-c::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--antes-hover);clip-path:circle(0 at 41px 41px);transition:clip-path .65s cubic-bezier(.4,0,.2,1)}
-.antes-c:hover,.antes-c:focus-visible{transform:translateY(-4px);box-shadow:0 16px 34px var(--antes-sombra);border-color:var(--gold)}
-.antes-c:hover::before,.antes-c:focus-visible::before{clip-path:circle(150% at 41px 41px)}
+/* Antes de pedir: al pasar el cursor la tarjeta se eleva y el ícono se mueve. Sin cambio de color. */
+.antes-c{--antes-sombra:rgba(60,20,10,.14);transition:transform .45s ease,box-shadow .45s ease}
+.antes-c:hover,.antes-c:focus-visible{transform:translateY(-4px);box-shadow:0 16px 34px var(--antes-sombra)}
 /* En oscuro la sombra suave no se ve */
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .antes-c{--antes-sombra:rgba(0,0,0,.5)}}
 :root[data-theme="dark"] .antes-c{--antes-sombra:rgba(0,0,0,.5)}
@@ -810,3 +807,40 @@ button.cal-day:hover{border-color:var(--primary)}
 .add:hover{background:var(--cta);color:var(--cta-ink);border-color:var(--cta)}
 .calc-caja summary::after{background:var(--cta);color:var(--cta-ink);border-color:var(--cta);box-shadow:inset 0 0 0 1.5px var(--cta-ring);padding:9px 18px;font-size:.95rem}
 .calc-caja[open] summary::after{background:transparent;color:var(--cta-text);border-color:currentColor;box-shadow:none}
+
+/* ---------- Fotos de los productos en "Arma tu pedido" ----------
+   Celular: cuadrada 64 px. Tableta: cuadrada 80 px. Compu: 4:3 que crece con la pantalla hasta 144 px. */
+:root{--thumb-w:80px;--thumb-h:80px}
+@media (min-width:900px){:root{--thumb-w:clamp(104px,8.5vw,144px);--thumb-h:calc(var(--thumb-w)*.75)}}
+.row{grid-template-columns:var(--thumb-w) minmax(0,1fr) auto auto}
+.thumb{position:relative;width:var(--thumb-w);height:var(--thumb-h);flex:none;padding:0;border:0;border-radius:12px;overflow:hidden;background:var(--surface-2);display:grid;place-items:center;align-self:center}
+button.thumb{cursor:zoom-in;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--fg) 10%,transparent)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}
+button.thumb:hover img{transform:scale(1.06)}
+button.thumb:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+/* Indicador de "se abre": con mouse, la foto va limpia y al pasar el mouse aparece una lupa al centro.
+   En pantallas táctiles (sin hover) queda un glifo chiquito de expandir en la esquina. */
+.lupa{position:absolute;inset:0;display:grid;place-items:center;color:#fff;pointer-events:none;transition:background .2s}
+.lupa svg{display:none}
+.lupa .i-lupa{width:32%;max-width:38px;opacity:0;transition:opacity .2s;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+@media (hover:hover){
+  .lupa .i-lupa{display:block}
+  button.thumb:hover .lupa,button.thumb:focus-visible .lupa{background:rgba(28,15,17,.38)}
+  button.thumb:hover .lupa .i-lupa,button.thumb:focus-visible .lupa .i-lupa{opacity:1}
+}
+@media (hover:none){
+  .lupa{inset:auto 4px 4px auto;width:16px;height:16px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+  .lupa .i-exp{display:block;width:100%;height:100%}
+}
+.thumb-vacia{color:var(--gold-ink);border:1.5px dashed color-mix(in srgb,var(--gold-ink) 45%,transparent);background:color-mix(in srgb,var(--gold-soft) 55%,var(--surface));gap:3px;align-content:center;justify-items:center}
+.thumb-vacia svg{width:50%;height:auto;opacity:.8}
+.thumb-vacia span{display:none;font:700 .62rem/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+@media (min-width:900px){.thumb-vacia svg{width:38%}.thumb-vacia span{display:block}}
+.row.agotado .thumb{opacity:.45;filter:grayscale(1)}
+@media (max-width:560px){
+  :root{--thumb-w:64px;--thumb-h:64px}
+  .row{grid-template-columns:var(--thumb-w) minmax(0,1fr) auto;column-gap:12px}
+  .row .thumb{grid-row:span 2;align-self:start;border-radius:10px}
+  .row .action{grid-column:2/-1}
+}
+@media (max-width:560px){.visor-producto .visor-titulo{display:block;font-size:1.05rem}}

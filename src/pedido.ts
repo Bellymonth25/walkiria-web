@@ -11,12 +11,13 @@ import {
   alcaldiaValida, idLinea, normalizarKgRelleno, nuevaLinea, OTRA_ALCALDIA, textoFaltantes, variasLineas,
 } from "./lib/pedido";
 import { $, aviso } from "./ui/dom";
-import { actualizarPreciosPresentacion, pintarChips, pintarFilaPorClave, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
+import { actualizarPreciosPresentacion, urlImagen, pintarChips, pintarFilaPorClave, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
 import { pintarOrden, textoPedido, type ContextoOrden } from "./ui/orden";
 import { pintarCalendario, rangoMeses } from "./ui/calendario";
 import { iniciarHoja } from "./ui/hoja";
 import { iniciarCalculadora, type Agregado } from "./ui/calculadora";
 import { iniciarComun } from "./comun";
+import { iniciarVisor } from "./ui/visor";
 
 // ---------- Estado ----------
 const pedido: Pedido = {
@@ -288,12 +289,24 @@ function pintarSugerido(): void {
   }
 }
 
+// ---------- Fotos de los productos ----------
+const visor = iniciarVisor();
+
+/** Abre la foto del producto en grande. Una sola foto: no se pasa a otros productos. */
+function verFoto(productoId: string): void {
+  const p = producto(productoId);
+  if (!p?.imagen) return;
+  visor.abrir([{ titulo: `${p.nombre} · ${dinero(p.precio)}/${p.unidad}`, alt: p.nombre, media: urlImagen(p.imagen) }]);
+}
+
 document.addEventListener("click", (e) => {
   const t = (e.target as Element).closest<HTMLElement>("button, a");
   if (!t) return;
   const d = t.dataset;
 
-  if (d.cat) {
+  if (d.verfoto) {
+    verFoto(d.verfoto);
+  } else if (d.cat) {
     filtro = d.cat as Filtro;
     pintarChips(vista());
     pintarMenu(vista());

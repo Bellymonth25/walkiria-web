@@ -8,6 +8,23 @@ import { $ } from "./dom";
 
 export type Filtro = CategoriaId | "todo";
 
+/** Ruta del sitio o URL completa → URL usable en la página. */
+export const urlImagen = (s: string): string => (/^https?:\/\//.test(s) ? s : `${import.meta.env.BASE_URL}${s.replace(/^\//, "")}`);
+
+const CLOCHE = `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 33a15 15 0 0 1 30 0"/><path d="M5 33h38"/><path d="M8 37h32"/><path d="M24 18v-2.5"/><circle cx="24" cy="13.5" r="2"/><path d="M15.5 26.5a10 10 0 0 1 5-5"/></svg>`;
+
+const LUPA = `<span class="lupa" aria-hidden="true"><svg class="i-exp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg><svg class="i-lupa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5M10.5 8v5M8 10.5h5"/></svg></span>`;
+
+/**
+ * Foto a la izquierda del renglón: cuadrada en celular, 4:3 y más grande en compu (ver styles.css).
+ * Al tocarla se abre en grande. Sin foto, recuadro de "foto pronto".
+ */
+function miniatura(conFoto: Producto | undefined, nombre: string): string {
+  if (!conFoto?.imagen) return `<div class="thumb thumb-vacia" title="Foto pronto">${CLOCHE}<span>Foto pronto</span></div>`;
+  const src = urlImagen(conFoto.imagenMini ?? conFoto.imagen);
+  return `<button type="button" class="thumb" data-verfoto="${conFoto.id}" aria-label="Ver foto de ${escapar(nombre)}"><img src="${src}" alt="" width="320" height="240" loading="lazy" decoding="async">${LUPA}</button>`;
+}
+
 export interface VistaMenu {
   categorias: readonly Categoria[];
   catalogo: readonly Producto[];
@@ -180,7 +197,9 @@ export function renglon(p: Producto, lineas: readonly [string, Linea][], agotado
       : enPedido
         ? `<span class="inorder">En tu pedido</span>`
         : `<button type="button" class="add" data-add="${p.id}">Agregar</button>`;
+  const conFoto = p.imagen ? p : undefined;
   return `<li class="row${enPedido ? " in" : ""}${agotado ? " agotado" : ""}" data-row="${p.id}">
+    ${miniatura(conFoto, p.nombre)}
     <div class="name">${n}${p.clasico ? '<span class="tag">Clásico</span>' : ""}${p.descripcion ? `<span class="meta">${escapar(p.descripcion)}</span>` : ""}</div>
     <div class="price num"><b>${dinero(p.precio)}</b><span>/${p.unidad}</span></div>
     <div class="action">${accion}</div>
@@ -224,7 +243,9 @@ function renglonGrupo(v: VistaMenu, f: Fila): string {
       return x ? detalle(o.producto, x[0], x[1], 0, `${f.nombre} ${o.etiqueta.toLowerCase()}`) : "";
     })
     .join("");
+  const conFoto = f.productos.find((p) => p.imagen);
   return `<li class="row grupo${enPedido ? " in" : ""}${todoAgotado ? " agotado" : ""}" data-row="${f.clave}">
+    ${miniatura(conFoto, f.nombre)}
     <div class="name">${escapar(f.nombre)}${f.productos.some((p) => p.clasico) ? '<span class="tag">Clásico</span>' : ""}${desc ? `<span class="meta">${escapar(desc)}</span>` : ""}</div>
     <div class="price num">${precios.length > 1 ? "<small>desde</small> " : ""}<b>${dinero(Math.min(...precios))}</b><span>/${unidad}</span></div>
     <div class="action">${accion}</div>
