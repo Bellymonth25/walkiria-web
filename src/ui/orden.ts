@@ -3,7 +3,7 @@ import type { Temporada } from "../data/temporada";
 import { dinero, escapar } from "../lib/formato";
 import {
   costoEnvio, empaquesDe, enlaceWhatsApp, envioPorConfirmar, faltantes, mensaje, nombreLinea, presentaciones, renglones, textoCantidad,
-  textoEmpaques, textoFaltantes, total, zonaDe,
+  resumenEmpaques, textoEmpaques, textoFaltantes, total, zonaDe,
 } from "../lib/pedido";
 import { nombreFecha } from "../lib/fechas";
 import { tipoDeFecha } from "../lib/entrega";
@@ -48,6 +48,19 @@ export function pintarOrden(pedido: Pedido, ctx: ContextoOrden): void {
       : envioPorConfirmar(pedido)
         ? `<li><span>Envío <span class="q">· otra zona</span></span><span class="num">Por confirmar</span></li>`
         : "");
+  // Con charolas o bolsas al vacío, junto al total se desglosa cuánto es de productos y cuánto de empaques.
+  const { productos: sub, empaques: emp } = resumenEmpaques(pedido, ctx.catalogo);
+  const desglose = $("#desglose");
+  desglose.hidden = emp.length === 0;
+  desglose.innerHTML = emp.length
+    ? `<li><span>Productos</span><span class="num">${dinero(sub)}</span></li>` +
+      emp
+        .map(
+          (e) =>
+            `<li><span>${escapar(e.nombre)} <span class="q">· ${e.piezas}</span><small>${escapar(e.tamanos)}</small></span><span class="num">${dinero(e.importe)}</span></li>`,
+        )
+        .join("")
+    : "";
   $("#total").textContent = dinero(t);
   $("#barTotal").textContent = dinero(t);
   $("#barCount").textContent = n ? `${n} ${n === 1 ? "producto" : "productos"}` : "Tu pedido";

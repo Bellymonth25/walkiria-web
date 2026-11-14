@@ -3,7 +3,7 @@ import type { Linea, Pedido, Producto } from "../src/types";
 import { productos } from "../src/data/productos";
 import { temporada } from "../src/data/temporada";
 import {
-  aumentar, conRellenoSugerido, disminuir, empaquesDe, rellenoSugerido, faltantes, idLinea, importeLinea, mensaje, nombreLinea, normalizarCantidad, normalizarKgPavo, nuevaLinea, total, alcaldiaValida, zonaDe,
+  resumenEmpaques, aumentar, conRellenoSugerido, disminuir, empaquesDe, rellenoSugerido, faltantes, idLinea, importeLinea, mensaje, nombreLinea, normalizarCantidad, normalizarKgPavo, nuevaLinea, total, alcaldiaValida, zonaDe,
 } from "../src/lib/pedido";
 import { esPedidoTardio, nombreDia } from "../src/lib/fechas";
 import { estaAgotado, estaOculto, parsearAgotados, parsearOcultos } from "../src/lib/disponibilidad";
@@ -107,9 +107,12 @@ describe("mensaje de WhatsApp", () => {
     );
     expect(m.split("\n")[1]).toBe("Nombre: Ana López");
     expect(m).toContain("• Pavo Relleno, 1 medio pavo (3 a 4 kg): $1,400");
-    expect(m).toContain("Presentación: Bolsa o caja de cartón (sin costo)");
+    expect(m).toContain("Va en bolsa o caja de cartón (sin costo)");
     expect(m).toContain("• Lomo Adobado, 6 kg: $2,640");
-    expect(m).toContain("Presentación: 2 charolas grandes (+$80)");
+    expect(m).toContain("Va en charola de aluminio: 2 charolas grandes (+$80)");
+    // El total se explica: productos + charolas
+    expect(m).toContain("Productos: $4,040");
+    expect(m).toContain("Charolas de aluminio (2): $80");
     expect(m).toContain("Nota del pedido: Ensalada sin apio");
     expect(m).toContain("Total estimado: $4,120");
   });
@@ -194,7 +197,7 @@ describe("maquila", () => {
     expect(m).toContain("• Maquila de Cabrito, aprox. 3 kg: $510");
     expect(m).toContain("Llevaré la carne para la maquila a la tienda al menos 2 días antes de la entrega.");
     expect(m).toContain("Día: Miércoles 30 de diciembre (sujeto a disponibilidad)");
-    expect(m).not.toContain("Presentación");
+    expect(m).not.toContain("Va en");
   });
 });
 
@@ -339,5 +342,30 @@ describe("zonas de envío", () => {
     const otra = mensaje({ ...p, alcaldia: "otra" }, ctxZ);
     expect(otra).toContain("otra zona");
     expect(otra).toContain("Total estimado: $880 más envío por confirmar");
+  });
+});
+
+describe("desglose de empaques", () => {
+  it("junta charolas y bolsas al vacío por tipo, con productos aparte", () => {
+    const pedido: Pedido = {
+      ...base,
+      lineas: {
+        "lomo-adobado": linea(lomo, { cantidad: 6, presentacion: "charola" }),
+        "pavo-relleno": linea(pavoR, { tamano: "medio", presentacion: "vacio" }),
+      },
+    };
+    const r = resumenEmpaques(pedido, productos);
+    const charolas = r.empaques.find((e) => e.presentacion === "charola")!;
+    expect(charolas.piezas).toBe(2);
+    expect(charolas.importe).toBe(80);
+    expect(charolas.tamanos).toBe("2 grandes");
+    expect(r.empaques.find((e) => e.presentacion === "vacio")?.nombre).toBe("Bolsas al vacío");
+    const suma = r.empaques.reduce((a, e) => a + e.importe, 0);
+    expect(r.productos + suma).toBeCloseTo(total(pedido, productos, []), 2);
+  });
+
+  it("sin empaques con costo no hay desglose", () => {
+    const r = resumenEmpaques({ ...base, lineas: { "lomo-adobado": linea(lomo, { cantidad: 2 }) } }, productos);
+    expect(r.empaques).toEqual([]);
   });
 });
