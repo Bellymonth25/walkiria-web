@@ -1,0 +1,30 @@
+/* Aviso de privacidad: una columna de lectura (~68 caracteres), resumen arriba e índice para saltar a cada parte. */
+.aviso-wrap{max-width:760px}
+.aviso-pag h1{font-size:clamp(2.2rem,5vw,3.2rem);margin:8px 0 0}
+.aviso-pag .eyebrow{color:var(--gold-ink)}
+.aviso-fecha{margin:8px 0 0;color:var(--muted);font-size:.95rem}
+.aviso-pag a{color:var(--brand);text-underline-offset:3px;overflow-wrap:anywhere}
+.aviso-pag p,.aviso-pag li,.aviso-pag dd{font-size:1.02rem;line-height:1.65}
+.aviso-pag ul,.aviso-pag ol{padding-left:1.3em;margin:10px 0}
+.aviso-pag li+li{margin-top:6px}
+
+.aviso-resumen{margin:28px 0 0;padding:20px 22px;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:var(--r)}
+.aviso-resumen h2{font-size:1.5rem}
+.aviso-resumen ul{margin-bottom:0}
+
+.aviso-indice{margin:28px 0 8px;padding:18px 22px;background:var(--surface-2);border-radius:var(--r)}
+.aviso-indice h2{font-family:var(--font-body);font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+.aviso-indice ol{columns:2;column-gap:28px;margin:10px 0 0}
+.aviso-indice li,.aviso-indice li+li{break-inside:avoid;margin:0;padding:2px 0}
+.aviso-indice a{display:inline-block;padding-block:3px;font-weight:500}
+@media (max-width:600px){.aviso-indice ol{columns:1}}
+
+.aviso-sec{padding-top:36px;scroll-margin-top:calc(var(--alto-top,64px) + 12px)}
+.aviso-sec h2{display:flex;align-items:baseline;gap:12px;font-size:clamp(1.55rem,3.4vw,2rem);color:var(--brand);margin-bottom:12px}
+.aviso-sec h3{font-family:var(--font-body);font-weight:700;font-size:1.05rem;margin:20px 0 4px}
+.aviso-n{flex:none;display:inline-grid;place-items:center;width:1.5em;height:1.5em;border-radius:50%;background:var(--primary-soft);color:var(--brand);font:700 .85rem/1 var(--font-body);translate:0 -.15em}
+.aviso-datos{display:grid;grid-template-columns:max-content 1fr;gap:8px 20px;margin:16px 0 0;padding:16px 20px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.aviso-datos dt{font-weight:600;color:var(--muted)}
+.aviso-datos dd{margin:0}
+@media (max-width:520px){.aviso-datos{grid-template-columns:1fr;gap:2px}.aviso-datos dd+dt{margin-top:10px}}
+.aviso-destacado{margin-top:14px;padding:12px 16px;background:var(--gold-soft);border-radius:10px}
