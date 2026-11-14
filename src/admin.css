@@ -132,3 +132,5 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-toast{display:flex;align-items:center;gap:8px}
 .adm-toast.error{background:var(--alerta);color:var(--alerta-ink)}
 @media (max-width:560px){.adm-ficha.adm-confirmar{height:fit-content;margin:auto 0 0;border-radius:var(--r) var(--r) 0 0}}
+/* Spinner dentro de un botón: toma el color del texto del botón. */
+.adm-giro.chico{display:inline-block;vertical-align:-3px;width:16px;height:16px;margin:0 8px 0 0;border:2px solid color-mix(in srgb,currentColor 30%,transparent);border-top-color:currentColor}
