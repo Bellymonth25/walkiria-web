@@ -2,7 +2,7 @@ import type { Linea, Presentacion, Producto } from "../types";
 import { calculadora as cfg } from "../data/temporada";
 import { calcularCena, pavosPara, repartirCarne, type Cena, type Grupo, type Personas } from "../lib/calculadora";
 import { dinero, escapar, kilos } from "../lib/formato";
-import { importeLinea, kgMinimoPavo, nuevaLinea, presentaciones } from "../lib/pedido";
+import { empaquesDe, importeProducto, kgMinimoPavo, nuevaLinea, presentaciones, tieneCosto, type Empaque } from "../lib/pedido";
 
 /** Lo que la calculadora agrega al pedido: un producto y cómo queda su línea. */
 export interface Agregado {
@@ -101,19 +101,19 @@ export function iniciarCalculadora(
         filas.push({
           nombre: nombreCarne(ca),
           cantidad: pavos[0]?.tamano === "medio" ? "medio pavo (3 a 4 kg)" : `${pavos.length} ${pavos.length === 1 ? "pavo" : "pavos"} de aprox. ${kilos(pavos[0]!.kgPorPavo)}`,
-          importe: lineas.reduce((a, l) => a + importeLinea(x, l), 0),
+          importe: lineas.reduce((a, l) => a + importeProducto(x, l), 0),
           agregado: lineas.map((l) => ({ productoId: x.id, cambios: l })),
         });
       } else {
         const l = linea(x, { cantidad: kg, version: ca.estilo ?? "" });
-        filas.push({ nombre: nombreCarne(ca), cantidad: kilos(kg), importe: importeLinea(x, l), agregado: [{ productoId: x.id, cambios: l }] });
+        filas.push({ nombre: nombreCarne(ca), cantidad: kilos(kg), importe: importeProducto(x, l), agregado: [{ productoId: x.id, cambios: l }] });
       }
     });
     const porKilo = (id: string, kg: number, version = "") => {
       const x = p(id);
       if (!x || !kg) return;
       const l = linea(x, { cantidad: kg, version });
-      filas.push({ nombre: version ? `${x.nombre} ${version.toLowerCase()}` : x.nombre, cantidad: kilos(kg), importe: importeLinea(x, l), agregado: [{ productoId: id, cambios: l }] });
+      filas.push({ nombre: version ? `${x.nombre} ${version.toLowerCase()}` : x.nombre, cantidad: kilos(kg), importe: importeProducto(x, l), agregado: [{ productoId: id, cambios: l }] });
     };
     const [pastaProd, pastaVer = ""] = pastaId.split(":") as [string, string?];
     porKilo(pastaProd, c.pasta, pastaVer);
@@ -144,6 +144,34 @@ export function iniciarCalculadora(
     return salida;
   };
 
+  /**
+   * Charolas o bolsas al vacío de todo lo que se agrega, en un solo renglón con su propio precio
+   * (así se ve qué cuesta el producto y qué cuesta el empaque). Sale de las líneas ya juntas,
+   * igual que lo que se agrega al pedido.
+   */
+  const renglonEmpaque = (items: Agregado[]): { nombre: string; detalle: string; cantidad: string; importe: number } | null => {
+    if (!tieneCosto(presentacion)) return null;
+    const porTamano = new Map<Empaque["tamano"], number>();
+    let importe = 0;
+    for (const it of items) {
+      const x = p(it.productoId);
+      if (!x) continue;
+      for (const e of empaquesDe(x, { ...nuevaLinea(x), ...it.cambios })) {
+        porTamano.set(e.tamano, (porTamano.get(e.tamano) ?? 0) + e.piezas);
+        importe += e.piezas * e.precio;
+      }
+    }
+    const n = [...porTamano.values()].reduce((a, b) => a + b, 0);
+    if (!n) return null;
+    const [uno, varios] = presentacion === "charola" ? ["charola", "charolas"] : ["bolsa al vacío", "bolsas al vacío"];
+    const plural = (t: string, k: number) => (k === 1 ? t : `${t}s`);
+    const detalle = (["chica", "mediana", "grande"] as const)
+      .filter((t) => porTamano.has(t))
+      .map((t) => `${porTamano.get(t)} ${plural(t, porTamano.get(t)!)}`)
+      .join(" · ");
+    return { nombre: presentacion === "charola" ? "Charolas de aluminio" : "Bolsas al vacío", detalle, cantidad: `${n} ${n === 1 ? uno : varios}`, importe };
+  };
+
   const res = () => raiz.querySelector<HTMLElement>("#calcRes")!;
 
   const pintarResultado = () => {
@@ -156,12 +184,14 @@ export function iniciarCalculadora(
       return;
     }
     const filas = plan(c);
-    const suma = filas.reduce((a, f) => a + f.importe, 0);
+    const emp = renglonEmpaque(juntar(filas.flatMap((f) => f.agregado)));
+    const suma = filas.reduce((a, f) => a + f.importe, 0) + (emp?.importe ?? 0);
     res().innerHTML = `
       <h3>Para ${c.personas} ${c.personas === 1 ? "persona" : "personas"} te sugerimos</h3>
       <ul class="calc-lista">${filas
         .map((f) => `<li><span>${escapar(f.nombre)}</span><b>${escapar(f.cantidad)}</b><span class="num">${dinero(Math.round(f.importe))}</span></li>`)
         .join("")}
+        ${emp ? `<li class="calc-emp"><span>${escapar(emp.nombre)}<small>${escapar(emp.detalle)}</small></span><b>${escapar(emp.cantidad)}</b><span class="num">${dinero(Math.round(emp.importe))}</span></li>` : ""}
         <li class="calc-pan"><span>Panecillo</span><b>${c.panes} ${c.panes === 1 ? "pza" : "pzas"}</b><span>1 por persona</span></li>
       </ul>
       <div class="calc-total"><span>Total aproximado</span><b class="num">${dinero(Math.round(suma))}</b></div>

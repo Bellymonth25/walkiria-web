@@ -472,6 +472,7 @@ button.cal-day:hover{border-color:var(--primary)}
 .calc-lista li{display:grid;grid-template-columns:minmax(0,1fr) auto 5.5rem;gap:12px;align-items:baseline;padding:9px 0;border-bottom:1px dashed var(--line)}
 .calc-lista li>span:last-child{text-align:right;color:var(--muted)}
 .calc-lista .calc-pan>span:last-child{font-size:.8rem}
+.calc-lista li>span:first-child small{display:block;color:var(--muted);font-size:.78rem;font-weight:500;margin-top:1px}
 .calc-total{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 14px}
 .calc-total b{font-family:var(--font-display);font-weight:400;font-size:1.8rem;color:var(--brand)}
 .calc-res .btn{width:100%}
