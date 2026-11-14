@@ -26,7 +26,7 @@ export function iniciarTema(boton: HTMLButtonElement): void {
     document.documentElement.dataset.theme = t;
     boton.setAttribute("aria-checked", String(t === "dark"));
     boton.setAttribute("aria-label", t === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro");
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", t === "dark" ? "#3A0D10" : "#5C1418");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", t === "dark" ? "#3E0C14" : "#5E111C");
   };
   let actual: Tema = leer() ?? sistema();
   aplicar(actual);
