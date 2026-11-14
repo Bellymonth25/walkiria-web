@@ -122,6 +122,10 @@
             <svg class="wa-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Z"/></svg>
             Enviar pedido por WhatsApp
           </a>
+          <div class="enviado" id="enviado" hidden>
+            <p><b>Abrimos WhatsApp con tu pedido.</b> Si ya lo mandaste, puedes empezar uno nuevo.</p>
+            <button class="btn btn-ghost" id="otroPedido" type="button">Armar otro pedido</button>
+          </div>
           <p class="missing" id="missing" hidden></p>
           <button class="copy" id="copy" type="button">Copiar el texto del pedido</button>
         </aside>
@@ -166,6 +170,17 @@
     <p class="visor-ayuda" id="visorAyuda"></p>
   </dialog>
 </main>
+<dialog class="confirmar" id="confirmarOtro" aria-labelledby="otroTitulo" aria-describedby="otroTexto">
+  <form method="dialog">
+    <span class="confirmar-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+    <h2 id="otroTitulo">¿Armar otro pedido?</h2>
+    <p id="otroTexto">Se borra todo lo de este pedido: productos, nombre, fecha y dirección. Hazlo solo si ya mandaste el anterior por WhatsApp.</p>
+    <div class="confirmar-botones">
+      <button class="btn btn-ghost" value="no" autofocus>No, volver</button>
+      <button class="btn btn-alerta" value="si">Sí, armar otro</button>
+    </div>
+  </form>
+</dialog>
 <dialog class="confirmar" id="confirmarVaciar" aria-labelledby="confirmarTitulo" aria-describedby="confirmarTexto">
   <form method="dialog">
     <span class="confirmar-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v7M14 10v7"/></svg></span>

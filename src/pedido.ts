@@ -65,13 +65,19 @@ const vista = (): VistaMenu => ({
 /** El pedido se guarda mientras dure la visita, para no perderlo al ir a otra página (Inicio, Gravy) y volver. */
 const CLAVE = "walkiria-pedido";
 const CLAVE_SUGERIDO = "walkiria-sugerido";
+/** Texto del pedido que se mandó por WhatsApp. Mientras el pedido siga igual se ofrece "Armar otro pedido". */
+const CLAVE_ENVIADO = "walkiria-enviado";
+let enviado: string | null = null;
 function pintarPedido(): void {
   pintarOrden(pedido, ctx);
+  $("#enviado").hidden = enviado === null || enviado !== textoPedido(pedido, ctx);
   $("#vaciar").hidden = Object.keys(pedido.lineas).length === 0;
   pintarSugerido();
   try {
     sessionStorage.setItem(CLAVE, JSON.stringify(pedido));
     sessionStorage.setItem(CLAVE_SUGERIDO, JSON.stringify(sugerido));
+    if (enviado === null) sessionStorage.removeItem(CLAVE_ENVIADO);
+    else sessionStorage.setItem(CLAVE_ENVIADO, enviado);
   } catch {
     /* sin almacenamiento: el pedido dura mientras no cambie de página */
   }
@@ -105,6 +111,11 @@ function restaurar(): void {
     if (s && typeof s.personas === "number" && s.lineas && typeof s.lineas === "object") sugerido = s;
   } catch {
     /* sin sugerido guardado */
+  }
+  try {
+    enviado = sessionStorage.getItem(CLAVE_ENVIADO);
+  } catch {
+    /* sin almacenamiento */
   }
   $<HTMLInputElement>("#cname").value = pedido.nombre;
   $<HTMLTextAreaElement>("#addr").value = pedido.direccion;
@@ -377,6 +388,13 @@ document.addEventListener("click", (e) => {
     else if (!pedido.nombre.trim()) $("#cname").focus();
     else if (pedido.fecha === null) $("#calendar").scrollIntoView({ block: "center", behavior: "smooth" });
     else $("#addr").focus();
+  } else if (t.id === "send") {
+    // WhatsApp se abre en otra pestaña (el enlace sigue su camino): se anota qué pedido se mandó.
+    enviado = textoPedido(pedido, ctx);
+    pintarPedido();
+    $("#enviado").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  } else if (t.id === "otroPedido") {
+    pedirConfirmacionOtroPedido();
   } else if (t.id === "copy") {
     if (!Object.keys(pedido.lineas).length) return aviso("Agrega al menos un producto");
     navigator.clipboard
@@ -484,6 +502,32 @@ if (pedir && producto(pedir)) {
   requestAnimationFrame(() => document.querySelector(`[data-row="${pedir}"]`)?.scrollIntoView({ block: "center" }));
 }
 void cargarDisponibilidad();
+
+/**
+ * "Armar otro pedido": después de mandar por WhatsApp, borra todo (con confirmación) y reinicia la página.
+ * "No, volver" tiene el foco al abrir, así un Enter por error no borra nada.
+ */
+function pedirConfirmacionOtroPedido(): void {
+  const dlg = $<HTMLDialogElement>("#confirmarOtro");
+  dlg.returnValue = "";
+  dlg.addEventListener(
+    "close",
+    () => {
+      if (dlg.returnValue !== "si") return;
+      try {
+        sessionStorage.removeItem(CLAVE);
+        sessionStorage.removeItem(CLAVE_SUGERIDO);
+        sessionStorage.removeItem(CLAVE_ENVIADO);
+      } catch {
+        /* sin almacenamiento */
+      }
+      window.scrollTo(0, 0);
+      location.reload();
+    },
+    { once: true },
+  );
+  dlg.showModal();
+}
 
 /**
  * Vaciar pedido con diálogo propio (no confirm()), para que siga los colores de la página.

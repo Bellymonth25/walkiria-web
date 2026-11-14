@@ -51,6 +51,31 @@ export function iniciarVisor(): Visor {
   const [menos, mas, ajustar] = [...zoom.querySelectorAll<HTMLButtonElement>("button")] as [HTMLButtonElement, HTMLButtonElement, HTMLButtonElement];
   img.draggable = false;
 
+  // ---------- Indicador de carga: se ve mientras baja la foto ----------
+  const cargando = document.createElement("div");
+  cargando.className = "visor-cargando";
+  cargando.setAttribute("role", "status");
+  cargando.innerHTML = `<span class="visor-spinner" aria-hidden="true"></span><span class="visor-cargando-txt">Cargando foto…</span>`;
+  cargando.hidden = true;
+  visor.append(cargando);
+  const terminarCarga = () => {
+    cargando.hidden = true;
+    visor.classList.remove("cargando");
+  };
+  img.addEventListener("load", terminarCarga);
+  img.addEventListener("error", () => {
+    terminarCarga();
+    ayuda.textContent = "No se pudo cargar la foto. Revisa tu conexión e inténtalo de nuevo.";
+  });
+  /** Cambia la foto y muestra el indicador hasta que termine de bajar (si ya estaba en caché no parpadea). */
+  const cargarImagen = (src: string) => {
+    if (img.src.endsWith(src) && img.complete && img.naturalWidth > 0) return;
+    cargando.hidden = false;
+    visor.classList.add("cargando");
+    img.src = src;
+    if (img.complete && img.naturalWidth > 0) terminarCarga();
+  };
+
   /** Cambia el zoom manteniendo el mismo punto al centro de la pantalla. */
   const ponerZoom = (n: number) => {
     const l = laminas[i];
@@ -60,7 +85,7 @@ export function iniciarVisor(): Visor {
     const centroY = (lienzo.scrollTop + lienzo.clientHeight / 2) / Math.max(1, lienzo.scrollHeight);
     nivel = Math.max(0, Math.min(NIVELES.length - 1, n));
     const factor = NIVELES[nivel]!;
-    if (nivel > 0 && l.grande && !img.src.endsWith(l.grande)) img.src = l.grande;
+    if (nivel > 0 && l.grande && !img.src.endsWith(l.grande)) cargarImagen(l.grande);
     lienzo.classList.toggle("zoom", nivel > 0);
     img.style.width = nivel > 0 ? `${Math.round(anchoBase * factor)}px` : "";
     porcentaje.textContent = `${Math.round(factor * 100)}%`;
@@ -116,9 +141,10 @@ export function iniciarVisor(): Visor {
     img.hidden = !l.media;
     vacio.hidden = !!l.media;
     if (l.media) {
-      img.src = l.media;
       img.alt = l.alt;
+      cargarImagen(l.media);
     } else {
+      terminarCarga();
       vacio.textContent = `Pronto: foto de ${l.titulo}`;
     }
     zoom.hidden = !l.media;
