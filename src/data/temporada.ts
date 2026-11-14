@@ -68,8 +68,8 @@ export const pavo = {
 export const empaques = {
   capacidad: { chica: 1, mediana: 2.5, grande: 4 } satisfies Record<TamanoEmpaque, number>,
   precio: {
-    vacio: { chica: 25, mediana: 30, grande: 35 } satisfies Record<TamanoEmpaque, number>,
-    charola: { chica: 25, mediana: 30, grande: 35 } satisfies Record<TamanoEmpaque, number>,
+    vacio: { chica: 30, mediana: 35, grande: 40 } satisfies Record<TamanoEmpaque, number>,
+    charola: { chica: 30, mediana: 35, grande: 40 } satisfies Record<TamanoEmpaque, number>,
   },
 } as const;
 
