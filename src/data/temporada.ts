@@ -55,7 +55,7 @@ export const temporada: Temporada = {
 /** Pavos enteros. */
 export const pavo = {
   /** Mínimo de un pavo completo. */
-  kgMinimoCompleto: 5,
+  kgMinimoCompleto: 6,
   /** Medio pavo pesa entre 3 y 4 kg; para el estimado se usa el punto medio. */
   kgMedio: { min: 3, max: 4, estimado: 3.5 },
 } as const;
@@ -140,12 +140,12 @@ export const calculadora = {
   factor: { personas: 1, adolescentes: 1.25 },
   /** Botones de tamaño de cena. La primera es la que se ve al abrir. */
   sugeridas: [4, 6, 10],
-  /** Hasta este número de personas se recomienda pechuga en lugar de pavo entero. */
-  hastaPechuga: 4,
-  /** El pavo entero (en la calculadora) se ofrece desde aquí, solo en medio pavo: con menos personas sobra. */
+  /** Pavo en la calculadora: con menos de 6 personas no se ofrece (sobraría muchísimo). */
   desdeMedioPavo: 6,
-  /** Desde aquí también se ofrece el pavo que solo se vende completo (el ahumado). */
-  desdePavoCompleto: 10,
+  /** De 6 a 8 personas, medio pavo; desde aquí, pavo entero (y ya se ofrece el ahumado, que solo se vende completo). */
+  desdePavoCompleto: 9,
+  /** Kilos de pavo entero por persona (con hueso). Se redondea al medio kilo hacia arriba, sin bajar del mínimo. */
+  porcionPavoKg: 0.55,
   /** Desde este número de personas se puede repartir la carne en varias (mitad y mitad). */
   desdeVariasCarnes: 6,
   maxCarnes: 3,

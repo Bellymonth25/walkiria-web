@@ -458,7 +458,7 @@ document.addEventListener("change", (e) => {
     if (el.value === "Otro") document.querySelector<HTMLInputElement>(`#otro-${d.tipo}`)?.focus();
     return;
   }
-  // Al salir del campo se muestra el valor ya limpio (ej. 0 → 0.25, 4 → 5 kg por pavo).
+  // Al salir del campo se muestra el valor ya limpio (ej. 0 → 0.25, 4 → 6 kg por pavo).
   // No se repinta el renglón para no perder el clic que el cliente esté dando en otro botón.
   const id = d.qty ?? d.kgpavo ?? d.relleno;
   const l = id ? pedido.lineas[id] : undefined;

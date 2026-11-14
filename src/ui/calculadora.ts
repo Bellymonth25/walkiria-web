@@ -1,6 +1,6 @@
 import type { Linea, Presentacion, Producto } from "../types";
 import { calculadora as cfg } from "../data/temporada";
-import { calcularCena, pavoPermitido, pavosPara, repartirCarne, type Cena, type Grupo, type Personas } from "../lib/calculadora";
+import { calcularCena, pavoPermitido, pavosCena, repartirCarne, type Cena, type Grupo, type Personas } from "../lib/calculadora";
 import { dinero, escapar, kilos } from "../lib/formato";
 import { empaquesDe, importeProducto, kgMinimoPavo, nuevaLinea, presentaciones, tieneCosto, type Empaque } from "../lib/pedido";
 
@@ -52,7 +52,11 @@ export function iniciarCalculadora(
 
   const personas: Personas = { personas: cfg.sugeridas[0], adolescentes: 0 };
   const total = () => personas.personas + personas.adolescentes;
-  const recomendada = () => (total() <= cfg.hastaPechuga ? "pechuga-pavo:Horneada" : "pavo-relleno");
+  /** Siempre se propone primero la pechuga de pavo horneada (si no hay, la primera carne disponible). */
+  const recomendada = () => {
+    const pechuga = carnes.find((c) => c.id === "pechuga-pavo:Horneada");
+    return pechuga && !agotado(p(pechuga.productoId)!) ? pechuga.id : (carnes.find((c) => permitida(c) && !agotado(p(c.productoId)!))?.id ?? carnes[0]!.id);
+  };
   /** La primera carne sigue a la recomendación hasta que el cliente la cambie. */
   let elegidas: string[] = [recomendada()];
   let primeraTocada = false;
@@ -99,7 +103,7 @@ export function iniciarCalculadora(
       const kg = partes[n];
       if (!x || !kg) return;
       if (x.pavoEntero) {
-        const pavos = pavosPara(kg, kgMinimoPavo(x), !x.soloCompleto);
+        const pavos = pavosCena(c.equivalentes, c.personas, elegidas.length, kgMinimoPavo(x), !x.soloCompleto);
         const lineas = pavos.map((v) => linea(x, { cantidad: 1, tamano: v.tamano, kgPorPavo: v.kgPorPavo }));
         filas.push({
           nombre: nombreCarne(ca),

@@ -66,9 +66,20 @@ export function repartirCarne(kg: number, partes: number): number[] {
 }
 
 /**
+ * Pavos de la cena. De 6 a 8 personas, medio pavo; desde 9, pavo entero de 0.55 kg por persona
+ * (al medio kilo hacia arriba, nunca menos del mínimo) y, si pasa de ~10 kg, repartido en varios.
+ * Si la carne se reparte entre varias (`partes`), al pavo le toca su parte y puede quedar en medio pavo.
+ */
+export function pavosCena(equivalentes: number, personas: number, partes: number, minimo: number, permitirMedio: boolean): ReturnType<typeof pavosPara> {
+  if (personas < calculadora.desdePavoCompleto && permitirMedio) return [{ tamano: "medio", kgPorPavo: minimo }];
+  const kg = Math.ceil(((equivalentes * calculadora.porcionPavoKg) / Math.max(1, partes)) * 2 - 1e-9) / 2;
+  return pavosPara(partes <= 1 ? Math.max(minimo, kg) : kg, minimo, permitirMedio);
+}
+
+/**
  * Si un producto se ofrece en la calculadora para cierto número de personas. El pavo entero no sale
- * en cenas chicas (sobraría muchísimo): desde 6 personas solo medio pavo, y el que solo se vende
- * completo (ahumado) desde 10.
+ * en cenas chicas (sobraría muchísimo): desde 6 personas medio pavo, y desde 9 también el pavo que
+ * solo se vende completo (ahumado).
  */
 export function pavoPermitido(p: Producto, personas: number): boolean {
   if (!p.pavoEntero) return true;

@@ -75,7 +75,7 @@ export interface Linea {
   /** kg o número de piezas. En pavos enteros siempre 1: cada pavo es su propia línea. */
   cantidad: number;
   tamano: TamanoPavo;
-  /** Solo pavo completo: kilos aproximados por pavo (mínimo 5). */
+  /** Solo pavo completo: kilos aproximados por pavo (mínimo 6). */
   kgPorPavo: number;
   presentacion: Presentacion;
   /** Maquila: qué carne trae el cliente ("" = todavía no elige). */

@@ -19,9 +19,9 @@ const base: Pedido = { lineas: {}, nombre: "", modo: "tienda", alcaldia: "", dir
 const ctx = { catalogo: productos, zonas: temporada.zonas, nombreDia: "Miércoles 23 de diciembre", tardio: false };
 
 describe("líneas nuevas", () => {
-  it("los pavos empiezan completos y en bolsa o caja; el relleno desde 6 kg y los demás desde 5", () => {
+  it("los pavos empiezan completos y en bolsa o caja; todos desde 6 kg", () => {
     expect(nuevaLinea(pavoR)).toMatchObject({ cantidad: 1, tamano: "completo", kgPorPavo: 6, presentacion: "bolsa" });
-    expect(nuevaLinea(prod("pavo-adobado"))).toMatchObject({ cantidad: 1, tamano: "completo", kgPorPavo: 5, presentacion: "bolsa" });
+    expect(nuevaLinea(prod("pavo-adobado"))).toMatchObject({ cantidad: 1, tamano: "completo", kgPorPavo: 6, presentacion: "bolsa" });
   });
   it("lo demás empieza en acrílico", () => {
     expect(nuevaLinea(lomo).presentacion).toBe("acrilico");
@@ -40,13 +40,13 @@ describe("cantidades", () => {
     expect(normalizarCantidad(lomo, 0.1)).toBe(0.25);
     expect(normalizarCantidad(strudel, 2.6)).toBe(3);
     expect(normalizarCantidad(lomo, -1)).toBeNull();
-    expect(normalizarKgPavo(prod("pavo-adobado"), 4)).toBe(5);
+    expect(normalizarKgPavo(prod("pavo-adobado"), 4)).toBe(6);
     expect(normalizarKgPavo(prod("pavo-adobado"), 6.3)).toBe(6.5);
-    // El pavo relleno empieza en 6 kg; los demás pavos, en 5.
+    // Todos los pavos empiezan en 6 kg.
     expect(normalizarKgPavo(prod("pavo-relleno"), 5)).toBe(6);
     expect(normalizarKgPavo(prod("pavo-relleno"), 6.3)).toBe(6.5);
     expect(nuevaLinea(prod("pavo-relleno")).kgPorPavo).toBe(6);
-    expect(nuevaLinea(prod("pavo-ahumado")).kgPorPavo).toBe(5);
+    expect(nuevaLinea(prod("pavo-ahumado")).kgPorPavo).toBe(6);
   });
 });
 
@@ -253,7 +253,7 @@ describe("varios pavos y patos", () => {
   });
 });
 
-import { calcularCena, pavosPara, redondearKg, repartirCarne } from "../src/lib/calculadora";
+import { calcularCena, pavosCena, pavosPara, redondearKg, repartirCarne } from "../src/lib/calculadora";
 
 describe("calculadora de cena", () => {
   it("redondea hacia arriba al cuarto de kilo", () => {
@@ -284,10 +284,10 @@ describe("calculadora de cena", () => {
     expect(repartirCarne(0, 2)).toEqual([]);
   });
   it("reparte la carne en pavos de máximo 10 kg", () => {
-    expect(pavosPara(3)).toEqual([{ tamano: "medio", kgPorPavo: 5 }]);
+    expect(pavosPara(3)).toEqual([{ tamano: "medio", kgPorPavo: 6 }]);
     expect(pavosPara(5.5, 6)).toEqual([{ tamano: "medio", kgPorPavo: 6 }]);
-    // El ahumado no tiene medio pavo: si pide poco, se le da uno completo de 5 kg.
-    expect(pavosPara(3, 5, false)).toEqual([{ tamano: "completo", kgPorPavo: 5 }]);
+    // El ahumado no tiene medio pavo: si pide poco, se le da uno completo del mínimo.
+    expect(pavosPara(3, 6, false)).toEqual([{ tamano: "completo", kgPorPavo: 6 }]);
     expect(pavosPara(7.2, 6)).toEqual([{ tamano: "completo", kgPorPavo: 7.5 }]);
     expect(pavosPara(7.2)).toEqual([{ tamano: "completo", kgPorPavo: 7.5 }]);
     expect(pavosPara(14)).toEqual([{ tamano: "completo", kgPorPavo: 7 }, { tamano: "completo", kgPorPavo: 7 }]);
@@ -379,5 +379,26 @@ describe("pavo en la calculadora", () => {
     expect(pavoPermitido(pavo("pavo-ahumado"), 6)).toBe(false);
     expect(pavoPermitido(pavo("pavo-ahumado"), 10)).toBe(true);
     expect(pavoPermitido(pavo("pechuga-pavo"), 4)).toBe(true);
+  });
+});
+
+describe("pavo por número de personas", () => {
+  const medio = [{ tamano: "medio", kgPorPavo: 6 }];
+  const completo = (kg: number, n = 1) => Array.from({ length: n }, () => ({ tamano: "completo", kgPorPavo: kg }));
+  it("de 6 a 8 personas, medio pavo", () => {
+    for (const n of [6, 7, 8]) expect(pavosCena(n, n, 1, 6, true)).toEqual(medio);
+  });
+  it("de 9 en adelante, pavo entero de 0.55 kg por persona y mínimo 6 kg", () => {
+    expect(pavosCena(9, 9, 1, 6, true)).toEqual(completo(6));
+    expect(pavosCena(10, 10, 1, 6, true)).toEqual(completo(6));
+    expect(pavosCena(11, 11, 1, 6, true)).toEqual(completo(6.5));
+    expect(pavosCena(12, 12, 1, 6, true)).toEqual(completo(7));
+    expect(pavosCena(14, 14, 1, 6, true)).toEqual(completo(8));
+  });
+  it("si pasa de ~10 kg se reparte en dos pavos", () => {
+    expect(pavosCena(20, 20, 1, 6, true)).toEqual(completo(5.5 < 6 ? 6 : 5.5, 2));
+  });
+  it("el ahumado (solo completo) nunca baja del mínimo", () => {
+    expect(pavosCena(9, 9, 1, 6, false)).toEqual(completo(6));
   });
 });
