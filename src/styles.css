@@ -1,40 +1,31 @@
 @import "./reset.css";
 /* Layout: una sola columna de lectura; arriba la "nota" con fechas clave, luego la lista de precios
    como mostrador (chips + tarjetas) y un pedido tipo nota de remisión fijo a la derecha / abajo en móvil. */
+/* Paleta 60/30/10 (opción A, "Volante"), sacada del logo:
+   60 = fondos crema (--bg, --surface), 30 = vino de marca (--hero: barra, portada, pie; --brand: precios y títulos),
+   10 = un solo color de acción, el dorado (--cta: Haz tu pedido, WhatsApp, Agregar, Calcular...).
+   Los colores de estado (--ok, --alerta) quedan fuera de la regla: son avisos, no decoración. */
 :root{
-  /* Paleta tomada de com.belmont.lawalkiria.ui.theme (Color.kt) */
-  --bg:#FFF8F7;            /* backgroundLight */
-  --surface:#FFFFFF;       /* surfaceContainerLowest */
-  --surface-2:#FCEAE8;     /* surfaceContainer */
-  --surface-3:#F6E4E3;     /* surfaceContainerHigh */
-  --fg:#231919;            /* onBackground */
-  --muted:#534342;         /* onSurfaceVariant */
-  --line:#D7C1C0;          /* outlineVariant */
-  --brand:#C2202F;         /* WalkiriaRed */
-  --brand-ink:#FFFFFF;
-  --primary:#904A48;       /* primaryLight */
-  --primary-soft:#FFDAD8;  /* primaryContainer */
-  --gold:#CEA54B;          /* WalkiriaGold */
-  --gold-ink:#785A0B;      /* secondaryLight */
-  --gold-soft:#FFDFA0;     /* secondaryContainer */
-  --ok:#2E7D32;            /* GreenNote */
-  --ok-ink:#FFFFFF;
-  --hero:#5C1418;
-  --hero-fg:#FFEDEB;
-  --alerta:#C2202F;         /* días "Solo en tienda" y avisos */
-  --alerta-ink:#FFFFFF;
+  --bg:#FAF4EA;--surface:#FFFDF8;--surface-2:#F3EADB;--surface-3:#EBDFCB;--fg:#2A1A17;--muted:#5E4A44;--line:#E0D2BE;--hero:#5E111C;--hero-fg:#FBF1E4;
+  --veil:#2E080E; /* máscara de la portada: igual en claro y oscuro */ --brand:#7A1626;--brand-ink:#FFFFFF;--primary:#7A1626;--primary-soft:#F3DEDB;--gold:#D9AE52;--gold-ink:#7A5714;--gold-soft:#F6E7C4;
+  --cta-text:#7A5714;--visor-bg:#1C0F11;--visor-barra:#2A1619;--cta:#C9972F;--cta-ink:#1F1400;--cta-ring:#7A5714;--alerta:#B3261E;--alerta-ink:#FFFFFF;
+  --ok:#2E7D32;--ok-ink:#FFFFFF;
   --font-display:"Gloock","Iowan Old Style","Georgia",serif;
   --font-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
   --r:14px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#1A1111;--surface:#271D1D;--surface-2:#322827;--surface-3:#3D3232;--fg:#F0DEDD;--muted:#D7C1C0;--line:#534342;
-  --brand:#FFB3B0;--brand-ink:#571D1E;--primary:#FFB3B0;--primary-soft:#733332;--gold:#EAC16C;--gold-ink:#EAC16C;--gold-soft:#5C4300;
-  --ok:#81C784;--ok-ink:#0F2E11;--hero:#3A0D10;--hero-fg:#FFEDEB;--alerta:#FFB3B0;--alerta-ink:#571D1E;color-scheme:dark}}
+  --bg:#16110F;--surface:#211A17;--surface-2:#2B2220;--surface-3:#352A27;--fg:#F3E7DA;--muted:#CDBBAE;--line:#4A3C37;--hero:#3E0C14;--hero-fg:#FBF1E4;
+  --veil:#2E080E;--brand:#F0A8AE;--brand-ink:#16110F;--primary:#F0A8AE;--primary-soft:#5A1D25;--gold:#E6BE63;--gold-ink:#E6BE63;--gold-soft:#3D2E10;
+  --cta-text:#E6BE63;--visor-bg:#1C0F11;--visor-barra:#2A1619;--cta:#E6BE63;--cta-ink:#2B1D00;--cta-ring:transparent;--alerta:#FF8A80;
+  --alerta-ink:#2B0A0D;--ok:#81C784;--ok-ink:#0F2E11;
+  color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#1A1111;--surface:#271D1D;--surface-2:#322827;--surface-3:#3D3232;--fg:#F0DEDD;--muted:#D7C1C0;--line:#534342;
-  --brand:#FFB3B0;--brand-ink:#571D1E;--primary:#FFB3B0;--primary-soft:#733332;--gold:#EAC16C;--gold-ink:#EAC16C;--gold-soft:#5C4300;
-  --ok:#81C784;--ok-ink:#0F2E11;--hero:#3A0D10;--hero-fg:#FFEDEB;--alerta:#FFB3B0;--alerta-ink:#571D1E;color-scheme:dark}
+  --bg:#16110F;--surface:#211A17;--surface-2:#2B2220;--surface-3:#352A27;--fg:#F3E7DA;--muted:#CDBBAE;--line:#4A3C37;--hero:#3E0C14;--hero-fg:#FBF1E4;
+  --veil:#2E080E;--brand:#F0A8AE;--brand-ink:#16110F;--primary:#F0A8AE;--primary-soft:#5A1D25;--gold:#E6BE63;--gold-ink:#E6BE63;--gold-soft:#3D2E10;
+  --cta-text:#E6BE63;--visor-bg:#1C0F11;--visor-barra:#2A1619;--cta:#E6BE63;--cta-ink:#2B1D00;--cta-ring:transparent;--alerta:#FF8A80;
+  --alerta-ink:#2B0A0D;--ok:#81C784;--ok-ink:#0F2E11;
+  color-scheme:dark}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -417,7 +408,7 @@ button.cal-day:hover{border-color:var(--primary)}
 .volante-btns{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 14px}
 .volante-btns .btn-ghost{color:var(--fg)}
 .volante-mini{position:relative;display:block;padding:0;border:0;background:none;cursor:zoom-in;border-radius:10px;overflow:hidden;
-  /* El volante es blanco: el filo usa el color del texto (no --line) para que se note sobre fondos blancos o crema, en cualquier paleta. */
+  /* El volante es blanco: el filo usa el color del texto (no --line) para que se note sobre fondos blancos o crema, en claro y en oscuro. */
   --filo:color-mix(in srgb,var(--fg) 22%,transparent);
   box-shadow:0 0 0 1px var(--filo),0 2px 6px rgba(0,0,0,.10),0 18px 40px rgba(0,0,0,.22);transition:transform .25s ease,box-shadow .25s ease}
 .volante-mini:hover,.volante-mini:focus-visible{transform:scale(1.03);box-shadow:0 0 0 1px var(--filo),0 4px 10px rgba(0,0,0,.12),0 24px 50px rgba(0,0,0,.28)}
@@ -661,7 +652,7 @@ button.cal-day:hover{border-color:var(--primary)}
 .hero[data-mascara="2"]{--m:78%}
 .hero[data-mascara="4"]{--m:91%}
 /* La máscara usa siempre el rojo del tema oscuro: deja ver mejor el video en los dos temas. */
-.hero-fondo::after{content:"";position:absolute;inset:0;z-index:2;transform:translateZ(0);background:color-mix(in srgb,#3A0D10 var(--m),transparent)}
+.hero-fondo::after{content:"";position:absolute;inset:0;z-index:2;transform:translateZ(0);background:color-mix(in srgb,var(--veil) var(--m),transparent)}
 /* Un poco de sombra para que el texto se lea sobre el video */
 .hero-texto{text-shadow:0 2px 14px rgba(0,0,0,.35)}
 .hero-texto .eyebrow{text-shadow:0 1px 6px rgba(0,0,0,.6)}
@@ -797,7 +788,7 @@ button.cal-day:hover{border-color:var(--primary)}
   .fiesta .day .mes{grid-column:2}
 }
 
-/* Diálogo de confirmación (Vaciar pedido). Usa los tokens, así sigue al tema claro/oscuro y a la paleta. */
+/* Diálogo de confirmación (Vaciar pedido). Usa los tokens, así sigue al tema claro/oscuro. */
 .confirmar{width:min(440px,calc(100vw - 32px));padding:0;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--fg);box-shadow:0 30px 80px rgba(0,0,0,.35)}
 .confirmar::backdrop{background:color-mix(in srgb,var(--hero) 45%,transparent);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
 .confirmar form{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:28px 24px 24px}
@@ -811,3 +802,16 @@ button.cal-day:hover{border-color:var(--primary)}
 .btn-alerta{background:var(--alerta);color:var(--alerta-ink)}
 .btn-alerta:hover{background:color-mix(in srgb,var(--alerta) 88%,var(--fg))}
 @media (max-width:400px){.confirmar-botones{grid-template-columns:1fr}.confirmar-botones .btn-alerta{order:-1}}
+
+/* Reglas 60/30/10: todos los botones de acción usan el mismo color 10. */
+:is(.btn-gold,.btn-wa,.btn-red){background:var(--cta);color:var(--cta-ink);box-shadow:inset 0 0 0 1.5px var(--cta-ring)}
+/* Los avisos siguen en rojo aunque el 30 sea vino: son estado, no decoración. */
+:is(.warn,.aviso-rojo,.regalo-aviso,.semaforo .no>b){color:var(--alerta)!important}
+.semaforo .no::before{background:var(--alerta)}
+
+/* Botones repetidos de acción (Agregar, Calcular): color de acción con fondo suave, para que se vean a la primera
+   sin pintar 17 botones sólidos. Al pasar el mouse se rellenan. Calcular va relleno porque es uno solo. */
+.add{border-color:var(--cta);color:var(--cta-text);background:color-mix(in srgb,var(--cta) 16%,var(--surface));font-weight:700}
+.add:hover{background:var(--cta);color:var(--cta-ink);border-color:var(--cta)}
+.calc-caja summary::after{background:var(--cta);color:var(--cta-ink);border-color:var(--cta);box-shadow:inset 0 0 0 1.5px var(--cta-ring);padding:9px 18px;font-size:.95rem}
+.calc-caja[open] summary::after{background:transparent;color:var(--cta-text);border-color:currentColor;box-shadow:none}

@@ -1,21 +1,17 @@
 import "./styles.css";
 import "./encabezados.css";
-import "./paletas.css";
 import { maquila, negocio, temporada } from "./data/temporada";
 import { dinero } from "./lib/formato";
 import { enlaceWhatsApp } from "./lib/pedido";
 import { $, llenar } from "./ui/dom";
 import { iniciarLuces } from "./ui/luces";
 import { iniciarNieve } from "./ui/nieve";
-import { iniciarPaletas } from "./ui/paleta";
 import { iniciarTema } from "./ui/tema";
 
 /** Lo que comparten todas las páginas: barra de arriba, tema, luces, nieve y los datos de la temporada. */
 export function iniciarComun(): void {
   iniciarTema($<HTMLButtonElement>("#themeToggle"));
   iniciarLuces($(".lights"));
-  const pie = document.querySelector<HTMLElement>("footer .wrap");
-  if (pie) iniciarPaletas(pie);
   const lienzo = document.querySelector<HTMLCanvasElement>("#snow");
   const nieve = document.querySelector<HTMLButtonElement>("#snowToggle");
   if (lienzo && nieve) iniciarNieve(lienzo, nieve);

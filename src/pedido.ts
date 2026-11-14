@@ -473,7 +473,7 @@ if (pedir && producto(pedir)) {
 void cargarDisponibilidad();
 
 /**
- * Vaciar pedido con diálogo propio (no confirm()), para que siga los colores de la página y de la paleta.
+ * Vaciar pedido con diálogo propio (no confirm()), para que siga los colores de la página.
  * "No, conservarlo" tiene el foco al abrir, así un Enter por error no borra nada.
  */
 function pedirConfirmacionVaciar(): void {
