@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Disponibilidad · La Walkiria</title>
+  <title>Panel · La Walkiria</title>
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#5E111C">
   <script>
@@ -45,8 +45,15 @@
   <!-- Lista -->
   <section id="panel" hidden>
     <div class="adm-head">
-      <h1>Disponibilidad</h1>
-      <p class="adm-sub">Toca un producto para prenderlo o apagarlo. Lo apagado sale como <b>agotado</b> en la página y deja de aparecer al levantar pedidos en la app.</p>
+      <div class="adm-titulo">
+        <h1>Productos</h1>
+        <button class="btn btn-gold btn-sm" id="nuevo" type="button">+ Nuevo producto</button>
+      </div>
+      <dl class="adm-leyenda">
+        <div><dt>Disponible</dt><dd>Prendido: se puede pedir. Apagado: sale <b>Agotado</b> en la app y en la página.</dd></div>
+        <div><dt>Mostrar</dt><dd>Prendido: aparece. Apagado: el producto se <b>oculta</b> en la app y en la página.</dd></div>
+        <div><dt>Editar</dt><dd>Nombre, precios, foto, grupo y demás. Cada cambio guarda quién y cuándo.</dd></div>
+      </dl>
       <div class="adm-resumen" id="resumen" aria-live="polite"></div>
       <label class="search adm-buscar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -58,6 +65,52 @@
 
   <p id="cargando" class="adm-sub adm-cargando">Cargando…</p>
 </main>
+
+<!-- Ficha del producto -->
+<dialog id="ficha" class="adm-ficha" aria-labelledby="fichaTitulo">
+  <form id="formFicha" method="dialog" novalidate>
+    <header class="adm-ficha-top">
+      <h2 id="fichaTitulo">Producto</h2>
+      <button class="adm-cerrar" type="button" id="cerrarFicha" aria-label="Cerrar">✕</button>
+    </header>
+    <div class="adm-ficha-cuerpo">
+      <div class="adm-foto">
+        <img id="fFotoVista" alt="" hidden>
+        <span id="fFotoVacia">Sin foto</span>
+        <div class="adm-foto-acc">
+          <label class="btn btn-ghost btn-sm">Subir foto<input id="fFotoArchivo" type="file" accept="image/*" hidden></label>
+          <button class="btn btn-ghost btn-sm" type="button" id="fFotoQuitar">Quitar</button>
+        </div>
+      </div>
+      <label>Enlace de la foto<input id="fImagen" type="url" inputmode="url" placeholder="https://…"></label>
+      <label>Nombre<input id="fNombre" type="text" required autocomplete="off"></label>
+      <div class="adm-dos">
+        <label>Precio menudeo<input id="fMenudeo" type="number" inputmode="decimal" min="0" step="0.5" required></label>
+        <label>Precio mayoreo<input id="fMayoreo" type="number" inputmode="decimal" min="0" step="0.5"></label>
+      </div>
+      <div class="adm-dos">
+        <label>Categoría<select id="fCategoria"></select></label>
+        <label>Grupo<select id="fGrupo"></select></label>
+      </div>
+      <div class="adm-dos">
+        <label>Se vende por<select id="fUnidad"></select></label>
+        <label>Presentación<select id="fPresentacion"></select></label>
+      </div>
+      <div class="adm-checks">
+        <label class="adm-check"><input id="fDisponible" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Disponible</b><small>Apagado: sale "Agotado" y no se puede pedir.</small></span></label>
+        <label class="adm-check"><input id="fMostrar" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Mostrar</b><small>Apagado: no aparece ni en la app ni en la página.</small></span></label>
+        <label class="adm-check"><input id="fPeso" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Peso ajustable</b><small>Cocina puede ajustar el peso real.</small></span></label>
+        <label class="adm-check"><input id="fMaquila" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Es maquila</b><small>Pide número de ficha al levantar el pedido.</small></span></label>
+      </div>
+      <p class="adm-id" id="fId"></p>
+      <p class="adm-error" id="errorFicha" role="alert" hidden></p>
+    </div>
+    <footer class="adm-ficha-pie">
+      <button class="btn btn-ghost" type="button" id="cancelarFicha">Cancelar</button>
+      <button class="btn btn-gold" type="submit" id="guardarFicha">Guardar</button>
+    </footer>
+  </form>
+</dialog>
 
 <div class="adm-toast" id="toast" role="status" hidden></div>
 <script type="module" src="/src/admin.ts"></script>

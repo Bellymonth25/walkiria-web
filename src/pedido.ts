@@ -1,11 +1,12 @@
 import "./styles.css";
-import type { Linea, ModoEntrega, Pedido, Presentacion, TamanoPavo } from "./types";
+import type { Linea, ModoEntrega, Pedido, Presentacion, Producto, TamanoPavo } from "./types";
 import { categorias, productos } from "./data/productos";
 import { firebase, negocio, temporada } from "./data/temporada";
 import { dinero, escapar } from "./lib/formato";
 import { esPedidoTardio } from "./lib/fechas";
 import { sinDomicilio } from "./lib/entrega";
-import { estaAgotado, leerAgotados } from "./lib/disponibilidad";
+import { aplicarCatalogo } from "./lib/catalogo";
+import { disponibilidadGuardada, estaAgotado, estaOculto, leerDisponibilidad } from "./lib/disponibilidad";
 import {
   aumentar, conRellenoSugerido, disminuir, enlaceWhatsApp, faltantes, normalizarCantidad, normalizarKgPavo,
   alcaldiaValida, idLinea, normalizarKgRelleno, nuevaLinea, OTRA_ALCALDIA, textoFaltantes, variasLineas,
@@ -32,7 +33,16 @@ const pedido: Pedido = {
 };
 let filtro: Filtro = "todo";
 let busqueda = "";
-let agotados: ReadonlySet<string> = new Set(pruebaAgotados());
+const guardada = disponibilidadGuardada();
+/**
+ * Productos de la web con nombre, precio y foto de Firestore. Se cambia en su lugar (no se
+ * reasigna) para que el contexto del pedido y la calculadora vean siempre lo último.
+ */
+const catalogo: Producto[] = aplicarCatalogo(productos, guardada?.catalogo ?? new Map());
+let agotados: ReadonlySet<string> = new Set([...(guardada?.agotados ?? []), ...pruebaLista("agotados")]);
+let ocultos: ReadonlySet<string> = new Set([...(guardada?.ocultos ?? []), ...pruebaLista("ocultos")]);
+/** No se puede pedir: agotado u oculto en la web. */
+const noDisponible = (p: Producto): boolean => estaAgotado(p, agotados) || estaOculto(p, ocultos);
 const hoy = new Date();
 let mesVisto = { anio: hoy.getFullYear(), mes: hoy.getMonth() };
 /** Siguiente número de línea para productos que se agregan varias veces (maquila-1, pavo-relleno-2…). */
@@ -46,21 +56,24 @@ const abiertos = new Set<string>();
 let sugerido: { personas: number; lineas: Record<string, number> } | null = null;
 
 const ctx: ContextoOrden = {
-  catalogo: productos,
+  catalogo,
   temporada,
   whatsapp: negocio.whatsapp,
   tardio: esPedidoTardio(hoy, temporada.anio, temporada.cortes.map((c) => c.limite)),
 };
 
-const vista = (): VistaMenu => ({
-  categorias,
-  catalogo: productos,
-  filtro,
-  busqueda,
-  lineas: pedido.lineas,
-  agotados: (p) => estaAgotado(p, agotados),
-  abiertos,
-});
+const vista = (): VistaMenu => {
+  const visibles = catalogo.filter((p) => !estaOculto(p, ocultos));
+  return {
+    categorias: categorias.filter((c) => visibles.some((p) => p.categoria === c.id)),
+    catalogo: visibles,
+    filtro,
+    busqueda,
+    lineas: pedido.lineas,
+    agotados: (p) => estaAgotado(p, agotados),
+    abiertos,
+  };
+};
 
 /** El pedido se guarda mientras dure la visita, para no perderlo al ir a otra página (Inicio, Gravy) y volver. */
 const CLAVE = "walkiria-pedido";
@@ -93,7 +106,7 @@ function restaurar(): void {
   if (typeof g !== "object") return;
   const lineas: Record<string, Linea> = {};
   for (const [id, l] of Object.entries(g.lineas ?? {})) {
-    if (!l || !productos.some((p) => p.id === l.productoId)) continue;
+    if (!l || !catalogo.some((p) => p.id === l.productoId)) continue;
     lineas[id] = { ...l, version: typeof l.version === "string" ? l.version : "" };
     const n = Number(id.slice(l.productoId.length + 1));
     if (n > 0) siguiente[l.productoId] = Math.max(siguiente[l.productoId] ?? 0, n);
@@ -123,7 +136,7 @@ function restaurar(): void {
   $<HTMLTextAreaElement>("#nota").value = pedido.nota;
 }
 
-const producto = (id: string) => productos.find((p) => p.id === id);
+const producto = (id: string) => catalogo.find((p) => p.id === id);
 /** Producto y línea a partir del id de la línea. */
 function deLinea(id: string) {
   const l = pedido.lineas[id];
@@ -205,29 +218,32 @@ function revisarDia(): void {
 
 // ---------- Agotados ----------
 async function cargarDisponibilidad(): Promise<void> {
-  const leidos = await leerAgotados(firebase.proyecto, firebase.documento);
+  const leidos = await leerDisponibilidad(firebase.proyecto, firebase.documento);
   if (!leidos) return;
-  agotados = new Set([...leidos, ...pruebaAgotados()]);
+  catalogo.splice(0, catalogo.length, ...aplicarCatalogo(productos, leidos.catalogo));
+  agotados = new Set([...leidos.agotados, ...pruebaLista("agotados")]);
+  ocultos = new Set([...leidos.ocultos, ...pruebaLista("ocultos")]);
   const quitados = Object.entries(pedido.lineas).filter(([, l]) => {
     const p = producto(l.productoId);
-    return p && estaAgotado(p, agotados);
+    return p && noDisponible(p);
   });
   quitados.forEach(([id]) => ponerLinea(id, null));
   const nombres = [...new Set(quitados.map(([, l]) => producto(l.productoId)!.nombre))];
-  if (nombres.length) aviso(`Se agotó: ${nombres.join(", ")}. Lo quitamos de tu pedido.`);
+  if (nombres.length) aviso(`Ya no está disponible: ${nombres.join(", ")}. Lo quitamos de tu pedido.`);
   pintarMenu(vista());
+  pintarChips(vista());
   pintarPedido();
 }
 
-/** Para probar en local: ?agotados=PROD_001,PROD_008 */
-function pruebaAgotados(): string[] {
-  return (new URLSearchParams(location.search).get("agotados") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+/** Para probar en local: ?agotados=PROD_001,PROD_008 y ?ocultos=PROD_002 */
+function pruebaLista(nombre: "agotados" | "ocultos"): string[] {
+  return (new URLSearchParams(location.search).get(nombre) ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 }
 
 // ---------- Eventos ----------
 function agregar(productoId: string, version = ""): void {
   const p = producto(productoId);
-  if (!p || estaAgotado(p, agotados)) return;
+  if (!p || noDisponible(p)) return;
   let id = idLinea(p, version);
   if (variasLineas(p)) {
     siguiente[p.id] = (siguiente[p.id] ?? 0) + 1;
@@ -248,7 +264,7 @@ function agregarDeCalculadora(items: readonly Agregado[], personas: number): voi
   const sumado: Record<string, number> = {};
   for (const { productoId, cambios } of items) {
     const p = producto(productoId);
-    if (!p || estaAgotado(p, agotados)) continue;
+    if (!p || noDisponible(p)) continue;
     let id = idLinea(p, cambios.version ?? "");
     if (variasLineas(p)) {
       siguiente[p.id] = (siguiente[p.id] ?? 0) + 1;
@@ -382,7 +398,7 @@ document.addEventListener("click", (e) => {
     $<HTMLDetailsElement>("#calcCaja").open = true;
   } else if (t.id === "send" && t.getAttribute("aria-disabled") === "true") {
     e.preventDefault();
-    const falta = faltantes(pedido, productos);
+    const falta = faltantes(pedido, catalogo);
     aviso(textoFaltantes(falta));
     if (falta.includes("qué carne nos trae para la maquila")) document.querySelector<HTMLElement>('[data-tipo]')?.focus();
     else if (!pedido.nombre.trim()) $("#cname").focus();
@@ -487,7 +503,7 @@ pintarMenu(vista());
 pintarDias();
 revisarDia();
 pintarPedido();
-iniciarCalculadora($("#calc"), productos, (p) => estaAgotado(p, agotados), agregarDeCalculadora);
+iniciarCalculadora($("#calc"), catalogo, noDisponible, agregarDeCalculadora);
 iniciarHoja($("#order"), $<HTMLButtonElement>("#bar"), $("#barBtn"));
 
 
