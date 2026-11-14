@@ -112,7 +112,7 @@ export const negocio = {
 
 /** Documento público de Firestore con los productos agotados (lo escribe una Cloud Function). */
 export const firebase = {
-  proyecto: "lwk-app-a583b",
+  proyecto: "walkiria-os",
   documento: "publicWeb/disponibilidad",
 } as const;
 
@@ -123,8 +123,8 @@ export const firebase = {
  */
 export const firebaseWeb = {
   apiKey: "AIzaSyDiZYeCsVZIAkqQr_rYYI3_5hh1UDcTmoI",
-  authDomain: "lwk-app-a583b.firebaseapp.com",
-  projectId: "lwk-app-a583b",
+  authDomain: "walkiria-os.firebaseapp.com",
+  projectId: "walkiria-os",
   appId: "1:663418170977:web:13532ab5181643e338c420",
 } as const;
 
