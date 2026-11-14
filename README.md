@@ -37,6 +37,38 @@ Si no se puede leer el documento, la página muestra todo disponible.
 
 Para probar en local sin Firebase: `http://localhost:5173/?agotados=PROD_001,PROD_008`
 
+## Admin de disponibilidad (`admin.html`)
+
+Página sin enlace en el menú (y con `noindex`) en `lawalkiria.com.mx/admin.html`. Se entra con
+el mismo correo y contraseña de la app; solo pasan usuarios con `type: "ADMIN"` en `user/{uid}`.
+Lista los productos de comida de Firestore con un interruptor por renglón: cambia
+`products/{id}.estaDisponible`, igual que la pantalla de la app. La web pública se entera por
+`onProductWritten` → `publicWeb/disponibilidad`.
+
+Para que funcione:
+
+1. En la consola de Firebase: **Configuración del proyecto → Tus apps → Agregar app web** (si no
+   existe) y copia `apiKey` y `appId` a `firebaseWeb` en `src/data/temporada.ts`. No son secretos.
+2. Reglas de Firestore (lo que protege de verdad, no que la página esté escondida):
+
+```
+function esAdmin() {
+  return request.auth != null
+    && get(/databases/$(database)/documents/user/$(request.auth.uid)).data.type.lower() == "admin";
+}
+match /products/{id} {
+  allow read: if request.auth != null;
+  // Desde la web/app solo se puede prender o apagar; precios y nombres no.
+  allow update: if esAdmin()
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["estaDisponible"]);
+}
+match /user/{uid} {
+  allow read: if request.auth != null && request.auth.uid == uid;
+}
+```
+
+Firebase solo se carga en `admin.html`; las páginas públicas no cambian de peso.
+
 ## Foto de la cena
 
 Si existe `public/img/cena.jpg` se muestra como banda debajo del servicio de maquila

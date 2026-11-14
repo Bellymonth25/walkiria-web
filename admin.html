@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Disponibilidad · La Walkiria</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#5E111C">
+  <script>
+    try { var t = localStorage.getItem("walkiria-tema"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600;700&display=swap">
+</head>
+<body class="adm-body">
+<header class="adm-top">
+  <div class="wrap adm-top-in">
+    <a class="logo" href="./"><img src="/img/logo.webp" alt="" width="36" height="32"><span class="logo-text">La <span>Walkiria</span></span></a>
+    <span class="adm-etq">Admin</span>
+    <button class="btn btn-ghost btn-sm" id="salir" type="button" hidden>Salir</button>
+  </div>
+</header>
+
+<main class="wrap adm-main">
+  <!-- Falta configuración -->
+  <section id="sinConfig" class="adm-card" hidden>
+    <h1>Falta configurar Firebase</h1>
+    <p>Copia la configuración de la app web de Firebase en <code>src/data/temporada.ts</code> (<code>firebaseWeb</code>).</p>
+  </section>
+
+  <!-- Entrar -->
+  <section id="entrar" class="adm-card adm-login" hidden>
+    <h1>Disponibilidad</h1>
+    <p class="adm-sub">Entra con tu usuario de la app de La Walkiria.</p>
+    <form id="formEntrar" novalidate>
+      <label>Correo<input id="correo" type="email" autocomplete="username" required></label>
+      <label>Contraseña<input id="clave" type="password" autocomplete="current-password" required></label>
+      <p class="adm-error" id="errorEntrar" role="alert" hidden></p>
+      <button class="btn btn-gold adm-ancho" id="btnEntrar" type="submit">Entrar</button>
+    </form>
+  </section>
+
+  <!-- Lista -->
+  <section id="panel" hidden>
+    <div class="adm-head">
+      <h1>Disponibilidad</h1>
+      <p class="adm-sub">Toca un producto para prenderlo o apagarlo. Lo apagado sale como <b>agotado</b> en la página y deja de aparecer al levantar pedidos en la app.</p>
+      <div class="adm-resumen" id="resumen" aria-live="polite"></div>
+      <label class="search adm-buscar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="buscar" type="search" placeholder="Buscar producto" autocomplete="off" aria-label="Buscar producto">
+      </label>
+    </div>
+    <div id="lista" class="adm-lista"></div>
+  </section>
+
+  <p id="cargando" class="adm-sub adm-cargando">Cargando…</p>
+</main>
+
+<div class="adm-toast" id="toast" role="status" hidden></div>
+<script type="module" src="/src/admin.ts"></script>
+</body>
+</html>
