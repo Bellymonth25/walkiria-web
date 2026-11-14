@@ -560,13 +560,9 @@ button.cal-day:hover{border-color:var(--primary)}
 .gal-foto:hover,.gal-foto:focus-visible{transform:translateY(-5px) scale(1.035);box-shadow:0 16px 34px rgba(0,0,0,.4);border-color:var(--gold);animation:sacudir .55s ease-in-out;z-index:1}
 @keyframes sacudir{0%{rotate:0deg}20%{rotate:-2.5deg}45%{rotate:2deg}70%{rotate:-1deg}100%{rotate:0deg}}
 
-/* Antes de pedir: al pasar el cursor se abre desde el ícono un fondo rosa claro con borde vino
-   (el dorado se perdía sobre las tarjetas, que ya son doradas).
-   El texto no cambia de color, así los avisos en rojo se siguen leyendo. */
-.antes-c{overflow:hidden;isolation:isolate;--antes-hover:var(--primary-soft);--antes-sombra:rgba(60,20,10,.14);transition:transform .45s ease,box-shadow .45s ease,border-color .45s ease}
-.antes-c::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--antes-hover);clip-path:circle(0 at 41px 41px);transition:clip-path .65s cubic-bezier(.4,0,.2,1)}
-.antes-c:hover,.antes-c:focus-visible{transform:translateY(-4px);box-shadow:0 16px 34px var(--antes-sombra);border-color:var(--brand)}
-.antes-c:hover::before,.antes-c:focus-visible::before{clip-path:circle(150% at 41px 41px)}
+/* Antes de pedir: al pasar el cursor la tarjeta se eleva y el ícono se mueve. Sin cambio de color. */
+.antes-c{--antes-sombra:rgba(60,20,10,.14);transition:transform .45s ease,box-shadow .45s ease}
+.antes-c:hover,.antes-c:focus-visible{transform:translateY(-4px);box-shadow:0 16px 34px var(--antes-sombra)}
 /* En oscuro la sombra suave no se ve */
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .antes-c{--antes-sombra:rgba(0,0,0,.5)}}
 :root[data-theme="dark"] .antes-c{--antes-sombra:rgba(0,0,0,.5)}
