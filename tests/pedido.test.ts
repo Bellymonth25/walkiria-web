@@ -63,7 +63,7 @@ describe("empaques", () => {
     expect(empaquesDe(lomo, linea(lomo, { cantidad: 4.5, presentacion: "charola" }))[0]).toMatchObject({ tamano: "mediana", piezas: 2 });
   });
   it("suma el empaque al importe", () => {
-    expect(importeLinea(lomo, linea(lomo, { cantidad: 6, presentacion: "charola" }))).toBe(6 * 440 + 2 * 35);
+    expect(importeLinea(lomo, linea(lomo, { cantidad: 6, presentacion: "charola" }))).toBe(6 * 440 + 2 * 40);
   });
 });
 
@@ -109,9 +109,9 @@ describe("mensaje de WhatsApp", () => {
     expect(m).toContain("• Pavo Relleno, 1 medio pavo (3 a 4 kg): $1,400");
     expect(m).toContain("Presentación: Bolsa o caja de cartón (sin costo)");
     expect(m).toContain("• Lomo Adobado, 6 kg: $2,640");
-    expect(m).toContain("Presentación: 2 charolas grandes (+$70)");
+    expect(m).toContain("Presentación: 2 charolas grandes (+$80)");
     expect(m).toContain("Nota del pedido: Ensalada sin apio");
-    expect(m).toContain("Total estimado: $4,110");
+    expect(m).toContain("Total estimado: $4,120");
   });
 });
 
@@ -232,7 +232,7 @@ describe("varios pavos y patos", () => {
       },
       nombre: "Ana", modo: "tienda" as const, alcaldia: "", direccion: "", referencias: "", nota: "", fecha: "2026-12-23",
     };
-    expect(total(pedido, productos, [])).toBe(7 * 400 + 9 * 400 + 35);
+    expect(total(pedido, productos, [])).toBe(7 * 400 + 9 * 400 + 40);
     const m = mensaje(pedido, { catalogo: productos, zonas: [], nombreDia: "Miércoles 23 de diciembre", tardio: false });
     expect(m).toContain("• Pavo Relleno, 1 pavo completo (aprox. 7 kg): $2,800");
     expect(m).toContain("• Pavo Relleno, 1 pavo completo (aprox. 9 kg): $3,600");
@@ -245,7 +245,7 @@ describe("varios pavos y patos", () => {
     expect(l.presentacion).toBe("bolsa");
     expect(aumentar(pato, 2)).toBe(3);
     expect(normalizarCantidad(pato, 1.4)).toBe(1);
-    expect(empaquesDe(pato, linea(pato, { cantidad: 2, presentacion: "charola" }))).toEqual([{ tamano: "mediana", piezas: 2, precio: 30 }]);
+    expect(empaquesDe(pato, linea(pato, { cantidad: 2, presentacion: "charola" }))).toEqual([{ tamano: "mediana", piezas: 2, precio: 35 }]);
   });
 });
 
