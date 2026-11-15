@@ -3,7 +3,8 @@ import { dinero, escapar, kilos, normalizar } from "../lib/formato";
 import {
   empaquesDe, importeLinea, kgMinimoPavo, tieneCosto, variasLineas, llevaRelleno, nombrePresentacion, presentaciones, textoEmpaques,
 } from "../lib/pedido";
-import { maquila, pavo } from "../data/temporada";
+import { combo, maquila, pavo } from "../data/temporada";
+import { importeCombo, textoDesglose } from "../lib/combo";
 import { $ } from "./dom";
 
 export type Filtro = CategoriaId | "todo";
@@ -86,9 +87,10 @@ export function pintarChips(v: VistaMenu): void {
 /** Texto bajo la cantidad: empaques y subtotal. Se actualiza mientras el cliente escribe. */
 export function textoDetalle(p: Producto, l: Linea): string {
   const partes: string[] = [];
+  if (p.combo) partes.push(textoDesglose(l.cantidad), `en ${textoEmpaques("charola", empaquesDe(p, l))}`);
   if (presentaciones(p).length) partes.push(textoEmpaques(l.presentacion, empaquesDe(p, l)));
   if (p.maquila && llevaRelleno(l)) partes.push(`relleno ${kilos(l.kgRelleno)} (+${dinero(l.kgRelleno * maquila.precioRellenoKg)})`);
-  partes.push(`Subtotal ${dinero(importeLinea(p, l))}`);
+  partes.push(`Subtotal ${p.combo ? "aprox. " : ""}${dinero(importeLinea(p, l))}`);
   return partes.join(" · ");
 }
 
@@ -122,7 +124,7 @@ function campoNumero(id: string, attr: string, valor: number, min: string, step:
 function detalle(p: Producto, id: string, l: Linea, numero: number, titulo = ""): string {
   const n = escapar(p.nombre);
   const porKilo = p.unidad === "kg" && !p.pavoEntero && !p.pieza;
-  const unidad = p.pieza ? (l.cantidad === 1 ? p.pieza.nombre : p.pieza.plural) : p.unidad === "pza" ? "pzas" : "kg";
+  const unidad = p.combo ? `personas (máx. ${combo.hastaPersonas})` : p.pieza ? (l.cantidad === 1 ? p.pieza.nombre : p.pieza.plural) : p.unidad === "pza" ? "pzas" : "kg";
   const partes: string[] = [];
   // Con varios pavos o maquilas, cada uno lleva su número para no confundirlos.
   if (numero > 0) partes.push(`<div class="dnum dwide">${p.maquila ? "Maquila" : "Pavo"} ${numero}</div>`);
@@ -146,7 +148,7 @@ function detalle(p: Producto, id: string, l: Linea, numero: number, titulo = "")
   }
 
   // Cada pavo es su propia línea: no lleva cantidad, solo tamaño y peso.
-  if (!p.pavoEntero) partes.push(`<div class="dfield"><label class="dlabel" for="qty-${id}">${p.maquila ? "Kilos aprox. de su carne" : "Cantidad"}</label>
+  if (!p.pavoEntero) partes.push(`<div class="dfield"><label class="dlabel" for="qty-${id}">${p.maquila ? "Kilos aprox. de su carne" : p.combo ? "¿Para cuántos?" : "Cantidad"}</label>
     <div class="qty">
       <button type="button" data-dec="${id}" aria-label="Menos ${n}">−</button>
       ${p.maquila
@@ -200,8 +202,10 @@ export function renglon(p: Producto, lineas: readonly [string, Linea][], agotado
   const conFoto = p.imagen ? p : undefined;
   return `<li class="row${enPedido ? " in" : ""}${agotado ? " agotado" : ""}" data-row="${p.id}">
     ${miniatura(conFoto, p.nombre)}
-    <div class="name">${n}${p.clasico ? '<span class="tag">Clásico</span>' : ""}${p.descripcion ? `<span class="meta">${escapar(p.descripcion)}</span>` : ""}</div>
-    <div class="price num"><b>${dinero(p.precio)}</b><span>/${p.unidad}</span></div>
+    <div class="name">${n}${p.clasico ? '<span class="tag">Clásico</span>' : ""}${p.combo ? '<span class="tag tag-nuevo">Nuevo</span>' : ""}${p.descripcion ? `<span class="meta">${escapar(p.descripcion)}</span>` : ""}</div>
+    ${p.combo
+      ? `<div class="price num"><small>aprox.</small> <b>${dinero(Math.round(importeCombo(p, combo.personasDefault)))}</b><span>para ${combo.personasDefault}</span></div>`
+      : `<div class="price num"><b>${dinero(p.precio)}</b><span>/${p.unidad}</span></div>`}
     <div class="action">${accion}</div>
     ${agotado ? "" : lineas.map(([id, l], i) => detalle(p, id, l, lineas.length > 1 ? i + 1 : 0)).join("")}</li>`;
 }

@@ -2,12 +2,13 @@ import type { Pedido, Producto } from "../types";
 import type { Temporada } from "../data/temporada";
 import { dinero, escapar } from "../lib/formato";
 import {
-  costoEnvio, empaquesDe, enlaceWhatsApp, envioPorConfirmar, faltantes, mensaje, nombreLinea, presentaciones, renglones, textoCantidad,
+  costoEnvio, empaquesDe, enlaceWhatsApp, llevaEmpaque, type Renglon, envioPorConfirmar, faltantes, mensaje, nombreLinea, renglones, textoCantidad,
   resumenEmpaques, textoEmpaques, textoFaltantes, total, zonaDe,
 } from "../lib/pedido";
 import { nombreFecha } from "../lib/fechas";
 import { tipoDeFecha } from "../lib/entrega";
 import { $ } from "./dom";
+import { textoDesglose } from "../lib/combo";
 
 export interface ContextoOrden {
   catalogo: readonly Producto[];
@@ -34,15 +35,9 @@ export function pintarOrden(pedido: Pedido, ctx: ContextoOrden): void {
 
   $("#order").dataset.empty = String(n === 0 && window.innerWidth <= 980);
   $("#hint").hidden = n > 0;
+  $("#hintEdit").hidden = n === 0;
   $("#lines").innerHTML =
-    filas
-      .map((r) => {
-        const pres = presentaciones(r.producto).length
-          ? `<small>${escapar(textoEmpaques(r.linea.presentacion, empaquesDe(r.producto, r.linea)))}</small>`
-          : "";
-        return `<li><span>${escapar(nombreLinea(r.producto, r.linea))} <span class="q">· ${escapar(textoCantidad(r.producto, r.linea))}</span>${pres}</span><span class="num">${dinero(r.importe)}</span></li>`;
-      })
-      .join("") +
+    filas.map(lineaPedido).join("") +
     (envio
       ? `<li><span>Envío ${escapar(zonaDe(pedido.alcaldia, ctx.temporada.zonas)!.nombre)} <span class="q">· ${escapar(pedido.alcaldia)}</span></span><span class="num">${dinero(envio)}</span></li>`
       : envioPorConfirmar(pedido)
@@ -82,6 +77,38 @@ export function pintarOrden(pedido: Pedido, ctx: ContextoOrden): void {
   pintarZona(pedido, ctx);
   $("#domNote").hidden = !domicilio;
   $("#addrField").hidden = !domicilio;
+}
+
+const BASURA = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
+
+/**
+ * Un renglón de "Tu pedido" que se edita ahí mismo: − cantidad + y quitar, sin bajar a la lista
+ * (como el carrito de las tiendas en línea). Lo que no es cantidad (tamaño del pavo, presentación,
+ * maquila) se cambia en el producto: el nombre lleva ahí.
+ */
+function lineaPedido(r: Renglon): string {
+  const { producto: p, linea: l, id } = r;
+  const nombre = escapar(nombreLinea(p, l));
+  const extra: string[] = [];
+  if (p.combo) extra.push(textoDesglose(l.cantidad));
+  if (llevaEmpaque(p)) extra.push(textoEmpaques(l.presentacion, empaquesDe(p, l)));
+  // Pavo entero y maquila no llevan − y +: cada pavo es su línea y la maquila pide datos.
+  const conPasos = !p.pavoEntero && !p.maquila;
+  const cantidad = escapar(textoCantidad(p, l));
+  const control = conPasos
+    ? `<div class="ln-qty" role="group" aria-label="Cantidad de ${nombre}">
+        <button type="button" data-dec="${id}" aria-label="Menos ${nombre}">−</button>
+        <span class="num">${cantidad}</span>
+        <button type="button" data-inc="${id}" aria-label="Más ${nombre}">+</button>
+      </div>`
+    : `<span class="ln-fija">${cantidad}</span>`;
+  return `<li class="ln">
+    <div class="ln-top"><button type="button" class="ln-nombre" data-ir="${p.id}" title="Ver y cambiar en la lista">${nombre}</button><span class="num ln-precio">${dinero(r.importe)}</span></div>
+    ${extra.length ? `<small>${escapar(extra.join(" · "))}</small>` : ""}
+    <div class="ln-ctl">${control}
+      ${conPasos ? "" : `<button type="button" class="ln-editar" data-ir="${p.id}">Editar</button>`}
+      <button type="button" class="ln-quitar" data-del="${id}" aria-label="Quitar ${nombre}">${BASURA}<span>Quitar</span></button></div>
+  </li>`;
 }
 
 /** Debajo de la alcaldía: la zona y el precio, o cómo preguntar si está fuera de zona. */
