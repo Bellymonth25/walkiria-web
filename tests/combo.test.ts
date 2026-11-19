@@ -11,9 +11,9 @@ const combo = catalogo.find((p) => p.id === "combo-pavo")!;
 describe("Combo Pavo", () => {
   it("lleva pechuga, relleno y 2 piernas de 700 g", () => {
     expect(desgloseCombo(4)).toEqual({ personas: 4, kgPechuga: 0.5, kgRelleno: 0.5, piernas: 2, kgPierna: 0.7 });
-    expect(desgloseCombo(5)).toMatchObject({ kgPechuga: 0.75, kgRelleno: 0.5 });
+    expect(desgloseCombo(5)).toMatchObject({ kgPechuga: 0.625, kgRelleno: 0.5 });
     expect(desgloseCombo(2)).toMatchObject({ kgPechuga: 0.25, kgRelleno: 0.25 }); // mínimo 250 g
-    expect(desgloseCombo(3)).toMatchObject({ kgPechuga: 0.5, kgRelleno: 0.5 });
+    expect(desgloseCombo(3)).toMatchObject({ kgPechuga: 0.375, kgRelleno: 0.375 }); // de 125 en 125 g
     expect(desgloseCombo(9).personas).toBe(5); // nunca más del máximo
   });
   it("precio con los precios por kilo de cada parte, más una charola mediana", () => {

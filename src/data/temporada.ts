@@ -189,7 +189,7 @@ export const combo = {
   piernas: 2,
   /** Peso estimado de cada pierna (con hueso). El precio final cambia según lo que pese. */
   kgPorPierna: 0.7,
-  /** Pechuga y relleno por persona; se redondea hacia arriba al cuarto de kilo, con un mínimo. */
+  /** Pechuga y relleno por persona; se redondea hacia arriba de 125 en 125 g, con un mínimo. */
   pechugaKgPorPersona: 0.125,
   rellenoKgPorPersona: 0.1,
   minimoKg: 0.25,
