@@ -40,8 +40,8 @@ export function tamanoPara(kg: number): TamanoEmpaque {
  * (6 kg → 2 grandes de 3 kg). Los pavos enteros van en un empaque grande por pavo.
  */
 export function empaquesDe(p: Producto, l: Linea): Empaque[] {
-  // El combo va siempre en una charola grande.
-  if (p.combo) return [{ tamano: "grande", piezas: 1, precio: empaques.precio.charola.grande }];
+  // El combo va siempre en una charola mediana, que se cobra aparte.
+  if (p.combo) return [{ tamano: "mediana", piezas: 1, precio: empaques.precio.charola.mediana }];
   if (!presentaciones(p).length || !tieneCosto(l.presentacion)) return [];
   const precios = empaques.precio[l.presentacion];
   if (p.pavoEntero) return [{ tamano: "grande", piezas: l.cantidad, precio: precios.grande }];

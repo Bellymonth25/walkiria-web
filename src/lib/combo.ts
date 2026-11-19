@@ -13,7 +13,8 @@ export interface DesgloseCombo {
   kgPierna: number;
 }
 
-const alCuarto = (kg: number): number => Math.ceil(kg * 4 - 1e-9) / 4;
+/** Hacia arriba, de 125 en 125 g. */
+const alOctavo = (kg: number): number => Math.ceil(kg * 8 - 1e-9) / 8;
 
 /** Personas válidas para un combo (entre el mínimo y el máximo). */
 export const personasCombo = (n: number): number =>
@@ -24,8 +25,8 @@ export function desgloseCombo(personas: number): DesgloseCombo {
   const n = personasCombo(personas);
   return {
     personas: n,
-    kgPechuga: Math.max(combo.minimoKg, alCuarto(n * combo.pechugaKgPorPersona)),
-    kgRelleno: Math.max(combo.minimoKg, alCuarto(n * combo.rellenoKgPorPersona)),
+    kgPechuga: Math.max(combo.minimoKg, alOctavo(n * combo.pechugaKgPorPersona)),
+    kgRelleno: Math.max(combo.minimoKg, alOctavo(n * combo.rellenoKgPorPersona)),
     piernas: combo.piernas,
     kgPierna: combo.kgPorPierna,
   };

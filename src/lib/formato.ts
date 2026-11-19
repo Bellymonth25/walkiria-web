@@ -1,5 +1,5 @@
 const pesos = new Intl.NumberFormat("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-const decimales = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 2 });
+const decimales = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 3 });
 
 export const dinero = (n: number): string => "$" + pesos.format(n);
 

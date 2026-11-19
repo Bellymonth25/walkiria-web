@@ -11,16 +11,18 @@ const combo = catalogo.find((p) => p.id === "combo-pavo")!;
 describe("Combo Pavo", () => {
   it("lleva pechuga, relleno y 2 piernas de 700 g", () => {
     expect(desgloseCombo(4)).toEqual({ personas: 4, kgPechuga: 0.5, kgRelleno: 0.5, piernas: 2, kgPierna: 0.7 });
-    expect(desgloseCombo(5)).toMatchObject({ kgPechuga: 0.75, kgRelleno: 0.5 });
+    expect(desgloseCombo(5)).toMatchObject({ kgPechuga: 0.625, kgRelleno: 0.5 });
+    expect(desgloseCombo(2)).toMatchObject({ kgPechuga: 0.25, kgRelleno: 0.25 }); // mínimo 250 g
+    expect(desgloseCombo(3)).toMatchObject({ kgPechuga: 0.375, kgRelleno: 0.375 }); // de 125 en 125 g
     expect(desgloseCombo(9).personas).toBe(5); // nunca más del máximo
   });
-  it("precio con los precios por kilo de cada parte, más una charola grande", () => {
+  it("precio con los precios por kilo de cada parte, más una charola mediana", () => {
     // 0.5 × 590 + 0.5 × 400 + 1.4 × 200
     expect(importeCombo(combo, 4)).toBe(775);
     const l = nuevaLinea(combo);
     expect(l.cantidad).toBe(4);
-    expect(empaquesDe(combo, l)).toEqual([{ tamano: "grande", piezas: 1, precio: 40 }]);
-    expect(importeLinea(combo, l)).toBe(815);
+    expect(empaquesDe(combo, l)).toEqual([{ tamano: "mediana", piezas: 1, precio: 35 }]);
+    expect(importeLinea(combo, l)).toBe(810);
     expect(textoCantidad(combo, l)).toBe("para 4 personas");
   });
   it("el precio sigue a Firestore", () => {
@@ -38,7 +40,7 @@ describe("Combo Pavo", () => {
     const m = mensaje(pedido, { catalogo, zonas: [], nombreDia: "Miércoles 23", tardio: false });
     expect(m).toContain("• Combo Pavo, para 4 personas: $775");
     expect(m).toContain("Lleva: Pechuga de pavo horneada 0.5 kg, relleno tradicional 0.5 kg y 2 piernas de pavo horneadas (aprox. 700 g c/u)");
-    expect(m).toContain("charola de aluminio: 1 charola grande (+$40)");
+    expect(m).toContain("charola de aluminio: 1 charola mediana (+$35)");
     expect(m).toContain("varía según el peso de las piernas");
   });
 });
