@@ -547,11 +547,10 @@ button.cal-day:hover{border-color:var(--primary)}
 
 /* Calculadora dentro de la página de pedido */
 .calc-caja{background:var(--surface-2);border:1.5px dashed var(--gold-ink);border-radius:var(--r);margin-bottom:26px}
-.calc-caja summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;font-size:1.05rem}
+.calc-caja summary{cursor:default;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;font-size:1.05rem}
 .calc-caja summary::-webkit-details-marker{display:none}
 .calc-caja summary b{font-family:var(--font-display);font-weight:400;font-size:1.35rem;margin-right:8px}
-.calc-caja summary::after{content:"Ver cenas";flex:none;font-weight:700;font-size:.9rem;color:var(--brand);border:1.5px solid currentColor;border-radius:999px;padding:6px 14px}
-.calc-caja[open] summary::after{content:"Cerrar"}
+.calc-abrir{flex:none;cursor:pointer;font-family:var(--font-body);background:transparent;font-weight:700;font-size:.9rem;color:var(--brand);border:1.5px solid currentColor;border-radius:999px;padding:6px 14px}
 .calc-reco{margin:0;padding:0 20px 14px;color:var(--muted);max-width:70ch}
 .calc-caja .calc{padding:0 20px 20px}
 @media (max-width:760px){
@@ -740,8 +739,6 @@ button.cal-day:hover{border-color:var(--primary)}
 .calc-check{display:none;flex:none;margin-left:auto;font-size:.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ok-ink,#0F2E11);background:var(--ok);border-radius:999px;padding:4px 10px}
 .calc-caja.usada{border-style:solid;border-color:var(--ok);margin-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0}
 .calc-caja.usada .calc-check{display:inline-block}
-.calc-caja.usada summary::after{content:"Calcular de nuevo"}
-.calc-caja.usada[open] summary::after{content:"Cerrar"}
 .calc-usada{display:flex;align-items:center;gap:12px 18px;flex-wrap:wrap;margin-bottom:26px;padding:12px 20px;border:1.5px solid var(--ok);border-top:1px dashed var(--line);border-radius:0 0 var(--r) var(--r);background:color-mix(in srgb,var(--ok) 12%,var(--surface))}
 .calc-usada[hidden]{display:none}
 .calc-usada p{margin:0;flex:1 1 260px;font-size:.92rem}
@@ -825,8 +822,8 @@ button.cal-day:hover{border-color:var(--primary)}
    sin pintar 17 botones sólidos. Al pasar el mouse se rellenan. Calcular va relleno porque es uno solo. */
 .add{border-color:var(--cta);color:var(--cta-text);background:color-mix(in srgb,var(--cta) 16%,var(--surface));font-weight:700}
 .add:hover{background:var(--cta);color:var(--cta-ink);border-color:var(--cta)}
-.calc-caja summary::after{background:var(--cta);color:var(--cta-ink);border-color:var(--cta);box-shadow:inset 0 0 0 1.5px var(--cta-ring);padding:9px 18px;font-size:.95rem}
-.calc-caja[open] summary::after{background:transparent;color:var(--cta-text);border-color:currentColor;box-shadow:none}
+.calc-abrir{background:var(--cta);color:var(--cta-ink);border-color:var(--cta);box-shadow:inset 0 0 0 1.5px var(--cta-ring);padding:9px 18px;font-size:.95rem}
+.calc-caja[open] .calc-abrir{background:transparent;color:var(--cta-text);border-color:currentColor;box-shadow:none}
 
 /* ---------- Fotos de los productos en "Arma tu pedido" ----------
    Celular: cuadrada 64 px. Tableta: cuadrada 80 px. Compu: 4:3 que crece con la pantalla hasta 144 px. */
@@ -911,7 +908,7 @@ button.thumb:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 .ln-qty{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
 .ln-qty button{width:36px;height:34px;border:0;background:transparent;color:var(--fg);font:700 1.15rem/1 var(--font-body);cursor:pointer}
 .ln-qty button:hover{background:var(--primary-soft)}
-.ln-qty span{min-width:4.6rem;padding:0 4px;text-align:center;font-weight:700;font-size:.9rem;white-space:nowrap}
+.ln-qty>span{min-width:4.6rem;padding:0 4px;text-align:center;font-weight:700;font-size:.9rem;white-space:nowrap}
 .ln-fija{font-size:.86rem;color:var(--muted);font-weight:600}
 .ln-editar,.ln-quitar{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;font:600 .84rem var(--font-body);cursor:pointer;padding:6px 4px;border-radius:8px}
 .ln-editar{color:var(--primary);text-decoration:underline;text-underline-offset:3px}
@@ -923,3 +920,7 @@ button.thumb:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 @keyframes resalta{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--gold) 80%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
 .order.resalta{animation:resalta 1s ease-out 2}
 .row.resalta{animation:resalta 1s ease-out 2}
+.ln-campo{display:inline-flex;align-items:center;gap:4px;padding:0 2px;font-weight:700;font-size:.9rem;white-space:nowrap;cursor:text}
+.ln-campo input{width:3.4rem;height:28px;text-align:center;font:700 16px var(--font-body);color:var(--fg);background:var(--surface-2,transparent);border:1.5px solid var(--line);border-radius:8px;padding:0 4px}
+.ln-campo input:focus{outline:none;border-color:var(--primary)}
+.ln-campo span{color:var(--muted);font-weight:600;font-size:.82rem}

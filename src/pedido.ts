@@ -359,7 +359,20 @@ function pintarSugerido(): void {
     const n = sugerido.personas;
     $("#calcUsadaTxt").innerHTML = `<b>Ya agregaste lo sugerido para ${n} ${n === 1 ? "persona" : "personas"}.</b> Al retirarlo solo se quita lo que sugerimos; lo que hayas subido o agregado aparte se queda en tu pedido.`;
   }
+  pintarBotonCenas();
 }
+
+/** Texto del botón de Cenas sugeridas: Ver cenas / Calcular de nuevo / Cerrar. */
+function pintarBotonCenas(): void {
+  const caja = $<HTMLDetailsElement>("#calcCaja");
+  const b = $("#calcAbrir");
+  b.textContent = caja.open ? "Cerrar" : sugerido ? "Calcular de nuevo" : "Ver cenas";
+  b.setAttribute("aria-expanded", String(caja.open));
+}
+
+// La tarjeta de Cenas sugeridas solo se abre o cierra con su botón, no al tocar cualquier parte.
+$("#calcCaja summary").addEventListener("click", (e) => e.preventDefault());
+$("#calcCaja").addEventListener("toggle", pintarBotonCenas);
 
 // ---------- Fotos de los productos ----------
 const visor = iniciarVisor();
@@ -376,7 +389,10 @@ document.addEventListener("click", (e) => {
   if (!t) return;
   const d = t.dataset;
 
-  if (d.verfoto) {
+  if (t.id === "calcAbrir") {
+    const caja = $<HTMLDetailsElement>("#calcCaja");
+    caja.open = !caja.open;
+  } else if (d.verfoto) {
     verFoto(d.verfoto);
   } else if (d.ir) {
     irAProducto(d.ir);
@@ -465,6 +481,29 @@ document.addEventListener("click", (e) => {
       .then(() => aviso("Pedido copiado"))
       .catch(() => aviso("No se pudo copiar. Usa el botón de WhatsApp."));
   }
+});
+
+// Cantidad escrita en "Tu pedido". Mientras escribe se guarda si es válida (sin repintar ese campo);
+// al terminar se muestra el número ya limpio (mínimo, paso y máximo de cada producto).
+document.addEventListener("input", (e) => {
+  const el = e.target as HTMLInputElement;
+  const id = el.dataset.lnqty;
+  if (!id) return;
+  const x = deLinea(id);
+  if (!x) return;
+  const n = normalizarCantidad(x.p, Number(el.value.replace(",", ".")));
+  if (n === null || n === x.l.cantidad) return;
+  ponerLinea(id, { ...x.l, cantidad: n });
+  pintarRenglon(vista(), x.p.id);
+  pintarPedido();
+});
+document.addEventListener("keydown", (e) => {
+  const el = e.target as HTMLInputElement;
+  if (el.dataset?.lnqty && e.key === "Enter") el.blur();
+});
+document.addEventListener("focusout", (e) => {
+  // Al salir del campo se repinta "Tu pedido" con la cantidad limpia (ej. 0.1 → 0.25 kg, 9 → 5 personas).
+  if ((e.target as HTMLElement).dataset?.lnqty) setTimeout(() => pintarPedido());
 });
 
 // Campos dentro de un producto. "input" mientras escribe (sin repintar), "change" al terminar.
