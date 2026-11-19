@@ -177,7 +177,7 @@ export const tiposCena: Record<TipoCena, { nombre: string; incluye: string; extr
 /**
  * Combo Pavo para familias chicas: pechuga, relleno y piernas de pavo en una misma charola.
  * A producción le llega el desglose (ver `desgloseCombo` en lib/combo.ts).
- * PENDIENTE de confirmar con el equipo: gramajes y si el precio queda fijo.
+ * Gramajes confirmados con el equipo. La charola (mediana) se cobra aparte.
  */
 export const combo = {
   /** Se ofrece en las cenas sugeridas hasta este número de personas. */
@@ -192,7 +192,7 @@ export const combo = {
   /** Pechuga y relleno por persona; se redondea hacia arriba al cuarto de kilo, con un mínimo. */
   pechugaKgPorPersona: 0.125,
   rellenoKgPorPersona: 0.1,
-  minimoKg: 0.5,
+  minimoKg: 0.25,
   versionPechuga: "Horneada",
   versionPierna: "Horneada",
 } as const;
