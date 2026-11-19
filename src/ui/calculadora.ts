@@ -1,8 +1,9 @@
 import type { Linea, Presentacion, Producto } from "../types";
-import { calculadora as cfg } from "../data/temporada";
-import { calcularCena, pavoPermitido, pavosCena, repartirCarne, type Cena, type Grupo, type Personas } from "../lib/calculadora";
+import { calculadora as cfg, combo as cfgCombo, tiposCena, type ExtraCena, type TipoCena } from "../data/temporada";
+import { calcularCena, pavoPermitido, pavosCena, repartirCarne, type Cena } from "../lib/calculadora";
 import { dinero, escapar, kilos } from "../lib/formato";
-import { empaquesDe, importeProducto, kgMinimoPavo, nuevaLinea, presentaciones, tieneCosto, type Empaque } from "../lib/pedido";
+import { importeProducto, kgMinimoPavo, nuevaLinea, presentaciones, resumenEmpaques } from "../lib/pedido";
+import { desgloseCombo, importeCombo } from "../lib/combo";
 
 /** Lo que la calculadora agrega al pedido: un producto y cómo queda su línea. */
 export interface Agregado {
@@ -10,9 +11,11 @@ export interface Agregado {
   cambios: Partial<Linea>;
 }
 
-const GRUPOS: Array<[Grupo, string, string]> = [
-  ["personas", "Personas", "Niños, adultos y personas mayores"],
-  ["adolescentes", "Adolescentes", "Suelen comer más"],
+const EXTRAS: Array<[ExtraCena, string]> = [
+  ["romeritos", "Romeritos"],
+  ["bacalao", "Bacalao"],
+  ["panes", "Panecillos"],
+  ["postre", "Postre (strudel)"],
 ];
 
 /** Presentación para todo el pedido. El pavo entero no cabe en acrílico: va en bolsa o caja. */
@@ -50,8 +53,8 @@ export function iniciarCalculadora(
   const carne = (id: string) => carnes.find((c) => c.id === id) ?? carnes[0]!;
   const nombreCarne = (c: Carne) => `${p(c.productoId)?.nombre ?? ""}${c.estilo ? ` ${c.estilo.toLowerCase()}` : ""}`;
 
-  const personas: Personas = { personas: cfg.sugeridas[0], adolescentes: 0 };
-  const total = () => personas.personas + personas.adolescentes;
+  let personas: number = cfg.sugeridas[0];
+  const total = () => personas;
   /** Siempre se propone primero la pechuga de pavo horneada (si no hay, la primera carne disponible). */
   const recomendada = () => {
     const pechuga = carnes.find((c) => c.id === "pechuga-pavo:Horneada");
@@ -62,8 +65,13 @@ export function iniciarCalculadora(
   let primeraTocada = false;
   const espagueti = p("espagueti");
   let pastaId = espagueti?.versiones?.[0] ? `espagueti:${espagueti.versiones[0]}` : "espagueti";
-  let conRomeritos = true;
-  let conBacalao = true;
+  let tipo: TipoCena = "completa";
+  let extras: Record<ExtraCena, boolean> = { ...tiposCena[tipo].extras };
+  /** Combo Pavo en lugar de la carne (solo en cenas chicas). */
+  let conCombo = false;
+  const prodCombo = p("combo-pavo");
+  const comboPosible = () => !!prodCombo && !agotado(prodCombo) && total() >= cfgCombo.minPersonas && total() <= cfgCombo.hastaPersonas;
+  const usaCombo = () => conCombo && comboPosible();
   let presentacion: Presentacion = "acrilico";
 
   const variasPermitidas = () => total() >= cfg.desdeVariasCarnes;
@@ -101,13 +109,23 @@ export function iniciarCalculadora(
     return partes.join(" + ");
   };
 
-  type Fila = { nombre: string; cantidad: string; importe: number; agregado: Agregado[] };
+  type Fila = { nombre: string; detalle?: string; cantidad: string; importe: number; agregado: Agregado[] };
 
   /** Renglones del resultado con lo que se agregaría. */
   const plan = (c: Cena): Fila[] => {
     const filas: Fila[] = [];
     const partes = repartirCarne(c.carne, elegidas.length);
-    elegidas.forEach((id, n) => {
+    if (usaCombo()) {
+      const d = desgloseCombo(c.personas);
+      filas.push({
+        nombre: "Combo Pavo",
+        detalle: `Pechuga ${kilos(d.kgPechuga)} · relleno ${kilos(d.kgRelleno)} · ${d.piernas} piernas`,
+        cantidad: `para ${d.personas}`,
+        importe: importeCombo(prodCombo!, d.personas),
+        agregado: [{ productoId: prodCombo!.id, cambios: { cantidad: d.personas, presentacion: "charola" } }],
+      });
+    }
+    (usaCombo() ? [] : elegidas).forEach((id, n) => {
       const ca = carne(id);
       const x = p(ca.productoId);
       const kg = partes[n];
@@ -128,22 +146,25 @@ export function iniciarCalculadora(
     });
     const porKilo = (id: string, kg: number, version = "") => {
       const x = p(id);
-      if (!x || !kg) return;
+      if (!x || !kg || agotado(x)) return;
       const l = linea(x, { cantidad: kg, version });
       filas.push({ nombre: version ? `${x.nombre} ${version.toLowerCase()}` : x.nombre, cantidad: kilos(kg), importe: importeProducto(x, l), agregado: [{ productoId: id, cambios: l }] });
     };
     const [pastaProd, pastaVer = ""] = pastaId.split(":") as [string, string?];
     porKilo(pastaProd, c.pasta, pastaVer);
     porKilo("ensalada-manzana", c.ensalada);
-    if (conRomeritos) porKilo("romeritos", c.romeritos);
-    if (conBacalao) porKilo("bacalao", c.bacalao);
+    if (extras.romeritos) porKilo("romeritos", c.romeritos);
+    if (extras.bacalao) porKilo("bacalao", c.bacalao);
     const piezas = (id: string, n: number, extra = "") => {
       const x = p(id);
-      if (!x || !n) return;
+      if (!x || !n || agotado(x)) return;
       filas.push({ nombre: x.nombre, cantidad: `${n} ${n === 1 ? "pza" : "pzas"}${extra}`, importe: n * x.precio, agregado: [{ productoId: id, cambios: { cantidad: n } }] });
     };
-    piezas("strudel", c.strudelGrande, " (para 10)");
-    piezas("strudel-individual", c.strudelIndividual);
+    if (extras.panes) piezas("panecillos", c.panes);
+    if (extras.postre) {
+      piezas("strudel", c.strudelGrande, " (para 10)");
+      piezas("strudel-individual", c.strudelIndividual);
+    }
     return filas;
   };
 
@@ -162,31 +183,16 @@ export function iniciarCalculadora(
   };
 
   /**
-   * Charolas o bolsas al vacío de todo lo que se agrega, en un solo renglón con su propio precio
-   * (así se ve qué cuesta el producto y qué cuesta el empaque). Sale de las líneas ya juntas,
-   * igual que lo que se agrega al pedido.
+   * Charolas o bolsas al vacío de todo lo que se agrega, cada tipo en su renglón con su precio
+   * (así se ve qué cuesta el producto y qué cuesta el empaque). Es el mismo cálculo del pedido.
    */
-  const renglonEmpaque = (items: Agregado[]): { nombre: string; detalle: string; cantidad: string; importe: number } | null => {
-    if (!tieneCosto(presentacion)) return null;
-    const porTamano = new Map<Empaque["tamano"], number>();
-    let importe = 0;
-    for (const it of items) {
+  const renglonesEmpaque = (items: Agregado[]) => {
+    const lineas: Record<string, Linea> = {};
+    items.forEach((it, i) => {
       const x = p(it.productoId);
-      if (!x) continue;
-      for (const e of empaquesDe(x, { ...nuevaLinea(x), ...it.cambios })) {
-        porTamano.set(e.tamano, (porTamano.get(e.tamano) ?? 0) + e.piezas);
-        importe += e.piezas * e.precio;
-      }
-    }
-    const n = [...porTamano.values()].reduce((a, b) => a + b, 0);
-    if (!n) return null;
-    const [uno, varios] = presentacion === "charola" ? ["charola", "charolas"] : ["bolsa al vacío", "bolsas al vacío"];
-    const plural = (t: string, k: number) => (k === 1 ? t : `${t}s`);
-    const detalle = (["chica", "mediana", "grande"] as const)
-      .filter((t) => porTamano.has(t))
-      .map((t) => `${porTamano.get(t)} ${plural(t, porTamano.get(t)!)}`)
-      .join(" · ");
-    return { nombre: presentacion === "charola" ? "Charolas de aluminio" : "Bolsas al vacío", detalle, cantidad: `${n} ${n === 1 ? uno : varios}`, importe };
+      if (x) lineas[String(i)] = { ...nuevaLinea(x), ...it.cambios };
+    });
+    return resumenEmpaques({ lineas, nombre: "", modo: "tienda", alcaldia: "", direccion: "", referencias: "", nota: "", fecha: null }, catalogo).empaques;
   };
 
   const res = () => raiz.querySelector<HTMLElement>("#calcRes")!;
@@ -196,25 +202,50 @@ export function iniciarCalculadora(
     const hayPavo = elegidas.some((id) => p(carne(id).productoId)?.pavoEntero);
     raiz.querySelector<HTMLElement>("#calcNotaPavo")!.hidden = !(hayPavo && presentacion === "acrilico");
     raiz.querySelectorAll<HTMLButtonElement>("[data-sugerida]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.sugerida) === c.personas)));
+    pintarCombo();
     if (!c.personas) {
       res().innerHTML = `<p class="calc-vacio">Dinos cuántos serán en tu cena y te decimos cuánto pedir.</p>`;
       return;
     }
     const filas = plan(c);
-    const emp = renglonEmpaque(juntar(filas.flatMap((f) => f.agregado)));
-    const suma = filas.reduce((a, f) => a + f.importe, 0) + (emp?.importe ?? 0);
+    const emp = renglonesEmpaque(juntar(filas.flatMap((f) => f.agregado)));
+    const suma = filas.reduce((a, f) => a + f.importe, 0) + emp.reduce((a, e) => a + e.importe, 0);
+    const pz = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
     res().innerHTML = `
-      <h3>Para ${c.personas} ${c.personas === 1 ? "persona" : "personas"} te sugerimos</h3>
+      <h3>Cena ${escapar(tiposCena[tipo].nombre.toLowerCase())} para ${c.personas} ${c.personas === 1 ? "persona" : "personas"}</h3>
       <ul class="calc-lista">${filas
-        .map((f) => `<li><span>${escapar(f.nombre)}</span><b>${escapar(f.cantidad)}</b><span class="num">${dinero(Math.round(f.importe))}</span></li>`)
+        .map((f) => `<li><span>${escapar(f.nombre)}${f.detalle ? `<small>${escapar(f.detalle)}</small>` : ""}</span><b>${escapar(f.cantidad)}</b><span class="num">${dinero(Math.round(f.importe))}</span></li>`)
         .join("")}
-        ${emp ? `<li class="calc-emp"><span>${escapar(emp.nombre)}<small>${escapar(emp.detalle)}</small></span><b>${escapar(emp.cantidad)}</b><span class="num">${dinero(Math.round(emp.importe))}</span></li>` : ""}
-        <li class="calc-pan"><span>Panecillo</span><b>${c.panes} ${c.panes === 1 ? "pza" : "pzas"}</b><span>1 por persona</span></li>
+        ${emp
+          .map((e) => `<li class="calc-emp"><span>${escapar(e.nombre)}<small>${escapar(e.tamanos)}</small></span><b>${escapar(pz(e.piezas, e.presentacion === "charola" ? "charola" : "bolsa", e.presentacion === "charola" ? "charolas" : "bolsas"))}</b><span class="num">${dinero(Math.round(e.importe))}</span></li>`)
+          .join("")}
       </ul>
+      ${usaCombo() ? `<p class="calc-nota">El precio del combo varía según el peso de las piernas (estimamos ${Math.round(cfgCombo.kgPorPierna * 1000)} g cada una).</p>` : ""}
       <div class="calc-total"><span>Total aproximado</span><b class="num">${dinero(Math.round(suma))}</b></div>
       <button class="btn btn-wa" type="button" id="calcAgregar">Agregar todo a mi pedido</button>
-      <p class="calc-aviso"><b>Es una recomendación.</b> La hacemos con nuestra experiencia de muchos años, calculando un promedio para que todos coman bien y puedan repetir un poco. Cada familia y cada cena es diferente, así que no podemos garantizar que no falte o sobre comida. Después de agregarlo puedes subir o bajar cada producto en tu pedido.</p>`;
+      <p class="calc-aviso"><b>Es una recomendación.</b> La hacemos con nuestra experiencia de muchos años, calculando un promedio para que todos coman bien y puedan repetir un poco. Cada familia y cada cena es diferente, así que no podemos garantizar que no falte o sobre comida. Después de agregarlo puedes subir, bajar o quitar cada producto desde <b>Tu pedido</b>.</p>`;
     res().querySelector("#calcAgregar")?.addEventListener("click", () => alAgregar(juntar(filas.flatMap((f) => f.agregado)), c.personas));
+  };
+
+  /** Anuncio del Combo Pavo en cenas chicas; al usarlo, ocupa el lugar de la carne. */
+  const pintarCombo = () => {
+    const caja = raiz.querySelector<HTMLElement>("#calcCombo")!;
+    const campoCarne = raiz.querySelector<HTMLElement>("#calcCarneCampo")!;
+    campoCarne.hidden = usaCombo();
+    if (!comboPosible()) {
+      caja.hidden = true;
+      return;
+    }
+    caja.hidden = false;
+    const d = desgloseCombo(total());
+    const precio = dinero(Math.round(importeCombo(prodCombo!, d.personas)));
+    caja.classList.toggle("on", usaCombo());
+    caja.innerHTML = `<div class="calc-combo-txt">
+        <span class="calc-combo-tag">${usaCombo() ? "✓ En tu cena" : `Para ${cfgCombo.hastaPersonas} personas o menos`}</span>
+        <b>Combo Pavo</b>
+        <span>Pechuga de pavo (${kilos(d.kgPechuga)}), relleno (${kilos(d.kgRelleno)}) y ${d.piernas} piernas de pavo, todo en una misma charola. Aprox. <b class="num">${precio}</b> para ${d.personas}.</span>
+      </div>
+      <button type="button" class="btn ${usaCombo() ? "btn-ghost" : "btn-wa"} btn-sm" id="calcComboBtn" aria-pressed="${usaCombo()}">${usaCombo() ? "Mejor otra carne" : "Usar combo"}</button>`;
   };
 
   const pintarCarnes = () => {
@@ -247,21 +278,30 @@ export function iniciarCalculadora(
   raiz.innerHTML = `
     <div class="calc-form">
       <div class="calc-sugeridas">
-        <span class="calc-etq">¿Cuántos son?</span>
-        <div class="seg">${cfg.sugeridas
-          .map((n) => `<button type="button" data-sugerida="${n}" aria-pressed="false">${n} <small>personas</small></button>`)
-          .join("")}</div>
+        <span class="calc-etq">1. ¿Cuántos son?</span>
+        <div class="calc-cuantos">
+          <div class="seg">${cfg.sugeridas
+            .map((n) => `<button type="button" data-sugerida="${n}" aria-pressed="false">${n} <small>personas</small></button>`)
+            .join("")}</div>
+          <div class="qty" aria-label="Otro número de personas"><button type="button" data-calc="-1" aria-label="Una persona menos">−</button>
+            <input class="num" type="number" inputmode="numeric" min="0" max="${MAX}" value="${personas}" id="calcN" aria-label="Personas">
+            <button type="button" data-calc="1" aria-label="Una persona más">+</button></div>
+        </div>
+        <p class="calc-nota">Todos cuentan igual: niños, adolescentes y adultos.</p>
       </div>
-      <div class="calc-grupos">${GRUPOS.map(
-        ([g, nombre, nota]) => `<div class="calc-grupo">
-          <span class="calc-nombre">${nombre}<small>${nota}</small></span>
-          <div class="qty"><button type="button" data-calc="${g}:-1" aria-label="Menos ${nombre.toLowerCase()}">−</button>
-          <input class="num" type="number" inputmode="numeric" min="0" max="${MAX}" value="${personas[g]}" data-calcn="${g}" aria-label="${nombre}">
-          <button type="button" data-calc="${g}:1" aria-label="Más ${nombre.toLowerCase()}">+</button></div></div>`,
-      ).join("")}</div>
+      <fieldset class="calc-campo calc-tipos-campo"><legend class="calc-etq">2. ¿Qué cena?</legend>
+        <div class="calc-tipos">${(Object.keys(tiposCena) as TipoCena[])
+          .map(
+            (t) => `<label class="calc-tipo"><input type="radio" name="calcTipo" value="${t}"${t === tipo ? " checked" : ""}>
+              <span><b>${escapar(tiposCena[t].nombre)}</b><small>${escapar(tiposCena[t].incluye)}</small></span></label>`,
+          )
+          .join("")}</div>
+      </fieldset>
       <div class="calc-elige">
-        <div class="calc-campo"><span class="calc-etq">Carne</span><div id="calcCarnes"></div></div>
-        <label class="calc-campo"><span class="calc-etq">Pasta</span><select id="calcPasta">${["espagueti", "ravioles"]
+        <span class="calc-etq">3. Ajústala a tu gusto</span>
+        <div class="calc-combo" id="calcCombo" hidden></div>
+        <div class="calc-campo" id="calcCarneCampo"><span class="calc-sub">Carne</span><div id="calcCarnes"></div></div>
+        <label class="calc-campo"><span class="calc-sub">Pasta</span><select id="calcPasta">${["espagueti", "ravioles"]
           .map((id) => p(id))
           .filter((x): x is Producto => !!x)
           .flatMap((x) => (x.versiones?.length ? x.versiones.map((ver) => [x, ver] as const) : [[x, ""] as const]))
@@ -270,13 +310,12 @@ export function iniciarCalculadora(
             return `<option value="${escapar(valor)}"${valor === pastaId ? " selected" : ""}${agotado(x) ? " disabled" : ""}>${escapar(ver ? `${x.nombre} ${ver.toLowerCase()}` : x.nombre)}</option>`;
           })
           .join("")}</select></label>
-        <fieldset class="calc-campo"><legend class="calc-etq">Extra</legend>
-          <div class="calc-extras">
-            <label class="calc-chk"><input type="checkbox" id="calcRom" checked><span>Romeritos</span></label>
-            <label class="calc-chk"><input type="checkbox" id="calcBac" checked><span>Bacalao</span></label>
-          </div>
+        <fieldset class="calc-campo"><legend class="calc-sub">Incluye (toca para quitar o agregar)</legend>
+          <div class="calc-extras">${EXTRAS.map(
+            ([k, t]) => `<label class="calc-chk"><input type="checkbox" data-extra="${k}"${extras[k] ? " checked" : ""}><span>${t}</span></label>`,
+          ).join("")}</div>
         </fieldset>
-        <div class="calc-campo"><span class="calc-etq">Presentación para todo</span>
+        <div class="calc-campo"><span class="calc-sub">Presentación para todo</span>
           <div class="seg seg-3" id="calcPres">${PRESENTACIONES.map(
             ([v, t, s]) => `<button type="button" data-pres-calc="${v}" aria-pressed="${v === presentacion}">${t}<small>${s}</small></button>`,
           ).join("")}</div>
@@ -286,22 +325,23 @@ export function iniciarCalculadora(
     </div>
     <div class="calc-res" id="calcRes" aria-live="polite"></div>`;
 
+  const ponerPersonas = (n: number) => {
+    personas = Math.min(MAX, Math.max(0, Math.floor(Number.isFinite(n) ? n : 0)));
+    raiz.querySelector<HTMLInputElement>("#calcN")!.value = String(personas);
+    alCambiarPersonas();
+  };
+
   raiz.addEventListener("click", (e) => {
     const t = (e.target as Element).closest<HTMLButtonElement>("button");
     if (!t) return;
     const d = t.dataset;
     if (d.calc) {
-      const [g, paso] = d.calc.split(":") as [Grupo, string];
-      personas[g] = Math.min(MAX, Math.max(0, personas[g] + Number(paso)));
-      raiz.querySelector<HTMLInputElement>(`[data-calcn="${g}"]`)!.value = String(personas[g]);
-      alCambiarPersonas();
+      ponerPersonas(personas + Number(d.calc));
     } else if (d.sugerida) {
-      // Se ajusta el número de personas y se respetan los adolescentes que ya puso.
-      const n = Number(d.sugerida);
-      personas.adolescentes = Math.min(personas.adolescentes, n);
-      personas.personas = n - personas.adolescentes;
-      GRUPOS.forEach(([g]) => (raiz.querySelector<HTMLInputElement>(`[data-calcn="${g}"]`)!.value = String(personas[g])));
-      alCambiarPersonas();
+      ponerPersonas(Number(d.sugerida));
+    } else if (t.id === "calcComboBtn") {
+      conCombo = !usaCombo();
+      pintarResultado();
     } else if (t.id === "calcMas") {
       const usadas = new Set(elegidas);
       const otra = carnes.find((c) => !usadas.has(c.id) && permitida(c) && !agotado(p(c.productoId)!) && c.productoId !== carne(elegidas[0]!).productoId);
@@ -320,10 +360,18 @@ export function iniciarCalculadora(
   });
   raiz.addEventListener("input", (e) => {
     const el = e.target as HTMLInputElement;
-    if (el.dataset.calcn) {
+    if (el.id === "calcN") {
       const n = Math.floor(Number(el.value));
-      personas[el.dataset.calcn as Grupo] = Number.isFinite(n) ? Math.min(MAX, Math.max(0, n)) : 0;
+      personas = Number.isFinite(n) ? Math.min(MAX, Math.max(0, n)) : 0;
       alCambiarPersonas();
+      return;
+    }
+    if (el.name === "calcTipo") {
+      // La cena base pone sus extras; después el cliente puede prender o apagar cada uno.
+      tipo = el.value as TipoCena;
+      extras = { ...tiposCena[tipo].extras };
+      raiz.querySelectorAll<HTMLInputElement>("[data-extra]").forEach((c) => (c.checked = extras[c.dataset.extra as ExtraCena]));
+      pintarResultado();
       return;
     }
     if (el.dataset.carne) {
@@ -331,14 +379,13 @@ export function iniciarCalculadora(
       elegidas[n] = el.value;
       if (n === 0) primeraTocada = true;
     } else if (el.id === "calcPasta") pastaId = el.value;
-    else if (el.id === "calcRom") conRomeritos = el.checked;
-    else if (el.id === "calcBac") conBacalao = el.checked;
+    else if (el.dataset.extra) extras[el.dataset.extra as ExtraCena] = el.checked;
     else return;
     pintarResultado();
   });
   raiz.addEventListener("change", (e) => {
     const el = e.target as HTMLInputElement;
-    if (el.dataset.calcn) el.value = String(personas[el.dataset.calcn as Grupo]);
+    if (el.id === "calcN") el.value = String(personas);
   });
   pintarCarnes();
   pintarResultado();

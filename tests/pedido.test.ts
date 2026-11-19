@@ -261,21 +261,21 @@ describe("calculadora de cena", () => {
     expect(redondearKg(1.5)).toBe(1.5);
     expect(redondearKg(1.51)).toBe(1.75);
   });
-  it("los adolescentes comen más", () => {
-    const c = calcularCena({ personas: 8, adolescentes: 2 });
+  it("todos cuentan igual: 10 personas", () => {
+    const c = calcularCena(10);
     expect(c.personas).toBe(10);
-    expect(c.equivalentes).toBe(8 + 2 * 1.25);
-    expect(c.carne).toBe(1.75); // 10.5 × 150 g = 1.575 kg
-    expect(c.romeritos).toBe(0.75); // 10.5 × 50 g = 0.525 kg
+    expect(c.equivalentes).toBe(10);
+    expect(c.carne).toBe(1.5); // 10 × 150 g
+    expect(c.romeritos).toBe(0.5); // 10 × 50 g
     expect(c.panes).toBe(10);
     expect([c.strudelGrande, c.strudelIndividual]).toEqual([1, 0]);
   });
   it("cena para 4: 600 g de carne", () => {
-    expect(calcularCena({ personas: 4, adolescentes: 0 })).toMatchObject({ carne: 0.75, pasta: 0.75, strudelGrande: 0, strudelIndividual: 4 });
+    expect(calcularCena(4)).toMatchObject({ carne: 0.75, pasta: 0.75, strudelGrande: 0, strudelIndividual: 4 });
   });
   it("postre: strudel grande por cada 10, el resto individual", () => {
-    expect(calcularCena({ personas: 13, adolescentes: 0 })).toMatchObject({ strudelGrande: 1, strudelIndividual: 3 });
-    expect(calcularCena({ personas: 8, adolescentes: 0 })).toMatchObject({ strudelGrande: 1, strudelIndividual: 0 });
+    expect(calcularCena(13)).toMatchObject({ strudelGrande: 1, strudelIndividual: 3 });
+    expect(calcularCena(8)).toMatchObject({ strudelGrande: 1, strudelIndividual: 0 });
   });
   it("reparte la carne en partes iguales de al menos 250 g", () => {
     expect(repartirCarne(1.5, 2)).toEqual([0.75, 0.75]);

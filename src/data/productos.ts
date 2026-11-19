@@ -27,6 +27,8 @@ export const productos: readonly Producto[] = [
   { id: "pavo-ahumado", nombre: "Pavo Ahumado", categoria: "pavo", unidad: "kg", precio: 400, pavoEntero: true, soloCompleto: true, firebaseIds: ["PROD_003"], ...foto("pavo-ahumado") },
   { id: "pechuga-pavo", nombre: "Pechuga de Pavo", categoria: "pavo", unidad: "kg", precio: 590, descripcion: "Horneada, adobada o mechada.", versiones: ["Horneada", "Adobada", "Mechada"], firebaseIds: ["PROD_017", "PROD_018", "PROD_019"], ...foto("pechuga-pavo-horneada") },
   { id: "pierna-pavo", nombre: "Pierna de Pavo", categoria: "pavo", unidad: "kg", precio: 200, descripcion: "Horneada o adobada.", versiones: ["Horneada", "Adobada"], firebaseIds: ["PROD_032"] },
+  // Combo para familias chicas. No existe en Firestore: el precio sale de pechuga, relleno y pierna.
+  { id: "combo-pavo", nombre: "Combo Pavo", categoria: "pavo", unidad: "pza", precio: 0, descripcion: "Pechuga de pavo, relleno y 2 piernas de pavo en una misma charola. Ideal para 5 personas o menos. El precio varía según el peso de las piernas.", combo: { pechuga: 590, relleno: 400, pierna: 200 }, firebaseIds: [] },
   { id: "pato-naranja", nombre: "Pato a la Naranja", categoria: "pavo", unidad: "kg", precio: 500, descripcion: "Relleno de manzanas. Se pide por pato y se cobra por peso: cada uno pesa de 1.8 a 2.4 kg aprox.", pieza: { nombre: "pato", plural: "patos", kgMin: 1.8, kgMax: 2.4, kgEstimado: 2 }, firebaseIds: ["PROD_007"] },
 
   { id: "lomo-mechado", nombre: "Lomo Mechado", categoria: "cerdo", unidad: "kg", precio: 430, descripcion: "Con pasitas.", clasico: true, familia: "Lomo de Cerdo", opcion: "Mechado", firebaseIds: ["PROD_005"], ...foto("lomo-mechado") },
@@ -45,6 +47,7 @@ export const productos: readonly Producto[] = [
   { id: "ravioles", nombre: "Ravioles de Queso", categoria: "guarn", unidad: "kg", precio: 330, firebaseIds: ["PROD_022"], ...foto("ravioles-de-queso") },
 
   { id: "strudel", nombre: "Strudel de Manzana", categoria: "pan", unidad: "pza", precio: 520, descripcion: "Pasta hojaldrada rellena de manzana. Para 10 personas.", clasico: true, firebaseIds: ["PROD_025"], ...foto("strudel-de-manzana") },
+  { id: "panecillos", nombre: "Panecillos", categoria: "pan", unidad: "pza", precio: 25, descripcion: "Para acompañar la cena: uno por persona.", firebaseIds: ["PROD_028"] },
   { id: "maquila", nombre: "Maquila", categoria: "maquila", unidad: "kg", precio: 170, descripcion: "Usted nos trae su pavo, lomo, costilla de cerdo, pechuga o pierna de pavo, o la carne que guste y nosotros la cocinamos. Se cobra por kilo de lo que pese. Tráigalo a la tienda al menos 2 días antes de la entrega (de preferencia descongelado). No se aceptan piernas de cerdo.", maquila: true, firebaseIds: ["PROD_013"] },
   { id: "strudel-individual", nombre: "Strudel Individual", categoria: "pan", unidad: "pza", precio: 40, descripcion: "Pasta hojaldrada rellena de manzana.", firebaseIds: ["PROD_035"] },
 ];

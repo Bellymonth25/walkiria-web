@@ -550,7 +550,7 @@ button.cal-day:hover{border-color:var(--primary)}
 .calc-caja summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;font-size:1.05rem}
 .calc-caja summary::-webkit-details-marker{display:none}
 .calc-caja summary b{font-family:var(--font-display);font-weight:400;font-size:1.35rem;margin-right:8px}
-.calc-caja summary::after{content:"Calcular";flex:none;font-weight:700;font-size:.9rem;color:var(--brand);border:1.5px solid currentColor;border-radius:999px;padding:6px 14px}
+.calc-caja summary::after{content:"Ver cenas";flex:none;font-weight:700;font-size:.9rem;color:var(--brand);border:1.5px solid currentColor;border-radius:999px;padding:6px 14px}
 .calc-caja[open] summary::after{content:"Cerrar"}
 .calc-reco{margin:0;padding:0 20px 14px;color:var(--muted);max-width:70ch}
 .calc-caja .calc{padding:0 20px 20px}
@@ -870,3 +870,56 @@ button.thumb:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 .enviado[hidden]{display:none}
 .enviado p{margin:0;font-size:.92rem;color:var(--fg)}
 .enviado .btn{width:100%;justify-content:center}
+
+/* ---------- Cenas sugeridas: personas, tipo de cena y Combo Pavo ---------- */
+.calc-nuevo{display:inline-block;margin-left:8px;font:700 .72rem/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold-soft);padding:5px 8px;border-radius:999px;vertical-align:2px}
+.calc-cuantos{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.calc-cuantos .seg{flex:1 1 240px;grid-template-columns:repeat(3,1fr)}
+.calc-cuantos .qty{flex:none;flex-wrap:nowrap}
+.calc-cuantos .qty input{width:64px;text-align:center}
+.calc-sub{display:block;font-weight:600;font-size:.84rem;color:var(--muted);margin-bottom:6px}
+.calc-elige>.calc-etq{margin-bottom:0}
+.calc-tipos-campo{margin:0 0 16px;padding-bottom:16px;border-bottom:1px dashed var(--line)}
+.calc-tipos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.calc-tipo{position:relative;display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;transition:border-color .2s,background-color .2s}
+.calc-tipo input{margin:3px 0 0;width:18px;height:18px;accent-color:var(--primary);flex:none}
+.calc-tipo b{display:block;font-size:1.02rem}
+.calc-tipo small{display:block;color:var(--muted);font-size:.8rem;line-height:1.35;margin-top:2px}
+.calc-tipo:has(input:checked){border-color:var(--primary);background:var(--primary-soft)}
+.calc-tipo:has(input:focus-visible){outline:3px solid var(--gold);outline-offset:2px}
+@media (max-width:420px){.calc-tipos{grid-template-columns:1fr}}
+.calc-combo{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 14px;border-radius:12px;border:1.5px dashed var(--gold-ink);background:color-mix(in srgb,var(--gold-soft) 55%,var(--surface))}
+.calc-combo.on{border-style:solid;border-color:var(--primary);background:var(--primary-soft)}
+.calc-combo-txt{flex:1 1 220px;display:flex;flex-direction:column;gap:3px;font-size:.88rem;line-height:1.4}
+.calc-combo-txt>b{font-family:var(--font-display);font-weight:400;font-size:1.25rem;line-height:1.1}
+.calc-combo-tag{align-self:flex-start;font:700 .7rem/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold-soft);padding:4px 7px;border-radius:4px}
+.calc-combo.on .calc-combo-tag{color:var(--ok-ink,#0F2E11);background:var(--ok)}
+.calc-combo .btn{flex:none}
+.calc-lista li>span:first-child small{white-space:normal}
+.tag-nuevo{color:var(--ok-ink,#0F2E11);background:var(--ok)}
+
+/* ---------- Tu pedido: se edita ahí mismo ---------- */
+.lines{max-height:none;gap:0}
+.lines li.ln{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:10px 0;border-top:1px dashed var(--line)}
+.lines li.ln:first-child{border-top:0;padding-top:0}
+.ln-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ln-nombre{all:unset;cursor:pointer;font-weight:600;min-width:0;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 30%,transparent);text-underline-offset:3px}
+.ln-nombre:hover{text-decoration-color:currentColor}
+.ln-nombre:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:4px}
+.ln-precio{font-weight:700;flex:none}
+.ln-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.ln-qty{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.ln-qty button{width:36px;height:34px;border:0;background:transparent;color:var(--fg);font:700 1.15rem/1 var(--font-body);cursor:pointer}
+.ln-qty button:hover{background:var(--primary-soft)}
+.ln-qty span{min-width:4.6rem;padding:0 4px;text-align:center;font-weight:700;font-size:.9rem;white-space:nowrap}
+.ln-fija{font-size:.86rem;color:var(--muted);font-weight:600}
+.ln-editar,.ln-quitar{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;font:600 .84rem var(--font-body);cursor:pointer;padding:6px 4px;border-radius:8px}
+.ln-editar{color:var(--primary);text-decoration:underline;text-underline-offset:3px}
+.ln-quitar{margin-left:auto;color:#C62828}
+.ln-quitar svg{width:16px;height:16px}
+:root[data-theme="dark"] .ln-quitar{color:#FF8A80}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ln-quitar{color:#FF8A80}}
+.hint-edit{margin:-6px 0 0;font-size:.82rem;color:var(--muted)}
+@keyframes resalta{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--gold) 80%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+.order.resalta{animation:resalta 1s ease-out 2}
+.row.resalta{animation:resalta 1s ease-out 2}

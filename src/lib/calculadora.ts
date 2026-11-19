@@ -2,12 +2,9 @@ import type { Producto } from "../types";
 import { calculadora } from "../data/temporada";
 import { pavo } from "../data/temporada";
 
-export type Grupo = keyof typeof calculadora.factor;
-export type Personas = Record<Grupo, number>;
-
 export interface Cena {
   personas: number;
-  /** Personas "adulto" equivalentes (los adolescentes cuentan más). */
+  /** Igual a `personas`: todos cuentan igual (se deja para el cálculo del pavo). */
   equivalentes: number;
   carne: number;
   pasta: number;
@@ -22,12 +19,12 @@ export interface Cena {
 /** Hacia arriba, al cuarto de kilo (lo mínimo que se vende). */
 export const redondearKg = (kg: number): number => (kg <= 0 ? 0 : Math.ceil(kg * 4 - 1e-9) / 4);
 
-export function calcularCena(p: Personas): Cena {
-  const grupos = Object.keys(calculadora.factor) as Grupo[];
-  const personas = grupos.reduce((a, g) => a + Math.max(0, Math.floor(p[g] || 0)), 0);
-  const equivalentes = grupos.reduce((a, g) => a + Math.max(0, Math.floor(p[g] || 0)) * calculadora.factor[g], 0);
-  const kg = (porcion: number) => redondearKg(equivalentes * porcion);
-  const por = calculadora.porcionAdultoKg;
+/** Cantidades de una cena para cierto número de personas. Todos comen lo mismo (niños, adolescentes y adultos). */
+export function calcularCena(n: number): Cena {
+  const personas = Math.max(0, Math.floor(Number.isFinite(n) ? n : 0));
+  const equivalentes = personas;
+  const kg = (porcion: number) => redondearKg(personas * porcion);
+  const por = calculadora.porcionKg;
   // Postre: un strudel grande por cada 10 personas; las que sobran, individuales (o uno grande más si son 7 o más).
   let strudelGrande = Math.floor(personas / calculadora.personasPorStrudel);
   let strudelIndividual = personas % calculadora.personasPorStrudel;

@@ -12,13 +12,14 @@ import {
   alcaldiaValida, idLinea, normalizarKgRelleno, nuevaLinea, OTRA_ALCALDIA, textoFaltantes, variasLineas,
 } from "./lib/pedido";
 import { $, aviso } from "./ui/dom";
-import { actualizarPreciosPresentacion, urlImagen, pintarChips, pintarFilaPorClave, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
+import { actualizarPreciosPresentacion, claveFila, urlImagen, pintarChips, pintarFilaPorClave, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
 import { pintarOrden, textoPedido, type ContextoOrden } from "./ui/orden";
 import { pintarCalendario, rangoMeses } from "./ui/calendario";
 import { iniciarHoja } from "./ui/hoja";
 import { iniciarCalculadora, type Agregado } from "./ui/calculadora";
 import { iniciarComun } from "./comun";
 import { iniciarVisor } from "./ui/visor";
+import { COMPONENTES_COMBO } from "./lib/combo";
 
 // ---------- Estado ----------
 const pedido: Pedido = {
@@ -42,7 +43,12 @@ const catalogo: Producto[] = aplicarCatalogo(productos, guardada?.catalogo ?? ne
 let agotados: ReadonlySet<string> = new Set([...(guardada?.agotados ?? []), ...pruebaLista("agotados")]);
 let ocultos: ReadonlySet<string> = new Set([...(guardada?.ocultos ?? []), ...pruebaLista("ocultos")]);
 /** No se puede pedir: agotado u oculto en la web. */
-const noDisponible = (p: Producto): boolean => estaAgotado(p, agotados) || estaOculto(p, ocultos);
+const noDisponible = (p: Producto): boolean =>
+  p.combo ? partesCombo().some((x) => !x || noDisponible(x)) : estaAgotado(p, agotados) || estaOculto(p, ocultos);
+/** El Combo Pavo se agota si falta cualquiera de sus partes (pechuga, relleno o pierna). */
+const agotadoMenu = (p: Producto): boolean =>
+  p.combo ? partesCombo().some((x) => !x || noDisponible(x)) : estaAgotado(p, agotados);
+const partesCombo = () => Object.values(COMPONENTES_COMBO).map((id) => catalogo.find((x) => x.id === id));
 const hoy = new Date();
 let mesVisto = { anio: hoy.getFullYear(), mes: hoy.getMonth() };
 /** Siguiente número de línea para productos que se agregan varias veces (maquila-1, pavo-relleno-2…). */
@@ -70,7 +76,7 @@ const vista = (): VistaMenu => {
     filtro,
     busqueda,
     lineas: pedido.lineas,
-    agotados: (p) => estaAgotado(p, agotados),
+    agotados: agotadoMenu,
     abiertos,
   };
 };
@@ -284,9 +290,48 @@ function agregarDeCalculadora(items: readonly Agregado[], personas: number): voi
   pintarChips(vista());
   pintarMenu(vista());
   pintarPedido();
-  aviso(`Listo: agregamos ${n} ${n === 1 ? "producto" : "productos"} a tu pedido. Puedes ajustarlos aquí.`);
+  aviso(`Listo: agregamos ${n} ${n === 1 ? "producto" : "productos"}. Súbelos, bájalos o quítalos en Tu pedido.`);
   $<HTMLDetailsElement>("#calcCaja").open = false;
-  $("#precios").scrollIntoView({ behavior: "smooth" });
+  mostrarPedido();
+}
+
+/**
+ * Después de agregar una cena sugerida se enseña "Tu pedido" (como el carrito que se abre al agregar
+ * en otras tiendas): en celular se abre la hoja; en compu se sube a la lista y se resalta el pedido.
+ */
+function mostrarPedido(): void {
+  const hoja = $("#order");
+  if (window.matchMedia("(max-width: 980px)").matches) {
+    if (!hoja.classList.contains("open")) $<HTMLButtonElement>("#bar").click();
+    hoja.scrollTop = 0;
+  } else {
+    $(".shop").scrollIntoView({ behavior: "smooth" });
+    hoja.scrollTop = 0;
+  }
+  hoja.classList.remove("resalta");
+  void hoja.offsetWidth;
+  hoja.classList.add("resalta");
+}
+
+/** Desde "Tu pedido": lleva al producto en la lista para cambiar todo lo demás (tamaño, presentación, notas). */
+function irAProducto(productoId: string): void {
+  const p = producto(productoId);
+  if (!p) return;
+  const hoja = $("#order");
+  if (hoja.classList.contains("open")) $<HTMLButtonElement>("#bar").click();
+  if (filtro !== "todo" || busqueda) {
+    filtro = "todo";
+    busqueda = "";
+    $<HTMLInputElement>("#q").value = "";
+    pintarChips(vista());
+    pintarMenu(vista());
+  }
+  const fila = document.querySelector<HTMLElement>(`[data-row="${claveFila(p)}"]`);
+  if (!fila) return;
+  fila.scrollIntoView({ behavior: "smooth", block: "center" });
+  fila.classList.remove("resalta");
+  void fila.offsetWidth;
+  fila.classList.add("resalta");
 }
 
 /** Resta del pedido solo lo que sumó la calculadora. */
@@ -297,7 +342,7 @@ function quitarSugerido(): void {
     if (!x) continue;
     const resto = Math.round((x.l.cantidad - cant) * 100) / 100;
     const minimo = x.p.unidad === "kg" && !x.p.pavoEntero && !x.p.pieza ? 0.25 : 1;
-    ponerLinea(id, x.p.pavoEntero || resto < minimo ? null : { ...x.l, cantidad: resto });
+    ponerLinea(id, x.p.pavoEntero || x.p.combo || resto < minimo ? null : { ...x.l, cantidad: resto });
   }
   sugerido = null;
 }
@@ -333,6 +378,8 @@ document.addEventListener("click", (e) => {
 
   if (d.verfoto) {
     verFoto(d.verfoto);
+  } else if (d.ir) {
+    irAProducto(d.ir);
   } else if (d.cat) {
     filtro = d.cat as Filtro;
     pintarChips(vista());
