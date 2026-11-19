@@ -8,7 +8,7 @@
  * ID del proyecto en clarity.microsoft.com → Settings → Overview → "Project ID".
  * No es secreto: va en el código de la página. Vacío = Clarity no se carga.
  */
-export const CLARITY_ID = "";
+export const CLARITY_ID = "zg68gw9z0h";
 
 /** Eventos que se ven en Clarity (filtros, embudos y grabaciones). */
 export type Evento =
