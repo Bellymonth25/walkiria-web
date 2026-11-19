@@ -657,8 +657,10 @@ button.cal-day:hover{border-color:var(--primary)}
 /* Portada con videos de fondo bajo una máscara roja */
 .hero{isolation:isolate}
 .hero-fondo{position:absolute;inset:0;z-index:-1;overflow:hidden;background:var(--hero) center/cover no-repeat}
-/* Un desenfoque ligero suaviza los cuadritos de compresión del video en las partes oscuras. */
-.hero-fondo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s ease;transform:translateZ(0) scale(1.04);filter:blur(2px)}
+/* El desenfoque ligero que suaviza los cuadritos de compresión ya viene dentro de los videos (public/video).
+   No usar filter:blur aquí: en Chrome obliga a desenfocar cada cuadro del video en la tarjeta de video
+   y la portada (video + nieve) se traba. Safari y Opera lo aguantan, Chrome no. */
+.hero-fondo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s ease;transform:translateZ(0) scale(1.04)}
 .hero-fondo video.activo{opacity:1}
 .hero-fondo video.arriba{z-index:1}
 /* Máscara roja: un solo color parejo (un degradado tan suave se veía en franjas o "columnas").
