@@ -1,5 +1,6 @@
 import type { Linea, Pedido, Presentacion, Producto, TamanoEmpaque, ZonaEnvio } from "../types";
-import { empaques, maquila, pavo } from "../data/temporada";
+import { combo, empaques, maquila, pavo } from "../data/temporada";
+import { desgloseCombo, importeCombo, personasCombo, textoDesglose } from "./combo";
 import { dinero, enLista, kilos, normalizar } from "./formato";
 
 // ---------- Presentación ----------
@@ -16,6 +17,9 @@ export function presentaciones(p: Producto): Presentacion[] {
   if (p.unidad === "pza" || p.maquila) return [];
   return p.pavoEntero || p.pieza ? ["bolsa", "vacio", "charola"] : ["acrilico", "vacio", "charola"];
 }
+
+/** Si el producto lleva empaque que mostrar (presentación elegible, o la charola fija del combo). */
+export const llevaEmpaque = (p: Producto): boolean => presentaciones(p).length > 0 || Boolean(p.combo);
 
 export const tieneCosto = (pr: Presentacion): pr is "vacio" | "charola" => pr === "vacio" || pr === "charola";
 
@@ -36,6 +40,8 @@ export function tamanoPara(kg: number): TamanoEmpaque {
  * (6 kg → 2 grandes de 3 kg). Los pavos enteros van en un empaque grande por pavo.
  */
 export function empaquesDe(p: Producto, l: Linea): Empaque[] {
+  // El combo va siempre en una charola grande.
+  if (p.combo) return [{ tamano: "grande", piezas: 1, precio: empaques.precio.charola.grande }];
   if (!presentaciones(p).length || !tieneCosto(l.presentacion)) return [];
   const precios = empaques.precio[l.presentacion];
   if (p.pavoEntero) return [{ tamano: "grande", piezas: l.cantidad, precio: precios.grande }];
@@ -96,7 +102,7 @@ export const maquilaIncompleta = (l: Linea): boolean =>
 // ---------- Cantidades ----------
 
 /** Productos que se agregan como varias líneas independientes (cada maquila, cada pavo). */
-export const variasLineas = (p: Producto): boolean => Boolean(p.maquila || p.pavoEntero);
+export const variasLineas = (p: Producto): boolean => Boolean(p.maquila || p.pavoEntero || p.combo);
 
 /** Id de la línea en el pedido. Cada versión va aparte: "pechuga-pavo~horneada". */
 export const idLinea = (p: Producto, version = ""): string =>
@@ -109,10 +115,11 @@ export function nuevaLinea(p: Producto, version = ""): Linea {
   return {
     productoId: p.id,
     // Maquila: el cliente escribe cuánto pesa su carne (empieza vacío).
-    cantidad: p.maquila ? 0 : 1,
+    // Combo: la cantidad es el número de personas.
+    cantidad: p.maquila ? 0 : p.combo ? combo.personasDefault : 1,
     tamano: "completo",
     kgPorPavo: kgMinimoPavo(p),
-    presentacion: presentaciones(p)[0] ?? "acrilico",
+    presentacion: p.combo ? "charola" : (presentaciones(p)[0] ?? "acrilico"),
     tipoMaquila: "",
     otroMaquila: "",
     kgRelleno: 1,
@@ -130,6 +137,7 @@ export function kgDe(p: Producto, l: Linea): number {
 }
 
 export function importeProducto(p: Producto, l: Linea): number {
+  if (p.combo) return importeCombo(p, l.cantidad);
   if (p.unidad === "pza") return p.precio * l.cantidad;
   const relleno = p.maquila && llevaRelleno(l) ? maquila.precioRellenoKg * l.kgRelleno : 0;
   return redondear2(p.precio * kgDe(p, l) + relleno);
@@ -143,6 +151,7 @@ export const importeLinea = (p: Producto, l: Linea): number => importeProducto(p
 
 /** Lo que se escribe en el pedido: "6 kg", "2 pzas", "1 pavo completo (aprox. 5 kg)". */
 export function textoCantidad(p: Producto, l: Linea): string {
+  if (p.combo) return `para ${desgloseCombo(l.cantidad).personas} personas`;
   if (p.pavoEntero) {
     const n = l.cantidad;
     const cu = n === 1 ? "" : " c/u";
@@ -169,6 +178,7 @@ export const paso = (p: Producto): number => (porKilo(p) ? 0.5 : 1);
 
 /** Limpia lo que el cliente escribe. Regresa null si no es un número válido. */
 export function normalizarCantidad(p: Producto, valor: number): number | null {
+  if (p.combo) return Number.isFinite(valor) && valor > 0 ? personasCombo(valor) : null;
   if (p.maquila) return Number.isFinite(valor) && valor >= 0 ? Math.round(valor * 100) / 100 : null;
   if (!Number.isFinite(valor) || valor <= 0) return null;
   if (!porKilo(p)) return Math.max(1, Math.round(valor));
@@ -188,6 +198,7 @@ export function normalizarKgRelleno(valor: number): number {
 }
 
 export function aumentar(p: Producto, actual: number): number {
+  if (p.combo) return personasCombo(actual + 1);
   return redondear1(actual + paso(p));
 }
 
@@ -195,6 +206,7 @@ export function aumentar(p: Producto, actual: number): number {
 export function disminuir(p: Producto, actual: number): number {
   const n = redondear1(actual - paso(p));
   if (p.maquila) return Math.max(0, n);
+  if (p.combo) return n < combo.minPersonas ? 0 : n;
   return n < (porKilo(p) ? 0.25 : 1) ? 0 : n;
 }
 
@@ -325,6 +337,12 @@ export function mensaje(pedido: Pedido, ctx: ContextoMensaje): string {
     const { producto: p, linea: l } = r;
     lineas.push(`• ${nombreLinea(p, l)}, ${textoCantidad(p, l)}: ${dinero(importeProducto(p, l))}`);
     if (p.maquila && llevaRelleno(l)) lineas.push(`   Con ${kilos(l.kgRelleno)} de relleno`);
+    // Producción necesita el desglose del combo para armarlo.
+    if (p.combo) {
+      lineas.push(`   Lleva: ${textoDesglose(l.cantidad)}`);
+      lineas.push(`   Va en una misma charola de aluminio: ${textoEmpaques("charola", empaquesDe(p, l))}`);
+      lineas.push("   Precio estimado: varía según el peso de las piernas");
+    }
     if (presentaciones(p).length) {
       const es = empaquesDe(p, l);
       lineas.push(`   Va ${vaEn[l.presentacion]}${es.length ? `: ${textoEmpaques(l.presentacion, es)}` : " (sin costo)"}`);

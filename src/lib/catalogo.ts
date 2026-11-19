@@ -1,5 +1,6 @@
 import type { CategoriaId, Producto } from "../types";
 import { normalizar } from "./formato";
+import { resolverCombos } from "./combo";
 
 /**
  * Lo que la Cloud Function publica de cada producto de comida en `publicWeb/disponibilidad`.
@@ -59,7 +60,7 @@ const CATEGORIA_DE_GRUPO: Record<string, CategoriaId> = {
  * Agotados y ocultos se resuelven aparte, con las listas de ids.
  */
 export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<string, ProductoPublico>): Producto[] {
-  if (!publico.size) return [...base];
+  if (!publico.size) return resolverCombos([...base]);
   const porNombre = new Map([...publico].map(([id, p]) => [normalizar(p.nombre.trim()), id]));
   const usados = new Set<string>();
 
@@ -92,5 +93,5 @@ export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<
         ...(esFotoPropia(p.imagen) ? { imagen: p.imagen, imagenMini: p.imagen } : {}),
       }),
     );
-  return [...lista, ...extra];
+  return resolverCombos([...lista, ...extra]);
 }

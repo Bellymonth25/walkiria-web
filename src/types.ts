@@ -27,6 +27,12 @@ export interface Producto {
   soloCompleto?: boolean;
   /** Se pide por pieza (ej. patos) pero se cobra por kilo con un peso aproximado por pieza. */
   pieza?: PiezaPorPeso;
+  /**
+   * Combo Pavo: pechuga, relleno y piernas de pavo en una charola. La cantidad de la línea es el
+   * número de personas y el precio sale del desglose con los precios por kilo de cada parte
+   * (se toman de la lista al cargar, ver `resolverCombos`).
+   */
+  combo?: PreciosCombo;
   /** Maquila: el cliente trae su carne y se cobra por kilo cocinado. Se puede agregar varias veces. */
   maquila?: boolean;
   /**
@@ -52,6 +58,13 @@ export interface Producto {
   imagen?: string;
   /** Miniatura 4:3 de ~320 px para la lista. Si falta, se usa `imagen`. */
   imagenMini?: string;
+}
+
+/** Precio por kilo de cada parte del Combo Pavo. */
+export interface PreciosCombo {
+  pechuga: number;
+  relleno: number;
+  pierna: number;
 }
 
 export interface PiezaPorPeso {

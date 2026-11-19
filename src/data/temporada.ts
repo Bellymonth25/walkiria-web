@@ -133,13 +133,11 @@ export const firebaseWeb = {
 } as const;
 
 /**
- * Calculadora "¿Cuánto pido?". Porciones por adulto y cuánto come cada grupo comparado con un adulto.
- * Para ajustar las porciones solo hay que cambiar estos números.
+ * Cenas sugeridas ("¿No sabes cuánto pedir?"). Porciones por persona: todos cuentan igual
+ * (niños, adolescentes y adultos), son cantidades fijas. Para ajustar solo hay que cambiar estos números.
  */
 export const calculadora = {
-  porcionAdultoKg: { carne: 0.15, pasta: 0.15, ensalada: 0.15, romeritos: 0.05, bacalao: 0.05 },
-  /** "Personas" incluye niños, adultos y personas mayores; los adolescentes suelen comer más. */
-  factor: { personas: 1, adolescentes: 1.25 },
+  porcionKg: { carne: 0.15, pasta: 0.15, ensalada: 0.15, romeritos: 0.05, bacalao: 0.05 },
   /** Botones de tamaño de cena. La primera es la que se ve al abrir. */
   sugeridas: [4, 6, 10],
   /** Pavo en la calculadora: con menos de 6 personas no se ofrece (sobraría muchísimo). */
@@ -153,4 +151,48 @@ export const calculadora = {
   maxCarnes: 3,
   /** Un Strudel de Manzana grande alcanza para 10 personas. */
   personasPorStrudel: 10,
+} as const;
+
+/** Lo que se puede prender o apagar en una cena sugerida. */
+export type ExtraCena = "romeritos" | "bacalao" | "panes" | "postre";
+export type TipoCena = "basica" | "completa";
+
+/**
+ * Las dos cenas base. Son el punto de partida: el cliente puede prender o apagar cada extra.
+ * Carne, pasta y ensalada van siempre.
+ */
+export const tiposCena: Record<TipoCena, { nombre: string; incluye: string; extras: Record<ExtraCena, boolean> }> = {
+  basica: {
+    nombre: "Básica",
+    incluye: "Carne, pasta, ensalada y postre",
+    extras: { romeritos: false, bacalao: false, panes: false, postre: true },
+  },
+  completa: {
+    nombre: "Todo incluido",
+    incluye: "Lo de la básica + romeritos, bacalao y panecillos",
+    extras: { romeritos: true, bacalao: true, panes: true, postre: true },
+  },
+};
+
+/**
+ * Combo Pavo para familias chicas: pechuga, relleno y piernas de pavo en una misma charola.
+ * A producción le llega el desglose (ver `desgloseCombo` en lib/combo.ts).
+ * PENDIENTE de confirmar con el equipo: gramajes y si el precio queda fijo.
+ */
+export const combo = {
+  /** Se ofrece en las cenas sugeridas hasta este número de personas. */
+  hastaPersonas: 5,
+  /** Personas con que se agrega desde la lista de productos. */
+  personasDefault: 4,
+  /** Mínimo de personas del combo (con menos ya no tiene caso: van 2 piernas). */
+  minPersonas: 2,
+  piernas: 2,
+  /** Peso estimado de cada pierna (con hueso). El precio final cambia según lo que pese. */
+  kgPorPierna: 0.7,
+  /** Pechuga y relleno por persona; se redondea hacia arriba al cuarto de kilo, con un mínimo. */
+  pechugaKgPorPersona: 0.125,
+  rellenoKgPorPersona: 0.1,
+  minimoKg: 0.5,
+  versionPechuga: "Horneada",
+  versionPierna: "Horneada",
 } as const;

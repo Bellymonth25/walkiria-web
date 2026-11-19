@@ -17,6 +17,16 @@ El calendario arranca en el mes actual y deja elegir de hoy al 31 de diciembre.
 En `temporada.ts` también están los precios de empaques (y su capacidad en kg), el servicio
 la maquila (precio, relleno y la lista de "¿Qué nos trae?") y los datos del negocio.
 
+## Cenas sugeridas y Combo Pavo
+
+- `calculadora` y `tiposCena` en `temporada.ts`: porciones por persona (todos cuentan igual) y las dos
+  cenas base, **Básica** (carne, pasta, ensalada y postre) y **Todo incluido** (además romeritos,
+  bacalao y panecillos). El cliente puede prender o apagar romeritos, bacalao, panecillos y postre.
+- `combo` en `temporada.ts`: Combo Pavo (pechuga, relleno y 2 piernas en una charola) para 5 personas
+  o menos. Su precio sale de los precios por kilo de pechuga, relleno y pierna (`src/lib/combo.ts`),
+  y el mensaje de WhatsApp lleva el desglose para producción. Se agota si falta cualquiera de sus partes.
+- En "Tu pedido" cada producto se sube, baja o quita ahí mismo; el nombre lleva al producto en la lista.
+
 ## Productos agotados
 
 La página lee `publicWeb/disponibilidad` de Firestore (sin SDK, con un `fetch`). Ese documento
