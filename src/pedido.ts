@@ -18,6 +18,7 @@ import { pintarCalendario, rangoMeses } from "./ui/calendario";
 import { iniciarHoja } from "./ui/hoja";
 import { iniciarCalculadora, type Agregado } from "./ui/calculadora";
 import { iniciarComun } from "./comun";
+import { evento } from "./lib/analitica";
 import { iniciarVisor } from "./ui/visor";
 import { COMPONENTES_COMBO } from "./lib/combo";
 
@@ -257,6 +258,7 @@ function agregar(productoId: string, version = ""): void {
   }
   ponerLinea(id, nuevaLinea(p, version));
   repintar(p.id);
+  evento("producto_agregado");
   if (p.maquila) document.querySelector<HTMLSelectElement>(`#tipo-${id}`)?.focus();
 }
 
@@ -265,6 +267,7 @@ function agregar(productoId: string, version = ""): void {
  * para poder retirarlo después sin tocar lo que el cliente agregó aparte.
  */
 function agregarDeCalculadora(items: readonly Agregado[], personas: number): void {
+  evento("calculadora_usada");
   // Si ya había usado la calculadora, lo sugerido antes se cambia por lo nuevo.
   if (sugerido) quitarSugerido();
   const sumado: Record<string, number> = {};
@@ -381,6 +384,7 @@ const visor = iniciarVisor();
 function verFoto(productoId: string): void {
   const p = producto(productoId);
   if (!p?.imagen) return;
+  evento("foto_abierta");
   visor.abrir([{ titulo: `${p.nombre} · ${dinero(p.precio)}/${p.unidad}`, alt: p.nombre, media: urlImagen(p.imagen) }]);
 }
 
@@ -470,6 +474,7 @@ document.addEventListener("click", (e) => {
   } else if (t.id === "send") {
     // WhatsApp se abre en otra pestaña (el enlace sigue su camino): se anota qué pedido se mandó.
     enviado = textoPedido(pedido, ctx);
+    evento("pedido_whatsapp");
     pintarPedido();
     $("#enviado").scrollIntoView({ block: "nearest", behavior: "smooth" });
   } else if (t.id === "otroPedido") {

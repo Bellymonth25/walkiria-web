@@ -87,7 +87,7 @@
           <button class="vaciar" id="vaciar" type="button" hidden>Vaciar pedido</button>
           <div class="field">
             <label for="cname">Tu nombre</label>
-            <input id="cname" type="text" autocomplete="name" placeholder="Nombre y apellido">
+            <input id="cname" data-clarity-mask="true" type="text" autocomplete="name" placeholder="Nombre y apellido">
           </div>
           <div class="field">
             <span class="legend">Entrega</span>
@@ -104,8 +104,8 @@
           </div>
           <div class="field" id="addrField" hidden>
             <label for="addr">Dirección de entrega</label>
-            <textarea id="addr" rows="2" autocomplete="street-address" placeholder="Calle, número, colonia y alcaldía"></textarea>
-            <input id="ref" type="text" placeholder="Referencias (opcional): entre calles, color de la casa…">
+            <textarea id="addr" data-clarity-mask="true" rows="2" autocomplete="street-address" placeholder="Calle, número, colonia y alcaldía"></textarea>
+            <input id="ref" data-clarity-mask="true" type="text" placeholder="Referencias (opcional): entre calles, color de la casa…">
           </div>
           <div class="field">
             <span class="legend" id="dayLabel">Día de entrega</span>
@@ -115,7 +115,7 @@
           <p class="warn" id="warn" hidden>El 24 de diciembre y el 31 de diciembre sólo entregamos en tienda. Cambiamos tu pedido a "Recojo en tienda".</p>
           <div class="field">
             <label for="nota">Alguna nota especial para su pedido</label>
-            <textarea id="nota" rows="2" placeholder="Ej. La ensalada de manzana sin apio, o tocar el timbre dos veces"></textarea>
+            <textarea id="nota" data-clarity-mask="true" rows="2" placeholder="Ej. La ensalada de manzana sin apio, o tocar el timbre dos veces"></textarea>
           </div>
           <ul class="desglose" id="desglose" aria-label="Desglose del total" hidden></ul>
           <div class="total"><span class="legend">Total estimado</span><b class="num" id="total">$0</b></div>

@@ -3,6 +3,7 @@ import "./encabezados.css";
 import { maquila, negocio, temporada } from "./data/temporada";
 import { dinero } from "./lib/formato";
 import { enlaceWhatsApp } from "./lib/pedido";
+import { escucharWhatsAppDudas, iniciarAnalitica } from "./lib/analitica";
 import { $, llenar } from "./ui/dom";
 import { iniciarLuces } from "./ui/luces";
 import { iniciarNieve } from "./ui/nieve";
@@ -10,6 +11,8 @@ import { iniciarTema } from "./ui/tema";
 
 /** Lo que comparten todas las páginas: barra de arriba, tema, luces, nieve y los datos de la temporada. */
 export function iniciarComun(): void {
+  iniciarAnalitica();
+  escucharWhatsAppDudas();
   iniciarTema($<HTMLButtonElement>("#themeToggle"));
   iniciarLuces($(".lights"));
   const lienzo = document.querySelector<HTMLCanvasElement>("#snow");
