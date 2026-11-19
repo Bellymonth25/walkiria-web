@@ -36,7 +36,20 @@ export function pintarOrden(pedido: Pedido, ctx: ContextoOrden): void {
   $("#order").dataset.empty = String(n === 0 && window.innerWidth <= 980);
   $("#hint").hidden = n > 0;
   $("#hintEdit").hidden = n === 0;
-  $("#lines").innerHTML =
+  // Mientras el cliente escribe una cantidad aquí, no se repinta la lista (perdería el cursor):
+  // solo cambian precio y empaques de cada renglón.
+  const foco = document.activeElement as HTMLElement | null;
+  const escribiendo = !!foco?.dataset.lnqty && $("#lines").contains(foco) && filas.some((r) => r.id === foco.dataset.lnqty);
+  if (escribiendo) {
+    for (const r of filas) {
+      const precio = document.querySelector(`[data-lnprecio="${r.id}"]`);
+      const extra = document.querySelector(`[data-lnextra="${r.id}"]`);
+      if (precio) precio.textContent = dinero(r.importe);
+      if (extra) extra.textContent = textoExtra(r);
+      const campo = document.querySelector<HTMLInputElement>(`[data-lnqty="${r.id}"]`);
+      if (campo && campo !== foco) campo.value = String(r.linea.cantidad);
+    }
+  } else $("#lines").innerHTML =
     filas.map(lineaPedido).join("") +
     (envio
       ? `<li><span>Envío ${escapar(zonaDe(pedido.alcaldia, ctx.temporada.zonas)!.nombre)} <span class="q">· ${escapar(pedido.alcaldia)}</span></span><span class="num">${dinero(envio)}</span></li>`
@@ -86,25 +99,38 @@ const BASURA = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
  * (como el carrito de las tiendas en línea). Lo que no es cantidad (tamaño del pavo, presentación,
  * maquila) se cambia en el producto: el nombre lleva ahí.
  */
-function lineaPedido(r: Renglon): string {
-  const { producto: p, linea: l, id } = r;
-  const nombre = escapar(nombreLinea(p, l));
+function textoExtra(r: Renglon): string {
+  const { producto: p, linea: l } = r;
   const extra: string[] = [];
   if (p.combo) extra.push(textoDesglose(l.cantidad));
   if (llevaEmpaque(p)) extra.push(textoEmpaques(l.presentacion, empaquesDe(p, l)));
+  return extra.join(" · ");
+}
+
+/** Lo que va junto al número que escribe el cliente: "kg", "pzas", "personas". */
+function unidadCampo(p: Renglon["producto"], cantidad: number): [string, string] {
+  if (p.combo) return ["para", "personas"];
+  if (p.pieza) return ["", cantidad === 1 ? p.pieza.nombre : p.pieza.plural];
+  return ["", p.unidad === "pza" ? (cantidad === 1 ? "pza" : "pzas") : "kg"];
+}
+
+function lineaPedido(r: Renglon): string {
+  const { producto: p, linea: l, id } = r;
+  const nombre = escapar(nombreLinea(p, l));
+  const extra = textoExtra(r);
   // Pavo entero y maquila no llevan − y +: cada pavo es su línea y la maquila pide datos.
   const conPasos = !p.pavoEntero && !p.maquila;
   const cantidad = escapar(textoCantidad(p, l));
   const control = conPasos
     ? `<div class="ln-qty" role="group" aria-label="Cantidad de ${nombre}">
         <button type="button" data-dec="${id}" aria-label="Menos ${nombre}">−</button>
-        <span class="num">${cantidad}</span>
+        <label class="ln-campo">${unidadCampo(p, l.cantidad)[0] ? `<span>${unidadCampo(p, l.cantidad)[0]}</span>` : ""}<input class="num" type="text" inputmode="${p.unidad === "kg" && !p.pieza ? "decimal" : "numeric"}" enterkeyhint="done" autocomplete="off" value="${l.cantidad}" data-lnqty="${id}" aria-label="Cantidad de ${nombre}"><span>${unidadCampo(p, l.cantidad)[1]}</span></label>
         <button type="button" data-inc="${id}" aria-label="Más ${nombre}">+</button>
       </div>`
     : `<span class="ln-fija">${cantidad}</span>`;
   return `<li class="ln">
-    <div class="ln-top"><button type="button" class="ln-nombre" data-ir="${p.id}" title="Ver y cambiar en la lista">${nombre}</button><span class="num ln-precio">${dinero(r.importe)}</span></div>
-    ${extra.length ? `<small>${escapar(extra.join(" · "))}</small>` : ""}
+    <div class="ln-top"><button type="button" class="ln-nombre" data-ir="${p.id}" title="Ver y cambiar en la lista">${nombre}</button><span class="num ln-precio" data-lnprecio="${id}">${dinero(r.importe)}</span></div>
+    ${extra ? `<small data-lnextra="${id}">${escapar(extra)}</small>` : ""}
     <div class="ln-ctl">${control}
       ${conPasos ? "" : `<button type="button" class="ln-editar" data-ir="${p.id}">Editar</button>`}
       <button type="button" class="ln-quitar" data-del="${id}" aria-label="Quitar ${nombre}">${BASURA}<span>Quitar</span></button></div>
