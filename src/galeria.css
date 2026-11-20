@@ -30,3 +30,62 @@
   .gal-plegable .gal-mas{display:flex;margin:14px auto 0;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 .95rem var(--font-body);padding:11px 20px;border-radius:999px;cursor:pointer;position:relative;z-index:1}
   .gal-plegable:not(.plegada) .gal-mas{display:none}
 }
+
+/* "Nuestra historia" mientras llegan las fotos: aviso de próximamente y tres instantáneas
+   colgadas de un tendedero que se van revelando poco a poco (como en el cuarto oscuro). */
+.gal-pronto{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:28px;align-items:center;padding:28px 32px;border-radius:24px;
+  background:var(--surface);border:1.5px dashed color-mix(in srgb,var(--gold) 70%,transparent)}
+.gal-pronto-insignia{display:inline-flex;align-items:center;gap:8px;font:700 .74rem/1 var(--font-body);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gold-ink);background:var(--gold-soft);padding:7px 12px;border-radius:999px}
+.gal-pronto-insignia .punto{width:8px;height:8px;border-radius:50%;background:var(--brand);animation:pronto-latido 1.6s ease-in-out infinite}
+.gal-pronto h3{font-size:clamp(1.4rem,2.6vw,1.9rem);margin:14px 0 8px;color:var(--brand)}
+.gal-pronto p{margin:0;color:var(--muted);max-width:42ch}
+.gal-pronto-tendedero{position:relative;display:flex;justify-content:center;gap:clamp(12px,2.4vw,28px);padding-top:18px}
+.gal-pronto-tendedero .cuerda{position:absolute;left:-2%;right:-2%;top:0;width:104%;height:40px;overflow:visible}
+.gal-pronto-tendedero .cuerda path{fill:none;stroke:var(--gold-ink);stroke-width:1.6;stroke-dasharray:3 2;vector-effect:non-scaling-stroke;opacity:.7}
+.revelando{position:relative;margin:0;flex:1 1 0;max-width:180px;background:#FFFDF8;padding:9px 9px 0;border-radius:3px;
+  box-shadow:0 1px 0 rgba(0,0,0,.04),0 12px 26px rgba(42,26,23,.18);transform-origin:50% -10px;animation:pronto-meneo 5s ease-in-out infinite}
+.revelando.r1{rotate:-4deg;margin-top:2px}
+.revelando.r2{rotate:2.5deg;margin-top:20px;animation-delay:-1.7s}
+.revelando.r3{rotate:-1.5deg;margin-top:6px;animation-delay:-3.2s}
+.revelando .pinza{position:absolute;left:50%;top:-14px;width:12px;height:26px;translate:-50% 0;border-radius:3px;
+  background:linear-gradient(90deg,#B98A2E,#E6BE63 45%,#B98A2E);box-shadow:0 2px 3px rgba(0,0,0,.25);z-index:2}
+.revelando .pinza::after{content:"";position:absolute;left:5px;top:3px;width:2px;height:20px;background:rgba(0,0,0,.18)}
+/* La película: empieza oscura (sin revelar) y la imagen va apareciendo, borrosa y en sepia */
+.revelando .pelicula{position:relative;display:block;aspect-ratio:1;overflow:hidden;background:#2A1A17}
+.revelando .pelicula::after{content:"";position:absolute;inset:0;opacity:.35;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
+.revelando .imagen{position:absolute;inset:-8%;filter:blur(7px) sepia(.6);opacity:0;animation:pronto-revela 9s ease-in-out infinite}
+.r1 .imagen{background:
+  radial-gradient(circle at 50% 34%,#F2D9B3 0 11%,transparent 12%),
+  radial-gradient(ellipse 26% 34% at 50% 78%,#7A1626 0 98%,transparent),
+  radial-gradient(circle at 18% 30%,#E9C98F 0 7%,transparent 8%),
+  linear-gradient(#C9A26A,#8E6A44)}
+.r2 .imagen{animation-delay:-3s;background:
+  radial-gradient(ellipse 34% 14% at 50% 72%,#FAF4EA 0 98%,transparent),
+  radial-gradient(ellipse 18% 13% at 50% 64%,#B5652B 0 98%,transparent),
+  radial-gradient(circle at 80% 26%,#F6E7C4 0 6%,transparent 7%),
+  linear-gradient(#5E111C 0 55%,#8C5A3C 55%)}
+.r3 .imagen{animation-delay:-6s;background:
+  radial-gradient(circle at 34% 40%,#F2D9B3 0 9%,transparent 10%),
+  radial-gradient(circle at 64% 38%,#F2D9B3 0 9%,transparent 10%),
+  radial-gradient(ellipse 18% 30% at 34% 82%,#7A1626 0 98%,transparent),
+  radial-gradient(ellipse 18% 30% at 64% 80%,#C9972F 0 98%,transparent),
+  linear-gradient(#E7D3B0,#A9825A)}
+.revelando figcaption{font:600 1.15rem/1 "Caveat","Segoe Print","Bradley Hand",cursive;color:#7A1626;text-align:center;padding:9px 2px 11px;white-space:nowrap}
+@keyframes pronto-revela{0%,8%{opacity:0;filter:blur(9px) sepia(.9) brightness(.6)}55%,78%{opacity:.92;filter:blur(3px) sepia(.55) brightness(1)}100%{opacity:0;filter:blur(9px) sepia(.9) brightness(.6)}}
+@keyframes pronto-meneo{0%,100%{transform:rotate(0)}50%{transform:rotate(1.6deg)}}
+@keyframes pronto-latido{0%,100%{opacity:1;scale:1}50%{opacity:.35;scale:.75}}
+@media (prefers-reduced-motion:reduce){
+  .revelando,.gal-pronto-insignia .punto{animation:none}
+  .revelando .imagen{animation:none;opacity:.6;filter:blur(5px) sepia(.7)}
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .revelando{box-shadow:0 14px 30px rgba(0,0,0,.55)}}
+:root[data-theme="dark"] .revelando{box-shadow:0 14px 30px rgba(0,0,0,.55)}
+@media (max-width:760px){
+  .gal-pronto{grid-template-columns:1fr;padding:22px 18px 26px;gap:22px;text-align:center}
+  .gal-pronto p{margin-inline:auto}
+  .revelando{max-width:150px}
+  .revelando figcaption{font-size:1rem}
+}
+@media (max-width:420px){.revelando.r3{display:none}.revelando{max-width:140px}}

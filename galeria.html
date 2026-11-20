@@ -18,7 +18,7 @@
   <meta property="og:image" content="/img/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Gloock&family=Figtree:wght@400;500;600;700&display=swap">
 </head>
 <body>
 <header class="top" data-encabezado="4">
@@ -55,8 +55,22 @@
       <h2 class="gal-titulo">Nuestros platillos</h2>
       <div class="gal-plegable plegada" id="galPlegable"><div class="gal-rejilla mosaico" id="galPlatillos"></div><button class="gal-mas" type="button" id="galMas">Ver más fotos <span id="galMasN"></span></button></div>
       <h2 class="gal-titulo">Nuestra historia</h2>
-      <p class="gal-nota">Muy pronto: fotos de La Walkiria a lo largo de los años.</p>
-      <div class="gal-rejilla" id="galHistoria"><button class="gal-foto" type="button" data-gal="historia-1" data-nombre="Nuestra historia 1" aria-label="Ver foto de Nuestra historia 1 en grande"><span class="gal-nombre">Nuestra historia 1</span></button><button class="gal-foto" type="button" data-gal="historia-2" data-nombre="Nuestra historia 2" aria-label="Ver foto de Nuestra historia 2 en grande"><span class="gal-nombre">Nuestra historia 2</span></button><button class="gal-foto" type="button" data-gal="historia-3" data-nombre="Nuestra historia 3" aria-label="Ver foto de Nuestra historia 3 en grande"><span class="gal-nombre">Nuestra historia 3</span></button></div>
+      <!-- Mientras no estén las fotos de la historia se ve este aviso con fotos "revelándose".
+           Cuando estén listas (public/img/galeria/historia-1.jpg, -2, -3), cambia este bloque por:
+           <div class="gal-rejilla" id="galHistoria"><button class="gal-foto" type="button" data-gal="historia-1" data-nombre="Nuestra historia 1" aria-label="Ver foto de Nuestra historia 1 en grande"><span class="gal-nombre">Nuestra historia 1</span></button> … </div> -->
+      <div class="gal-pronto" id="galHistoria">
+        <div class="gal-pronto-texto">
+          <span class="gal-pronto-insignia"><span class="punto" aria-hidden="true"></span>Próximamente</span>
+          <h3>Estamos trabajando en ello</h3>
+          <p>Estamos reuniendo las fotos de La Walkiria a lo largo de los años. Siguen en el cuarto de revelado; muy pronto las verás aquí.</p>
+        </div>
+        <div class="gal-pronto-tendedero" aria-hidden="true">
+          <svg class="cuerda" viewBox="0 0 600 40" preserveAspectRatio="none"><path d="M0 6 Q300 46 600 6"/></svg>
+          <figure class="revelando r1"><span class="pinza"></span><span class="pelicula"><span class="imagen"></span></span><figcaption>Revelando…</figcaption></figure>
+          <figure class="revelando r2"><span class="pinza"></span><span class="pelicula"><span class="imagen"></span></span><figcaption>Secando…</figcaption></figure>
+          <figure class="revelando r3"><span class="pinza"></span><span class="pelicula"><span class="imagen"></span></span><figcaption>¡Ya casi!</figcaption></figure>
+        </div>
+      </div>
     </div>
   </section>
   <dialog class="visor" id="visor" aria-label="Imagen en grande">
