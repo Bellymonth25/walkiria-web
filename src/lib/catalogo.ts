@@ -1,5 +1,6 @@
 import type { CategoriaId, FotoProducto, Producto } from "../types";
 import { SITIO, urlLocal } from "./galeria";
+import { normalizarEncuadre } from "./encuadre";
 import { normalizar } from "./formato";
 import { resolverCombos } from "./combo";
 
@@ -54,12 +55,17 @@ function leerFotos(v: Valor | undefined): FotoProducto[] | undefined {
     const f = x.mapValue?.fields ?? {};
     const url = texto(f.url);
     if (!esFotoPropia(url)) return [];
+    const grande = texto(f.grande);
+    const e = f.encuadre?.mapValue?.fields;
+    const encuadre = e ? normalizarEncuadre({ x: numero(e.x), y: numero(e.y), zoom: numero(e.zoom) }) : undefined;
     return [
       {
         url,
         forma: texto(f.forma) === "v" ? "v" : "h",
         ...(f.ancha?.booleanValue ? { ancha: true } : {}),
         ...(f.carrusel?.booleanValue === false ? { carrusel: false } : {}),
+        ...(esFotoPropia(grande) ? { grande } : {}),
+        ...(encuadre ? { encuadre } : {}),
       },
     ];
   });
@@ -76,10 +82,19 @@ export const esFotoPropia = (url: string): boolean => /^https:\/\/firebasestorag
  * Foto principal de Firestore para el renglón del pedido. Si es la misma foto que la web ya tenía,
  * se conserva su miniatura ligera; si es nueva, la miniatura es la misma foto.
  */
-function fotoPrincipal(p: Producto, imagen: string): Partial<Pick<Producto, "imagen" | "imagenMini">> {
+function fotoPrincipal(p: Producto, imagen: string, fotos: readonly FotoProducto[] = []): Partial<Pick<Producto, "imagen" | "imagenMini" | "imagenGrande" | "encuadre">> {
   if (!esFotoPropia(imagen)) return {};
   const local = urlLocal(imagen);
-  return { imagen: local, imagenMini: local === p.imagen && p.imagenMini ? p.imagenMini : local };
+  // Encuadre y tamaño real vienen de la foto principal dentro de `fotos`.
+  const f = fotos.find((x) => x.url === imagen);
+  // Con encuadre, la miniatura ligera de la página (ya recortada) no sirve: se usa la foto.
+  const mini = !f?.encuadre && local === p.imagen && p.imagenMini ? p.imagenMini : local;
+  return {
+    imagen: local,
+    imagenMini: mini,
+    ...(f?.grande ? { imagenGrande: urlLocal(f.grande) } : {}),
+    ...(f?.encuadre ? { encuadre: f.encuadre } : {}),
+  };
 }
 
 /** Agrega `fotos` solo si existe (con exactOptionalPropertyTypes no se puede poner undefined). */
@@ -124,7 +139,7 @@ export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<
       firebaseIds: ligado,
       precio: fs.precio > 0 ? fs.precio : p.precio,
       nombre: sencillo && fs.nombre ? fs.nombre : p.nombre,
-      ...fotoPrincipal(p, fs.imagen),
+      ...fotoPrincipal(p, fs.imagen, fs.fotos),
       ...conFotos(fotos),
     };
     // Si en el panel se quitaron todas sus fotos, en el pedido sale "Foto pronto".
@@ -146,7 +161,7 @@ export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<
         unidad: p.unidad.toLowerCase() === "kg" ? "kg" : "pza",
         precio: p.precio,
         firebaseIds: [id],
-        ...(esFotoPropia(p.imagen) ? { imagen: urlLocal(p.imagen), imagenMini: urlLocal(p.imagen) } : {}),
+        ...fotoPrincipal({ id, nombre: p.nombre, categoria: "otros", unidad: "kg", precio: 0, firebaseIds: [] }, p.imagen, p.fotos),
         ...conFotos(p.fotos),
       }),
     );

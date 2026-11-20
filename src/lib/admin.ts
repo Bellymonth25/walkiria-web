@@ -1,4 +1,5 @@
-import type { FotoProducto, Producto } from "../types";
+import type { Encuadre, FotoProducto, Producto } from "../types";
+import { normalizarEncuadre } from "./encuadre";
 import type { FotoGaleria } from "../data/galeria";
 import { fotosDeLaPagina, SITIO } from "./galeria";
 
@@ -97,7 +98,18 @@ export function leerFotos(v: unknown): FotoProducto[] {
     const f = (x ?? {}) as Record<string, unknown>;
     const url = texto(f.url);
     if (!url) return [];
-    return [{ url, forma: f.forma === "v" ? "v" : "h", ...(f.ancha === true ? { ancha: true } : {}), ...(f.carrusel === false ? { carrusel: false } : {}) }];
+    const grande = texto(f.grande);
+    const encuadre = normalizarEncuadre(f.encuadre as Partial<Encuadre> | undefined);
+    return [
+      {
+        url,
+        forma: f.forma === "v" ? "v" : "h",
+        ...(f.ancha === true ? { ancha: true } : {}),
+        ...(f.carrusel === false ? { carrusel: false } : {}),
+        ...(grande ? { grande } : {}),
+        ...(encuadre ? { encuadre } : {}),
+      },
+    ];
   });
 }
 

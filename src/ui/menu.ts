@@ -6,6 +6,7 @@ import {
 import { combo, maquila, pavo } from "../data/temporada";
 import { importeCombo, textoDesglose } from "../lib/combo";
 import { $ } from "./dom";
+import { estiloEncuadre } from "../lib/encuadre";
 
 export type Filtro = CategoriaId | "todo";
 
@@ -23,7 +24,9 @@ const LUPA = `<span class="lupa" aria-hidden="true"><svg class="i-exp" viewBox="
 function miniatura(conFoto: Producto | undefined, nombre: string): string {
   if (!conFoto?.imagen) return `<div class="thumb thumb-vacia" title="Foto pronto">${CLOCHE}<span>Foto pronto</span></div>`;
   const src = urlImagen(conFoto.imagenMini ?? conFoto.imagen);
-  return `<button type="button" class="thumb" data-verfoto="${conFoto.id}" aria-label="Ver foto de ${escapar(nombre)}"><img src="${src}" alt="" width="320" height="240" loading="lazy" decoding="async">${LUPA}</button>`;
+  // El encuadre que se eligió en el panel (qué parte de la foto se ve); al tocarla se ve completa.
+  const estilo = estiloEncuadre(conFoto.encuadre);
+  return `<button type="button" class="thumb" data-verfoto="${conFoto.id}" aria-label="Ver foto de ${escapar(nombre)}"><img src="${src}" alt="" width="320" height="240" loading="lazy" decoding="async"${estilo ? ` style="${estilo}"` : ""}>${LUPA}</button>`;
 }
 
 export interface VistaMenu {
