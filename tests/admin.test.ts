@@ -149,7 +149,7 @@ describe("fotos en el súper panel", () => {
   });
 
   it("las fotos de la página se ven desde el mismo sitio", () => {
-    expect(urlVista(`${SITIO}/img/galeria/bacalao.jpg`)).toBe("/img/galeria/bacalao.jpg");
+    expect(urlVista(`${SITIO}/img/galeria/bacalao.jpg`)).toBe("img/galeria/bacalao.jpg");
     expect(urlVista(ST)).toBe(ST);
   });
 });

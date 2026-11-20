@@ -70,7 +70,10 @@
     <div id="lista" class="adm-lista"></div>
   </section>
 
-  <p id="cargando" class="adm-sub adm-cargando">Cargando…</p>
+  <div id="cargando" class="adm-sub adm-cargando">
+    <p id="cargandoTexto">Cargando…</p>
+    <button class="btn btn-gold btn-sm" type="button" id="recargar" hidden onclick="location.reload()">Recargar</button>
+  </div>
 </main>
 
 <!-- Ficha del producto -->
@@ -159,6 +162,17 @@
 </dialog>
 
 <div class="adm-toast" id="toast" role="status" hidden></div>
+<script>
+  // Si el panel no arranca (por ejemplo, el navegador guardó la versión anterior de esta página y sus
+  // archivos ya no existen después de publicar), se avisa en lugar de quedarse en "Cargando…".
+  setTimeout(function () {
+    if (window.__adminArranco) return;
+    var t = document.getElementById("cargandoTexto");
+    if (t) t.textContent = "El panel no arrancó. Puede que tu navegador tenga guardada la versión anterior: toca Recargar (o Ctrl+Shift+R en compu).";
+    var b = document.getElementById("recargar");
+    if (b) b.hidden = false;
+  }, 8000);
+</script>
 <script type="module" src="/src/admin.ts"></script>
 </body>
 </html>
