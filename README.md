@@ -156,6 +156,16 @@ las que la página ya traía; al agregar, quitar o cambiar la principal, el pane
 todas (las de la página se guardan con su dirección `https://www.lawalkiria.com.mx/img/galeria/…`).
 `fotos: []` significa que se quitaron todas: ya no sale ninguna de ese producto.
 
+**Encuadre y tamaño real.** Cada foto subida se guarda en dos tamaños: 1200 px (`url`, la de la página y
+la app) y el tamaño real hasta 3000 px (`grande`, por el límite de 5 MB de las reglas de Storage). En la
+ficha, "Elegir qué se ve de la principal" (o tocar la foto principal) abre el selector: se arrastra la
+foto y se acerca con la barra, viendo cómo queda en compu (4:3) y en celular (cuadrada). Se guarda como
+`encuadre: { x, y, zoom }` en esa foto y se aplica a la miniatura del pedido. Al tocar la miniatura, el
+visor muestra la foto completa y, al acercar, baja la de tamaño real.
+
+**Panel en celular.** La explicación de los botones empieza cerrada ("¿Qué hace cada botón?"); al
+bajar solo se quedan fijos el resumen y el buscador, y cada producto es una tarjeta compacta.
+
 Necesita la versión de `onProductWritten` que publica `fotos` (repo de la app). Mientras no se
 despliegue, la galería sigue con las fotos de la página, pero ya oculta y marca agotados.
 

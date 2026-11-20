@@ -6,10 +6,8 @@ import type { FotoVista } from "../lib/galeria";
  * public/img/galeria/<id>.jpg). Mientras no exista la foto, se ve el recuadro de muestra. Al picar
  * uno se abre el visor con todas las fotos de su grupo, empezando por esa.
  */
-const urlFoto = (el: HTMLElement): string => {
-  const s = el.dataset.src ?? `img/galeria/${el.dataset.gal}.jpg`;
-  return /^https?:\/\//.test(s) ? s : `${import.meta.env.BASE_URL}${s.replace(/^\//, "")}`;
-};
+const urlRuta = (s: string): string => (/^https?:\/\//.test(s) ? s : `${import.meta.env.BASE_URL}${s.replace(/^\//, "")}`);
+const urlFoto = (el: HTMLElement): string => urlRuta(el.dataset.src ?? `img/galeria/${el.dataset.gal}.jpg`);
 
 export function iniciarFotos(visor: Visor, grupo: ParentNode): void {
   const recuadros = [...grupo.querySelectorAll<HTMLElement>("[data-gal]")];
@@ -33,7 +31,8 @@ export function iniciarFotos(visor: Visor, grupo: ParentNode): void {
         unicos.map((r) => {
           const nombre = r.dataset.nombre ?? "";
           const titulo = r.hasAttribute("data-agotado") ? `${nombre} · Agotado por ahora` : nombre;
-          return { titulo, alt: `Foto de ${nombre}`, media: conFoto.has(r.dataset.gal!) ? urlFoto(r) : undefined };
+          const grande = r.dataset.grande;
+          return { titulo, alt: `Foto de ${nombre}`, media: conFoto.has(r.dataset.gal!) ? urlFoto(r) : undefined, ...(grande ? { grande: urlRuta(grande) } : {}) };
         }),
         Math.max(0, unicos.findIndex((r) => r.dataset.gal === id)),
       ),
@@ -53,6 +52,7 @@ export function pintarFotos(caja: HTMLElement, fotos: readonly FotoVista[]): voi
       b.dataset.nombre = f.nombre;
       b.dataset.forma = f.forma;
       if (f.ancha) b.dataset.ancha = "";
+      if (f.grande) b.dataset.grande = f.grande;
       if (f.agotado) b.dataset.agotado = "";
       b.setAttribute("aria-label", `Ver foto de ${f.nombre} en grande${f.agotado ? " (agotado)" : ""}`);
       if (f.agotado) {

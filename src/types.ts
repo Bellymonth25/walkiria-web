@@ -58,6 +58,10 @@ export interface Producto {
   imagen?: string;
   /** Miniatura 4:3 de ~320 px para la lista. Si falta, se usa `imagen`. */
   imagenMini?: string;
+  /** Foto principal en tamaño real (súper panel): se carga al acercar en el visor. */
+  imagenGrande?: string;
+  /** Qué parte de la foto principal se ve en la miniatura. Sin él, el centro. */
+  encuadre?: Encuadre;
   /**
    * Fotos de la galería subidas desde el súper panel (todas las de sus ids de Firestore).
    * Si existe, reemplaza a las fotos de `data/galeria.ts` que apuntan a este producto.
@@ -74,6 +78,20 @@ export interface FotoProducto {
   ancha?: boolean;
   /** false: solo en la página de galería, no en el carrusel del inicio. */
   carrusel?: boolean;
+  /** La misma foto en tamaño real (hasta 3000 px), para verla completa y acercarla en el visor. */
+  grande?: string;
+  /** Qué parte de la foto se ve en la miniatura del pedido (solo cuenta en la principal). */
+  encuadre?: Encuadre;
+}
+
+/**
+ * Encuadre de una miniatura: el punto que queda al centro (x, y en % de la foto, 50/50 = centro)
+ * y cuánto se acerca (1 = sin acercar). Se aplica igual a la miniatura 4:3 (compu) y a la cuadrada (celular).
+ */
+export interface Encuadre {
+  x: number;
+  y: number;
+  zoom: number;
 }
 
 /** Precio por kilo de cada parte del Combo Pavo. */

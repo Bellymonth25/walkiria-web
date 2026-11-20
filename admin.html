@@ -49,17 +49,24 @@
         <h1>Productos</h1>
         <button class="btn btn-gold btn-sm" id="nuevo" type="button">+ Nuevo producto</button>
       </div>
-      <dl class="adm-leyenda">
-        <div><dt>Disponible</dt><dd>Prendido: se puede pedir. Apagado: sale <b>Agotado</b> en la app y en la página.</dd></div>
-        <div><dt>Mostrar</dt><dd>Prendido: aparece. Apagado: el producto y sus fotos de la galería se <b>ocultan</b> en la app y en la página.</dd></div>
-        <div><dt>Editar</dt><dd>Nombre, precios, fotos, grupo y demás. Cada cambio guarda quién y cuándo.</dd></div>
-      </dl>
-      <div class="adm-resumen" id="resumen" aria-live="polite"></div>
-      <label class="search adm-buscar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="buscar" type="search" placeholder="Buscar producto" autocomplete="off" aria-label="Buscar producto">
-      </label>
+      <!-- En celular la explicación empieza cerrada para dejar lugar a la lista; en compu siempre se ve. -->
+      <details class="adm-ayuda" id="ayuda" open>
+        <summary>¿Qué hace cada botón?</summary>
+        <dl class="adm-leyenda">
+          <div><dt>Disponible</dt><dd>Prendido: se puede pedir. Apagado: sale <b>Agotado</b> en la app y en la página.</dd></div>
+          <div><dt>Mostrar</dt><dd>Prendido: aparece. Apagado: el producto y sus fotos de la galería se <b>ocultan</b> en la app y en la página.</dd></div>
+          <div><dt>Editar</dt><dd>Nombre, precios, fotos, grupo y demás. Cada cambio guarda quién y cuándo.</dd></div>
+        </dl>
+      </details>
     </div>
+    <!-- Lo único que se queda fijo arriba al bajar: el resumen y el buscador. -->
+      <div class="adm-fija">
+        <div class="adm-resumen" id="resumen" aria-live="polite"></div>
+        <label class="search adm-buscar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="buscar" type="search" placeholder="Buscar producto" autocomplete="off" aria-label="Buscar producto">
+        </label>
+      </div>
     <div id="lista" class="adm-lista"></div>
   </section>
 
@@ -81,6 +88,7 @@
         </div>
         <p class="adm-fotos-ayuda">La <b>★ Principal</b> es la que se ve en la app y al elegir el producto en el pedido. <b>Todas</b> salen en la galería de la página.</p>
         <ul class="adm-fotos-lista" id="fFotos"></ul>
+        <button class="btn btn-ghost btn-sm adm-enc-btn" type="button" id="fEncuadre" hidden></button>
         <p class="adm-fotos-estado" id="fFotosEstado" hidden></p>
         <p class="adm-fotos-nota" id="fFotosNota" hidden>Estas fotos ya estaban en la página. Si agregas, quitas o cambias la principal, desde ese momento se manejan aquí.</p>
       </section>
@@ -111,6 +119,26 @@
       <button class="btn btn-gold" type="submit" id="guardarFicha">Guardar</button>
     </footer>
   </form>
+</dialog>
+
+<!-- Encuadre de la foto principal: qué parte se ve al elegir el producto en el pedido -->
+<dialog id="encuadre" class="adm-ficha adm-encuadre" aria-labelledby="encTitulo">
+  <header class="adm-ficha-top">
+    <h2 id="encTitulo">¿Qué se ve de la foto?</h2>
+    <button class="adm-cerrar" type="button" id="encCerrar" aria-label="Cerrar">✕</button>
+  </header>
+  <div class="adm-ficha-cuerpo">
+    <p class="adm-sub">Arrastra la foto para elegir qué parte se ve en el pedido. Al tocarla, el cliente ve la foto completa.</p>
+    <div class="adm-enc-vistas">
+      <figure class="adm-enc-grande"><div class="adm-enc-marco" id="encMarco"><img id="encImg" alt="Foto principal" draggable="false"></div><figcaption>En compu</figcaption></figure>
+      <figure class="adm-enc-chica"><div class="adm-enc-marco cuadrado"><img id="encCel" alt="" draggable="false"></div><figcaption>En celular</figcaption></figure>
+    </div>
+    <label class="adm-enc-zoom"><span>Acercar</span><input id="encZoom" type="range" min="1" max="3" step="0.05" value="1"></label>
+  </div>
+  <footer class="adm-ficha-pie">
+    <button class="btn btn-ghost" type="button" id="encCentrar">Centrar</button>
+    <button class="btn btn-gold" type="button" id="encListo">Listo</button>
+  </footer>
 </dialog>
 
 <!-- Confirmar eliminar: hay que escribir el nombre -->

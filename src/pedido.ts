@@ -385,7 +385,10 @@ function verFoto(productoId: string): void {
   const p = producto(productoId);
   if (!p?.imagen) return;
   evento("foto_abierta");
-  visor.abrir([{ titulo: `${p.nombre} · ${dinero(p.precio)}/${p.unidad}`, alt: p.nombre, media: urlImagen(p.imagen) }]);
+  // Se abre la foto completa (sin el encuadre de la miniatura); al acercar baja la de tamaño real.
+  visor.abrir([
+    { titulo: `${p.nombre} · ${dinero(p.precio)}/${p.unidad}`, alt: p.nombre, media: urlImagen(p.imagen), ...(p.imagenGrande ? { grande: urlImagen(p.imagenGrande) } : {}) },
+  ]);
 }
 
 document.addEventListener("click", (e) => {

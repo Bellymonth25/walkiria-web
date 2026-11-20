@@ -25,6 +25,8 @@ export interface FotoVista {
   forma: "h" | "v";
   ancha?: boolean;
   carrusel?: boolean;
+  /** Tamaño real, para acercar en el visor. */
+  grande?: string;
   /** El producto está agotado: la foto lleva la marca. */
   agotado: boolean;
 }
@@ -66,6 +68,7 @@ export function armarGaleria(curadas: readonly FotoGaleria[], catalogo: readonly
       forma: f.forma,
       ...(f.ancha ? { ancha: true } : {}),
       ...(f.carrusel === false ? { carrusel: false } : {}),
+      ...(f.grande ? { grande: urlLocal(f.grande) } : {}),
       agotado: estado.agotado(p),
     }));
 

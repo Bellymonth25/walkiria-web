@@ -33,7 +33,8 @@ import {
 import { dinero, escapar } from "./lib/formato";
 import { productos as productosWeb } from "./data/productos";
 import { fotosPlatillos } from "./data/galeria";
-import type { FotoProducto } from "./types";
+import type { Encuadre, FotoProducto } from "./types";
+import { estiloEncuadre, normalizarEncuadre } from "./lib/encuadre";
 
 type Campo = "estaDisponible" | "oculto";
 import { $ } from "./ui/dom";
@@ -142,6 +143,11 @@ function iniciar(): void {
   }
 
   buscar.addEventListener("input", pintar);
+  // En celular la explicación de los botones empieza cerrada: se abre con "¿Qué hace cada botón?".
+  if (matchMedia("(max-width:760px)").matches) $<HTMLDetailsElement>("#ayuda").open = false;
+  // En compu el encabezado entero se queda arriba y el resumen con el buscador justo debajo de él.
+  const cabeza = $(".adm-head");
+  new ResizeObserver(() => document.documentElement.style.setProperty("--alto-head", `${cabeza.offsetHeight}px`)).observe(cabeza);
 
   function pintar(): void {
     const visibles = lista.filter((p) => !p.oculto);
@@ -196,10 +202,12 @@ function iniciar(): void {
     const unidad = p.unidad ? `<small>/ ${escapar(p.unidad)}</small>` : "";
     const id = escapar(p.id);
     // Miniatura: la foto principal y, si tiene más de una, cuántas son.
-    const { imagen } = fotosParaFicha(p, productosWeb, fotosPlatillos);
+    const { imagen, fotos: todas } = fotosParaFicha(p, productosWeb, fotosPlatillos);
     const principal = imagen || p.imagen;
     const n = cuantasFotos(p, productosWeb, fotosPlatillos);
-    const foto = `<span class="adm-mini-caja">${principal ? `<img class="adm-mini" src="${escapar(urlVista(principal))}" alt="" loading="lazy">` : `<span class="adm-mini" aria-hidden="true"></span>`}${n > 1 ? `<span class="adm-mini-n" title="${n} fotos">${n}</span>` : ""}</span>`;
+    // Con el mismo encuadre que ve el cliente al pedir.
+    const enc = estiloEncuadre(todas.find((x) => x.url === principal)?.encuadre);
+    const foto = `<span class="adm-mini-caja">${principal ? `<span class="adm-mini adm-recorte"><img src="${escapar(urlVista(principal))}" alt="" loading="lazy"${enc ? ` style="${enc}"` : ""}></span>` : `<span class="adm-mini" aria-hidden="true"></span>`}${n > 1 ? `<span class="adm-mini-n" title="${n} fotos">${n}</span>` : ""}</span>`;
     const mod = p.actualizadoEn ? `${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? `<small>${escapar(p.actualizadoPor.split("@")[0]!)}</small>` : ""}` : `<span class="adm-vacio">—</span>`;
     return `<tr class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}">
       <td class="c-prod"><div class="adm-abrir">${foto}<span class="adm-nombre">${escapar(p.nombre)}</span></div></td>
@@ -262,6 +270,7 @@ function iniciar(): void {
     fotosN: $("#fFotosN"),
     fotosNota: $("#fFotosNota"),
     fotosEstado: $("#fFotosEstado"),
+    encuadreBtn: $<HTMLButtonElement>("#fEncuadre"),
     archivo: $<HTMLInputElement>("#fFotoArchivo"),
     nombre: $<HTMLInputElement>("#fNombre"),
     menudeo: $<HTMLInputElement>("#fMenudeo"),
@@ -357,8 +366,9 @@ function iniciar(): void {
     f.fotosN.textContent = total ? `(${total})` : "";
     const lista = fotos.map((x, i) => {
       const esPrincipal = x.url === principal;
+      const enc = esPrincipal ? estiloEncuadre(x.encuadre) : "";
       return `<li class="adm-fotito${esPrincipal ? " principal" : ""}">
-        <img src="${escapar(urlVista(x.url))}" alt="Foto ${i + 1}${esPrincipal ? " (principal)" : ""}" loading="lazy">
+        ${esPrincipal ? `<button class="adm-enc-abrir" type="button" data-encuadre="${i}" aria-label="Elegir qué parte de la foto principal se ve">` : ""}<img src="${escapar(urlVista(x.url))}" alt="Foto ${i + 1}${esPrincipal ? " (principal)" : ""}" loading="lazy"${enc ? ` style="${enc}"` : ""}>${esPrincipal ? "</button>" : ""}
         ${esPrincipal ? `<span class="adm-es-principal">★ Principal</span>` : `<button class="adm-hacer" type="button" data-principal="${i}" aria-label="Hacer principal la foto ${i + 1}">Hacer principal</button>`}
         <button class="adm-x" type="button" data-quitar="${i}" aria-label="Quitar la foto ${i + 1}" title="Quitar">✕</button>
       </li>`;
@@ -367,6 +377,11 @@ function iniciar(): void {
     f.fotos.innerHTML = total
       ? [...lista, ...enCamino].join("")
       : `<li><label class="adm-fotos-vacia" for="fFotoArchivo">+ Sin fotos todavía. Toca para agregar: la primera será la principal.</label></li>`;
+    // Botón visible para el encuadre de la principal (también se abre tocando la foto).
+    const iP = fotos.findIndex((x) => x.url === principal);
+    f.encuadreBtn.hidden = iP < 0;
+    f.encuadreBtn.dataset.encuadre = String(iP);
+    f.encuadreBtn.innerHTML = `${ICONO_ENCUADRE}<span>${fotos[iP]?.encuadre ? "Cambiar qué se ve de la principal" : "Elegir qué se ve de la principal"}</span>`;
     f.guardar.disabled = subiendo > 0;
   }
 
@@ -381,8 +396,11 @@ function iniciar(): void {
   f.mostrar.addEventListener("change", estadoFotos);
   f.disponible.addEventListener("change", estadoFotos);
 
+  f.encuadreBtn.addEventListener("click", () => abrirEncuadre(Number(f.encuadreBtn.dataset.encuadre)));
   f.fotos.addEventListener("click", (e) => {
     const el = e.target as HTMLElement;
+    const enc = el.closest<HTMLElement>("[data-encuadre]")?.dataset.encuadre;
+    if (enc !== undefined) return abrirEncuadre(Number(enc));
     const hacer = el.closest<HTMLElement>("[data-principal]")?.dataset.principal;
     if (hacer !== undefined) {
       principal = fotos[Number(hacer)]?.url ?? principal;
@@ -412,13 +430,19 @@ function iniciar(): void {
     // Una por una, en el orden en que se eligieron; cada una aparece en cuanto termina.
     for (const [i, archivo] of archivos.entries()) {
       try {
-        const { blob, forma } = await reducir(archivo);
-        const destino = ref(getStorage(app), `productos/${id}/${Date.now()}-${i}.jpg`);
-        await uploadBytes(destino, blob, { contentType: "image/jpeg", cacheControl: "public,max-age=31536000" });
-        const url = await getDownloadURL(destino);
+        // Dos tamaños: 1200 px para la página y la app, y el tamaño real (hasta 3000 px) para verla completa.
+        const { normal, grande, forma } = await reducir(archivo);
+        const nombre = `productos/${id}/${Date.now()}-${i}`;
+        const subir = async (blob: Blob, ruta: string): Promise<string> => {
+          const destino = ref(getStorage(app), ruta);
+          await uploadBytes(destino, blob, { contentType: "image/jpeg", cacheControl: "public,max-age=31536000" });
+          return getDownloadURL(destino);
+        };
+        const url = await subir(normal, `${nombre}.jpg`);
+        const urlGrande = grande ? await subir(grande, `${nombre}-grande.jpg`) : "";
         // Si mientras subía se cerró la ficha o se abrió otro producto, no se mezcla.
         if (original?.id === id) {
-          fotos.push({ url, forma });
+          fotos.push({ url, forma, ...(urlGrande ? { grande: urlGrande } : {}) });
           if (!principal) principal = url;
         }
       } catch (e) {
@@ -431,6 +455,86 @@ function iniciar(): void {
     }
     if (fallas) aviso(`No se ${fallas === 1 ? "pudo subir 1 foto" : `pudieron subir ${fallas} fotos`}. Revisa tu conexión e inténtalo otra vez.`, true);
     else aviso(archivos.length === 1 ? "✓ Foto lista. Toca Guardar para que salga en la página." : `✓ ${archivos.length} fotos listas. Toca Guardar para que salgan en la página.`);
+  });
+
+  // ---------- Encuadre de la foto principal ----------
+  // Se arrastra la foto dentro del recuadro (así se ve en compu) y se acerca con la barra; al lado,
+  // cómo queda en celular (cuadrada). Se guarda con el resto de la ficha al tocar Guardar.
+  const enc = {
+    dialogo: $<HTMLDialogElement>("#encuadre"),
+    marco: $("#encMarco"),
+    img: $<HTMLImageElement>("#encImg"),
+    cel: $<HTMLImageElement>("#encCel"),
+    zoom: $<HTMLInputElement>("#encZoom"),
+  };
+  let encIndice = -1;
+  let encActual: Encuadre = { x: 50, y: 50, zoom: 1 };
+  function pintarEncuadre(): void {
+    const estilo = estiloEncuadre(encActual) || "object-position:50% 50%;";
+    enc.img.setAttribute("style", estilo);
+    enc.cel.setAttribute("style", estilo);
+    enc.zoom.value = String(encActual.zoom);
+  }
+  function abrirEncuadre(i: number): void {
+    const foto = fotos[i];
+    if (!foto) return;
+    encIndice = i;
+    encActual = { x: 50, y: 50, zoom: 1, ...foto.encuadre };
+    const src = urlVista(foto.url);
+    enc.img.src = src;
+    enc.cel.src = src;
+    pintarEncuadre();
+    enc.dialogo.showModal();
+  }
+  enc.zoom.addEventListener("input", () => {
+    encActual = { ...encActual, zoom: Number(enc.zoom.value) };
+    pintarEncuadre();
+  });
+  // Arrastrar: la foto sigue al dedo. El avance se calcula con lo que sobra de foto fuera del recuadro.
+  let arrastre: { x: number; y: number; inicio: Encuadre } | null = null;
+  enc.marco.addEventListener("pointerdown", (e) => {
+    arrastre = { x: e.clientX, y: e.clientY, inicio: encActual };
+    enc.marco.setPointerCapture(e.pointerId);
+    enc.marco.classList.add("arrastrando");
+  });
+  enc.marco.addEventListener("pointermove", (e) => {
+    if (!arrastre || !enc.img.naturalWidth) return;
+    const W = enc.marco.clientWidth;
+    const H = enc.marco.clientHeight;
+    const s = Math.max(W / enc.img.naturalWidth, H / enc.img.naturalHeight);
+    const z = arrastre.inicio.zoom;
+    const sobraX = Math.max(enc.img.naturalWidth * s - W + W * (z - 1), W * 0.2);
+    const sobraY = Math.max(enc.img.naturalHeight * s - H + H * (z - 1), H * 0.2);
+    const lim = (n: number) => Math.min(100, Math.max(0, n));
+    encActual = {
+      zoom: z,
+      x: lim(arrastre.inicio.x - ((e.clientX - arrastre.x) / sobraX) * 100),
+      y: lim(arrastre.inicio.y - ((e.clientY - arrastre.y) / sobraY) * 100),
+    };
+    pintarEncuadre();
+  });
+  const soltar = () => {
+    arrastre = null;
+    enc.marco.classList.remove("arrastrando");
+  };
+  enc.marco.addEventListener("pointerup", soltar);
+  enc.marco.addEventListener("pointercancel", soltar);
+  $("#encCentrar").addEventListener("click", () => {
+    encActual = { x: 50, y: 50, zoom: 1 };
+    pintarEncuadre();
+  });
+  $("#encCerrar").addEventListener("click", () => enc.dialogo.close());
+  $("#encListo").addEventListener("click", () => {
+    const foto = fotos[encIndice];
+    if (foto) {
+      const { encuadre: _viejo, ...resto } = foto;
+      const nuevo = normalizarEncuadre(encActual);
+      fotos = fotos.map((x, i) => (i === encIndice ? { ...resto, ...(nuevo ? { encuadre: nuevo } : {}) } : x));
+      f.fotosNota.hidden = true;
+      pintarFotosFicha();
+      aviso("✓ Encuadre listo. Toca Guardar para que se vea en la página.");
+    }
+    enc.dialogo.close();
   });
 
   // ---------- Eliminar ----------
@@ -514,19 +618,34 @@ function iniciar(): void {
   });
 }
 
-/** Reduce la foto a 1200 px por lado como JPEG para que la app y la web carguen rápido, y dice si es horizontal o vertical. */
-async function reducir(archivo: File): Promise<{ blob: Blob; forma: "h" | "v" }> {
+/**
+ * Prepara la foto para subirla: una de 1200 px por lado para que la app y la web carguen rápido y,
+ * si la original es más grande, otra en tamaño real (hasta 3000 px, para no pasar de los 5 MB que
+ * permiten las reglas de Storage). Dice también si es horizontal o vertical.
+ */
+async function reducir(archivo: File): Promise<{ normal: Blob; grande: Blob | null; forma: "h" | "v" }> {
   const img = await createImageBitmap(archivo);
-  const escala = Math.min(1, 1200 / Math.max(img.width, img.height));
-  const lienzo = document.createElement("canvas");
-  lienzo.width = Math.round(img.width * escala);
-  lienzo.height = Math.round(img.height * escala);
-  lienzo.getContext("2d")!.drawImage(img, 0, 0, lienzo.width, lienzo.height);
-  img.close();
-  const forma = lienzo.height > lienzo.width * 1.1 ? "v" : "h";
-  const blob = await new Promise<Blob>((ok, mal) => lienzo.toBlob((b) => (b ? ok(b) : mal(new Error("toBlob"))), "image/jpeg", 0.85));
-  return { blob, forma };
+  const lado = Math.max(img.width, img.height);
+  const aJpeg = (max: number, calidad: number): Promise<Blob> => {
+    const escala = Math.min(1, max / lado);
+    const lienzo = document.createElement("canvas");
+    lienzo.width = Math.round(img.width * escala);
+    lienzo.height = Math.round(img.height * escala);
+    lienzo.getContext("2d")!.drawImage(img, 0, 0, lienzo.width, lienzo.height);
+    return new Promise<Blob>((ok, mal) => lienzo.toBlob((b) => (b ? ok(b) : mal(new Error("toBlob"))), "image/jpeg", calidad));
+  };
+  try {
+    const forma = img.height > img.width * 1.1 ? "v" : "h";
+    const normal = await aJpeg(1200, 0.85);
+    const grande = lado > 1200 ? await aJpeg(3000, 0.88) : null;
+    return { normal, grande, forma };
+  } finally {
+    img.close();
+  }
 }
+
+/** Ícono de encuadre (cuadro con esquinas). */
+const ICONO_ENCUADRE = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2"/></svg>`;
 
 /** Botón en espera: spinner girando y el texto de lo que está pasando. */
 function ocupado(btn: HTMLButtonElement, texto: string): void {
