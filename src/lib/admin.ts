@@ -217,7 +217,7 @@ export function fotosParaFicha(p: ProductoFirestore, web: readonly Producto[], c
   if (p.conFotos) return { fotos: p.fotos, imagen: p.fotos.some((f) => f.url === p.imagen) ? p.imagen : (p.fotos[0]?.url ?? ""), dePagina: false };
   const propia = (u: string) => /^https:\/\/firebasestorage\.googleapis\.com\//.test(u) || u.startsWith(`${SITIO}/img/`);
   const pw = web.find((x) => x.firebaseIds[0] === p.id);
-  const dePagina = pw ? fotosDeLaPagina(curadas, pw.id) : [];
+  const dePagina = fotosDeLaPagina(curadas, { productoWeb: pw?.id, firebaseId: p.id });
   // La principal: la que ya se sube desde el panel o, si no, la que usa la página en el pedido.
   const principalWeb = pw?.imagen && /^img\/galeria\//.test(pw.imagen) ? `${SITIO}/${pw.imagen}` : "";
   const principal = propia(p.imagen) ? p.imagen : principalWeb;

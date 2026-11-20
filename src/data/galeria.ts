@@ -10,6 +10,7 @@
  *   oculta en el súper panel, la foto desaparece; si está agotado, sale con la marca "Agotado".
  *   Cuando al producto se le suben fotos desde el panel, esas reemplazan a las de aquí.
  *   Sin producto, la foto se muestra siempre.
+ * - firebaseId: lo mismo, para platillos que solo están en el súper panel (lechón, codornices…).
  */
 export interface FotoGaleria {
   id: string;
@@ -19,15 +20,20 @@ export interface FotoGaleria {
   disponible?: boolean;
   carrusel?: boolean;
   producto?: string;
+  /**
+   * Para platillos que solo existen en el súper panel (no en data/productos.ts): id de Firestore.
+   * Funciona igual que `producto`: oculto = no sale, agotado = marca.
+   */
+  firebaseId?: string;
 }
 
 export const fotosPlatillos: FotoGaleria[] = [
   { id: "pavo-relleno", nombre: "Pavo relleno", forma: "h", ancha: true, producto: "pavo-relleno" },
   { id: "medio-pavo-relleno", nombre: "Medio pavo relleno", forma: "v", producto: "pavo-relleno" },
   { id: "ravioles-de-queso", nombre: "Ravioles de queso", forma: "v", producto: "ravioles" },
-  { id: "lomo-a-la-espinaca", nombre: "Lomo a la espinaca", forma: "v" },
-  { id: "lechon", nombre: "Lechón", forma: "h" },
-  { id: "codornices", nombre: "Codornices", forma: "v" },
+  { id: "lomo-a-la-espinaca", nombre: "Lomo a la espinaca", forma: "v", firebaseId: "PROD_016" },
+  { id: "lechon", nombre: "Lechón", forma: "h", firebaseId: "PROD_024" },
+  { id: "codornices", nombre: "Codornices", forma: "v", firebaseId: "PROD_031" },
   { id: "ensalada-de-manzana", nombre: "Ensalada de manzana", forma: "v", producto: "ensalada-manzana" },
   { id: "pechuga-pavo-adobada", nombre: "Pechuga de pavo adobada", forma: "h", producto: "pechuga-pavo" },
   { id: "pavo-adobado", nombre: "Pavo adobado", forma: "v", producto: "pavo-adobado" },

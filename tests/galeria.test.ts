@@ -25,7 +25,17 @@ describe("galería ligada a los productos", () => {
     const g = galeria(new Map(), [], ["PROD_001"]);
     expect(g.some((f) => f.clave === "pavo-relleno" || f.clave === "medio-pavo-relleno")).toBe(false);
     // Las fotos sin producto siguen.
-    expect(g.some((f) => f.clave === "lechon")).toBe(true);
+    expect(g.some((f) => f.clave === "lomo-horneado")).toBe(true);
+  });
+
+  it("platillos que solo están en el panel (lechón): se ocultan y se marcan por su id de Firestore", () => {
+    expect(galeria(new Map(), [], ["PROD_024"]).some((f) => f.clave === "lechon")).toBe(false);
+    expect(galeria(new Map(), ["PROD_031"]).find((f) => f.clave === "codornices")?.agotado).toBe(true);
+    // Ya con Firestore: el lechón llega como producto del panel y sigue ligado.
+    const c = new Map([["PROD_024", pub({ nombre: "Lechón al Horno", precio: 2200 })]]);
+    expect(galeria(c, [], ["PROD_024"]).some((f) => f.clave === "lechon")).toBe(false);
+    expect(galeria(c).find((f) => f.clave === "lechon")?.agotado).toBe(false);
+    expect(fotosDeLaPagina(fotosPlatillos, { firebaseId: "PROD_024" })).toEqual([{ url: `${SITIO}/img/galeria/lechon.jpg`, forma: "h" }]);
   });
 
   it("pechuga: se oculta solo si todas sus versiones están ocultas", () => {
@@ -110,7 +120,7 @@ describe("galería ligada a los productos", () => {
   });
 
   it("fotos de la página para un producto, con dirección completa", () => {
-    expect(fotosDeLaPagina(fotosPlatillos, "pavo-relleno")).toEqual([
+    expect(fotosDeLaPagina(fotosPlatillos, { productoWeb: "pavo-relleno", firebaseId: "PROD_001" })).toEqual([
       { url: `${SITIO}/img/galeria/pavo-relleno.jpg`, forma: "h", ancha: true },
       { url: `${SITIO}/img/galeria/medio-pavo-relleno.jpg`, forma: "v" },
     ]);

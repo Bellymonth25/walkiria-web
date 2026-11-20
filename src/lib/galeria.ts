@@ -45,6 +45,16 @@ export interface EstadoProductos {
  */
 export function armarGaleria(curadas: readonly FotoGaleria[], catalogo: readonly Producto[], estado: EstadoProductos): FotoVista[] {
   const porId = new Map(catalogo.map((p) => [p.id, p]));
+  /**
+   * Producto de una foto. Con `firebaseId` se busca en lo que trajo Firestore; si aún no llega (primera
+   * visita sin datos guardados) se usa un producto mínimo con ese id para revisar oculto y agotado.
+   */
+  const productoDe = (f: FotoGaleria): Producto | undefined => {
+    if (f.producto) return porId.get(f.producto);
+    if (!f.firebaseId) return undefined;
+    const id = f.firebaseId;
+    return catalogo.find((p) => p.firebaseIds.includes(id)) ?? { id: `fs-${id.toLowerCase()}`, nombre: f.nombre, categoria: "otros", unidad: "kg", precio: 0, firebaseIds: [id] };
+  };
   const salida: FotoVista[] = [];
   const yaPuestos = new Set<string>();
 
@@ -61,7 +71,7 @@ export function armarGaleria(curadas: readonly FotoGaleria[], catalogo: readonly
 
   for (const f of curadas) {
     if (f.disponible === false) continue;
-    const p = f.producto ? porId.get(f.producto) : undefined;
+    const p = productoDe(f);
     if (p && estado.oculto(p)) continue;
     if (p?.fotos) {
       if (!yaPuestos.has(p.id)) salida.push(...delPanel(p));
@@ -89,9 +99,9 @@ export function armarGaleria(curadas: readonly FotoGaleria[], catalogo: readonly
  * Fotos que la página ya trae para un producto de la web, con dirección completa, para que el panel
  * las muestre y, si se cambia algo, las guarde en Firestore junto con las nuevas.
  */
-export function fotosDeLaPagina(curadas: readonly FotoGaleria[], productoWeb: string): FotoProducto[] {
+export function fotosDeLaPagina(curadas: readonly FotoGaleria[], de: { productoWeb?: string | undefined; firebaseId: string }): FotoProducto[] {
   return curadas
-    .filter((f) => f.producto === productoWeb && f.disponible !== false)
+    .filter((f) => f.disponible !== false && ((!!de.productoWeb && f.producto === de.productoWeb) || f.firebaseId === de.firebaseId))
     .map((f) => ({
       url: `${SITIO}/${rutaGaleria(f.id)}`,
       forma: f.forma,

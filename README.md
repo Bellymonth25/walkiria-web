@@ -145,7 +145,9 @@ La galería y el carrusel del inicio leen `publicWeb/disponibilidad` igual que e
 
 - Producto oculto (**Mostrar** apagado): sus fotos no salen.
 - Producto agotado: sus fotos salen con la marca **Agotado** y un poco apagadas.
-- Fotos sin producto (lechón, codornices, lomo a la espinaca, lomo horneado): salen siempre.
+- Platillos que solo están en el panel (lechón `PROD_024`, codornices `PROD_031`, lomo a la espinaca
+  `PROD_016`) se ligan con `firebaseId` y funcionan igual.
+- Fotos sin producto (por ahora el lomo horneado): salen siempre.
 
 En la ficha del súper panel, **Fotos** deja subir varias a la vez (se reducen a 1200 px). La que lleva
 **★ Principal** se guarda en `imagen`: es la de la app y la del renglón del pedido. Todas se guardan en
