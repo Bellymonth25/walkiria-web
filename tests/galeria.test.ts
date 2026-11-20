@@ -24,8 +24,9 @@ describe("galería ligada a los productos", () => {
   it("producto oculto: sus fotos no salen", () => {
     const g = galeria(new Map(), [], ["PROD_001"]);
     expect(g.some((f) => f.clave === "pavo-relleno" || f.clave === "medio-pavo-relleno")).toBe(false);
-    // Las fotos sin producto siguen.
+    // Las de otros productos siguen.
     expect(g.some((f) => f.clave === "lomo-horneado")).toBe(true);
+    expect(galeria(new Map(), [], ["PROD_055"]).some((f) => f.clave === "lomo-horneado")).toBe(false);
   });
 
   it("platillos que solo están en el panel (lechón): se ocultan y se marcan por su id de Firestore", () => {

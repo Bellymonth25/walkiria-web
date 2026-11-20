@@ -40,7 +40,7 @@ export const fotosPlatillos: FotoGaleria[] = [
   { id: "romeritos", nombre: "Romeritos", forma: "h", ancha: true, producto: "romeritos" },
   { id: "ravioles-de-queso-2", nombre: "Ravioles de queso", forma: "v", carrusel: false, producto: "ravioles" },
   { id: "pavo-ahumado", nombre: "Pavo ahumado", forma: "h", producto: "pavo-ahumado" },
-  { id: "lomo-horneado", nombre: "Lomo horneado", forma: "h" },
+  { id: "lomo-horneado", nombre: "Lomo horneado", forma: "h", firebaseId: "PROD_055" },
   { id: "lomo-adobado-mechado", nombre: "Lomo adobado y mechado", forma: "h", producto: "lomo-adobado" },
   { id: "strudel-de-manzana", nombre: "Strudel de manzana", forma: "v", producto: "strudel" },
   { id: "pechuga-pavo-horneada", nombre: "Pechuga de pavo horneada", forma: "h", producto: "pechuga-pavo" },
