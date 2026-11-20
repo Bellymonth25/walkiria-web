@@ -51,8 +51,8 @@
       </div>
       <dl class="adm-leyenda">
         <div><dt>Disponible</dt><dd>Prendido: se puede pedir. Apagado: sale <b>Agotado</b> en la app y en la página.</dd></div>
-        <div><dt>Mostrar</dt><dd>Prendido: aparece. Apagado: el producto se <b>oculta</b> en la app y en la página.</dd></div>
-        <div><dt>Editar</dt><dd>Nombre, precios, foto, grupo y demás. Cada cambio guarda quién y cuándo.</dd></div>
+        <div><dt>Mostrar</dt><dd>Prendido: aparece. Apagado: el producto y sus fotos de la galería se <b>ocultan</b> en la app y en la página.</dd></div>
+        <div><dt>Editar</dt><dd>Nombre, precios, fotos, grupo y demás. Cada cambio guarda quién y cuándo.</dd></div>
       </dl>
       <div class="adm-resumen" id="resumen" aria-live="polite"></div>
       <label class="search adm-buscar">
@@ -74,15 +74,16 @@
       <button class="adm-cerrar" type="button" id="cerrarFicha" aria-label="Cerrar">✕</button>
     </header>
     <div class="adm-ficha-cuerpo">
-      <div class="adm-foto">
-        <img id="fFotoVista" alt="" hidden>
-        <span id="fFotoVacia">Sin foto</span>
-        <div class="adm-foto-acc">
-          <label class="btn btn-ghost btn-sm">Subir foto<input id="fFotoArchivo" type="file" accept="image/*" hidden></label>
-          <button class="btn btn-ghost btn-sm" type="button" id="fFotoQuitar">Quitar</button>
+      <section class="adm-fotos" aria-labelledby="fFotosTit">
+        <div class="adm-fotos-top">
+          <h3 id="fFotosTit">Fotos <span class="adm-fotos-n" id="fFotosN"></span></h3>
+          <label class="btn btn-ghost btn-sm adm-agregar" id="fFotoAgregar">+ Agregar fotos<input id="fFotoArchivo" type="file" accept="image/*" multiple hidden></label>
         </div>
-      </div>
-      <label>Enlace de la foto<input id="fImagen" type="url" inputmode="url" placeholder="https://…"></label>
+        <p class="adm-fotos-ayuda">La <b>★ Principal</b> es la que se ve en la app y al elegir el producto en el pedido. <b>Todas</b> salen en la galería de la página.</p>
+        <ul class="adm-fotos-lista" id="fFotos"></ul>
+        <p class="adm-fotos-estado" id="fFotosEstado" hidden></p>
+        <p class="adm-fotos-nota" id="fFotosNota" hidden>Estas fotos ya estaban en la página. Si agregas, quitas o cambias la principal, desde ese momento se manejan aquí.</p>
+      </section>
       <label>Nombre<input id="fNombre" type="text" required autocomplete="off"></label>
       <div class="adm-dos">
         <label>Precio menudeo<input id="fMenudeo" type="number" inputmode="decimal" min="0" step="0.5" required></label>
@@ -98,7 +99,7 @@
       </div>
       <div class="adm-checks">
         <label class="adm-check"><input id="fDisponible" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Disponible</b><small>Apagado: sale "Agotado" y no se puede pedir.</small></span></label>
-        <label class="adm-check"><input id="fMostrar" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Mostrar</b><small>Apagado: no aparece ni en la app ni en la página.</small></span></label>
+        <label class="adm-check"><input id="fMostrar" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Mostrar</b><small>Apagado: no aparece ni en la app ni en la página, tampoco sus fotos.</small></span></label>
         <label class="adm-check"><input id="fPeso" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Peso ajustable</b><small>Cocina puede ajustar el peso real.</small></span></label>
         <label class="adm-check"><input id="fMaquila" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Es maquila</b><small>Pide número de ficha al levantar el pedido.</small></span></label>
       </div>

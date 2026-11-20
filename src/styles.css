@@ -926,3 +926,8 @@ button.thumb:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 .ln-campo input{width:3.4rem;height:28px;text-align:center;font:700 16px var(--font-body);color:var(--fg);background:var(--surface-2,transparent);border:1.5px solid var(--line);border-radius:8px;padding:0 4px}
 .ln-campo input:focus{outline:none;border-color:var(--primary)}
 .ln-campo span{color:var(--muted);font-weight:600;font-size:.82rem}
+
+/* Foto de un producto agotado (galería y carrusel): la foto un poco apagada y la marca arriba a la izquierda. */
+.gal-agotado{position:absolute;z-index:2;top:12px;left:12px;font:800 .72rem/1 var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#8E1B1B;padding:7px 10px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.35);transform:rotate(-3deg);pointer-events:none}
+.gal-foto[data-agotado].con-foto::before{filter:grayscale(.55) brightness(.92)}
+.gal-foto[data-agotado].con-foto:hover::before{filter:grayscale(.55) brightness(.98)}

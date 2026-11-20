@@ -14,7 +14,9 @@ import {
   agrupar,
   cambios,
   coincideNombre,
+  cuantasFotos,
   fechaCorta,
+  fotosParaFicha,
   evaluarSuperadmin,
   leerProducto,
   motivoDeError,
@@ -22,12 +24,16 @@ import {
   productoNuevo,
   siguienteId,
   textoModificacion,
+  urlVista,
   validar,
   type Categoria,
   type ProductoFirestore,
   type ResultadoRol,
 } from "./lib/admin";
 import { dinero, escapar } from "./lib/formato";
+import { productos as productosWeb } from "./data/productos";
+import { fotosPlatillos } from "./data/galeria";
+import type { FotoProducto } from "./types";
 
 type Campo = "estaDisponible" | "oculto";
 import { $ } from "./ui/dom";
@@ -189,7 +195,11 @@ function iniciar(): void {
   function fila(p: ProductoFirestore): string {
     const unidad = p.unidad ? `<small>/ ${escapar(p.unidad)}</small>` : "";
     const id = escapar(p.id);
-    const foto = p.imagen ? `<img class="adm-mini" src="${escapar(p.imagen)}" alt="" loading="lazy">` : `<span class="adm-mini" aria-hidden="true"></span>`;
+    // Miniatura: la foto principal y, si tiene más de una, cuántas son.
+    const { imagen } = fotosParaFicha(p, productosWeb, fotosPlatillos);
+    const principal = imagen || p.imagen;
+    const n = cuantasFotos(p, productosWeb, fotosPlatillos);
+    const foto = `<span class="adm-mini-caja">${principal ? `<img class="adm-mini" src="${escapar(urlVista(principal))}" alt="" loading="lazy">` : `<span class="adm-mini" aria-hidden="true"></span>`}${n > 1 ? `<span class="adm-mini-n" title="${n} fotos">${n}</span>` : ""}</span>`;
     const mod = p.actualizadoEn ? `${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? `<small>${escapar(p.actualizadoPor.split("@")[0]!)}</small>` : ""}` : `<span class="adm-vacio">—</span>`;
     return `<tr class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}">
       <td class="c-prod"><div class="adm-abrir">${foto}<span class="adm-nombre">${escapar(p.nombre)}</span></div></td>
@@ -248,11 +258,11 @@ function iniciar(): void {
   const f = {
     titulo: $("#fichaTitulo"),
     id: $("#fId"),
-    imagen: $<HTMLInputElement>("#fImagen"),
-    vista: $<HTMLImageElement>("#fFotoVista"),
-    vacia: $("#fFotoVacia"),
+    fotos: $<HTMLUListElement>("#fFotos"),
+    fotosN: $("#fFotosN"),
+    fotosNota: $("#fFotosNota"),
+    fotosEstado: $("#fFotosEstado"),
     archivo: $<HTMLInputElement>("#fFotoArchivo"),
-    quitar: $<HTMLButtonElement>("#fFotoQuitar"),
     nombre: $<HTMLInputElement>("#fNombre"),
     menudeo: $<HTMLInputElement>("#fMenudeo"),
     mayoreo: $<HTMLInputElement>("#fMayoreo"),
@@ -277,7 +287,11 @@ function iniciar(): void {
 
   let original: ProductoFirestore | null = null;
   let esNuevo = false;
-  let subiendo = false;
+  /** Fotos que se están subiendo ahora (cada una tiene su recuadro con el circulito). */
+  let subiendo = 0;
+  /** Fotos de la ficha abierta y cuál es la principal (su url). Se guardan al tocar Guardar. */
+  let fotos: FotoProducto[] = [];
+  let principal = "";
 
   /** Si el valor guardado no está en la lista (dato viejo), se agrega para no perderlo al guardar. */
   function elegir(sel: HTMLSelectElement, valor: string): void {
@@ -290,8 +304,13 @@ function iniciar(): void {
     esNuevo = nuevo;
     f.titulo.textContent = nuevo ? "Nuevo producto" : p.nombre;
     f.id.textContent = nuevo ? `Se guardará como ${p.id}.` : `Id: ${p.id}. ${textoModificacion(p)}`;
-    f.imagen.value = p.imagen;
-    verFoto(p.imagen);
+    // Si el producto aún no tiene fotos en el panel, se muestran las que ya traía la página.
+    const inicio = fotosParaFicha(p, productosWeb, fotosPlatillos);
+    original = { ...p, fotos: inicio.fotos, imagen: inicio.imagen || p.imagen };
+    fotos = [...inicio.fotos];
+    principal = inicio.imagen;
+    f.fotosNota.hidden = !inicio.dePagina;
+    pintarFotosFicha();
     f.nombre.value = p.nombre;
     f.menudeo.value = nuevo ? "" : String(p.menudeo);
     f.mayoreo.value = nuevo ? "" : String(p.mayoreo);
@@ -303,6 +322,7 @@ function iniciar(): void {
     f.mostrar.checked = !p.oculto;
     f.peso.checked = p.pesoAjustable;
     f.maquila.checked = p.maquila;
+    estadoFotos();
     f.error.hidden = true;
     f.guardar.textContent = nuevo ? "Crear producto" : "Guardar";
     ficha.showModal();
@@ -314,7 +334,10 @@ function iniciar(): void {
     return {
       ...original!,
       nombre: f.nombre.value.trim(),
-      imagen: f.imagen.value.trim(),
+      // Sin fotos se respeta la que ya tenía (la app puede traer una de antes); con fotos, la ★.
+      // Si se quitaron todas las fotos que tenía, también se quita la principal.
+      imagen: fotos.length ? principal : original!.fotos.length ? "" : original!.imagen,
+      fotos,
       menudeo: num(f.menudeo),
       mayoreo: num(f.mayoreo),
       categoria: f.categoria.value as Categoria,
@@ -328,44 +351,86 @@ function iniciar(): void {
     };
   }
 
-  function verFoto(url: string): void {
-    f.vista.hidden = !url;
-    f.vacia.hidden = !!url;
-    if (url) f.vista.src = url;
-    else f.vista.removeAttribute("src");
-    f.quitar.hidden = !url;
+  // ---------- Fotos de la ficha ----------
+  function pintarFotosFicha(): void {
+    const total = fotos.length + subiendo;
+    f.fotosN.textContent = total ? `(${total})` : "";
+    const lista = fotos.map((x, i) => {
+      const esPrincipal = x.url === principal;
+      return `<li class="adm-fotito${esPrincipal ? " principal" : ""}">
+        <img src="${escapar(urlVista(x.url))}" alt="Foto ${i + 1}${esPrincipal ? " (principal)" : ""}" loading="lazy">
+        ${esPrincipal ? `<span class="adm-es-principal">★ Principal</span>` : `<button class="adm-hacer" type="button" data-principal="${i}" aria-label="Hacer principal la foto ${i + 1}">Hacer principal</button>`}
+        <button class="adm-x" type="button" data-quitar="${i}" aria-label="Quitar la foto ${i + 1}" title="Quitar">✕</button>
+      </li>`;
+    });
+    const enCamino = Array.from({ length: subiendo }, () => `<li class="adm-fotito subiendo" role="status"><span class="adm-giro" aria-hidden="true"></span>Subiendo…</li>`);
+    f.fotos.innerHTML = total
+      ? [...lista, ...enCamino].join("")
+      : `<li><label class="adm-fotos-vacia" for="fFotoArchivo">+ Sin fotos todavía. Toca para agregar: la primera será la principal.</label></li>`;
+    f.guardar.disabled = subiendo > 0;
   }
-  f.imagen.addEventListener("change", () => verFoto(f.imagen.value.trim()));
-  f.quitar.addEventListener("click", () => {
-    f.imagen.value = "";
-    verFoto("");
+
+  /** Recuerda en la ficha qué pasa con las fotos según Disponible y Mostrar. */
+  function estadoFotos(): void {
+    const e = f.fotosEstado;
+    e.classList.toggle("oculto", !f.mostrar.checked);
+    if (!f.mostrar.checked) e.textContent = "Oculto: el producto y sus fotos no salen en la página ni en la galería.";
+    else if (!f.disponible.checked) e.textContent = "Agotado: sus fotos siguen en la galería con la marca “Agotado”.";
+    e.hidden = f.mostrar.checked && f.disponible.checked;
+  }
+  f.mostrar.addEventListener("change", estadoFotos);
+  f.disponible.addEventListener("change", estadoFotos);
+
+  f.fotos.addEventListener("click", (e) => {
+    const el = e.target as HTMLElement;
+    const hacer = el.closest<HTMLElement>("[data-principal]")?.dataset.principal;
+    if (hacer !== undefined) {
+      principal = fotos[Number(hacer)]?.url ?? principal;
+      f.fotosNota.hidden = true;
+      return pintarFotosFicha();
+    }
+    const quitar = el.closest<HTMLElement>("[data-quitar]")?.dataset.quitar;
+    if (quitar !== undefined) {
+      const [fuera] = fotos.splice(Number(quitar), 1);
+      // Si se quitó la principal, la siguiente toma su lugar.
+      if (fuera?.url === principal) principal = fotos[0]?.url ?? "";
+      f.fotosNota.hidden = true;
+      pintarFotosFicha();
+    }
   });
 
   f.archivo.addEventListener("change", async () => {
-    const archivo = f.archivo.files?.[0];
+    const archivos = [...(f.archivo.files ?? [])];
     f.archivo.value = "";
-    if (!archivo || !original) return;
-    if (!firebaseWeb.storageBucket) return aviso("Falta activar Storage en Firebase para subir fotos. Puedes pegar el enlace de la foto.", true);
-    subiendo = true;
-    f.guardar.disabled = true;
-    f.vacia.textContent = "Subiendo…";
-    verFoto("");
-    try {
-      const jpg = await reducir(archivo);
-      const destino = ref(getStorage(app), `productos/${original.id}/${Date.now()}.jpg`);
-      await uploadBytes(destino, jpg, { contentType: "image/jpeg", cacheControl: "public,max-age=31536000" });
-      const url = await getDownloadURL(destino);
-      f.imagen.value = url;
-      verFoto(url);
-    } catch (e) {
-      console.error("admin: no se pudo subir la foto", e);
-      verFoto(f.imagen.value.trim());
-      aviso("No se pudo subir la foto. Revisa que Storage esté activo y sus reglas.", true);
-    } finally {
-      subiendo = false;
-      f.guardar.disabled = false;
-      f.vacia.textContent = "Sin foto";
+    if (!archivos.length || !original) return;
+    if (!firebaseWeb.storageBucket) return aviso("Falta activar Storage en Firebase para subir fotos.", true);
+    const id = original.id;
+    subiendo += archivos.length;
+    f.fotosNota.hidden = true;
+    pintarFotosFicha();
+    let fallas = 0;
+    // Una por una, en el orden en que se eligieron; cada una aparece en cuanto termina.
+    for (const [i, archivo] of archivos.entries()) {
+      try {
+        const { blob, forma } = await reducir(archivo);
+        const destino = ref(getStorage(app), `productos/${id}/${Date.now()}-${i}.jpg`);
+        await uploadBytes(destino, blob, { contentType: "image/jpeg", cacheControl: "public,max-age=31536000" });
+        const url = await getDownloadURL(destino);
+        // Si mientras subía se cerró la ficha o se abrió otro producto, no se mezcla.
+        if (original?.id === id) {
+          fotos.push({ url, forma });
+          if (!principal) principal = url;
+        }
+      } catch (e) {
+        console.error("admin: no se pudo subir la foto", e);
+        fallas++;
+      } finally {
+        subiendo--;
+        if (original?.id === id) pintarFotosFicha();
+      }
     }
+    if (fallas) aviso(`No se ${fallas === 1 ? "pudo subir 1 foto" : `pudieron subir ${fallas} fotos`}. Revisa tu conexión e inténtalo otra vez.`, true);
+    else aviso(archivos.length === 1 ? "✓ Foto lista. Toca Guardar para que salga en la página." : `✓ ${archivos.length} fotos listas. Toca Guardar para que salgan en la página.`);
   });
 
   // ---------- Eliminar ----------
@@ -409,7 +474,7 @@ function iniciar(): void {
 
   $<HTMLFormElement>("#formFicha").addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!original || subiendo) return;
+    if (!original || subiendo > 0) return;
     const p = leerFicha();
     const problema = validar(p, lista);
     if (problema) {
@@ -449,8 +514,8 @@ function iniciar(): void {
   });
 }
 
-/** Reduce la foto a 1200 px por lado como JPEG para que la app y la web carguen rápido. */
-async function reducir(archivo: File): Promise<Blob> {
+/** Reduce la foto a 1200 px por lado como JPEG para que la app y la web carguen rápido, y dice si es horizontal o vertical. */
+async function reducir(archivo: File): Promise<{ blob: Blob; forma: "h" | "v" }> {
   const img = await createImageBitmap(archivo);
   const escala = Math.min(1, 1200 / Math.max(img.width, img.height));
   const lienzo = document.createElement("canvas");
@@ -458,7 +523,9 @@ async function reducir(archivo: File): Promise<Blob> {
   lienzo.height = Math.round(img.height * escala);
   lienzo.getContext("2d")!.drawImage(img, 0, 0, lienzo.width, lienzo.height);
   img.close();
-  return new Promise((ok, mal) => lienzo.toBlob((b) => (b ? ok(b) : mal(new Error("toBlob"))), "image/jpeg", 0.85));
+  const forma = lienzo.height > lienzo.width * 1.1 ? "v" : "h";
+  const blob = await new Promise<Blob>((ok, mal) => lienzo.toBlob((b) => (b ? ok(b) : mal(new Error("toBlob"))), "image/jpeg", 0.85));
+  return { blob, forma };
 }
 
 /** Botón en espera: spinner girando y el texto de lo que está pasando. */

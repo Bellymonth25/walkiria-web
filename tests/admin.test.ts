@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { productos } from "../src/data/productos";
+import { fotosPlatillos } from "../src/data/galeria";
+import { SITIO } from "../src/lib/galeria";
 import {
   aDocumento,
   agrupar,
   cambios,
+  fotosParaFicha,
   coincideNombre,
   evaluarSuperadmin,
   leerProducto,
@@ -12,6 +15,7 @@ import {
   productoNuevo,
   siguienteId,
   textoModificacion,
+  urlVista,
   validar,
 } from "../src/lib/admin";
 
@@ -108,5 +112,44 @@ describe("eliminar", () => {
     expect(coincideNombre("pavo relleno", "Pavo Relleno")).toBe(false);
     expect(coincideNombre("Pavo", "Pavo Relleno")).toBe(false);
     expect(coincideNombre("", "")).toBe(false);
+  });
+});
+
+describe("fotos en el súper panel", () => {
+  const ST = "https://firebasestorage.googleapis.com/v0/b/x/o/a.jpg";
+
+  it("sin fotos en Firestore, la ficha ofrece las de la página con la principal del pedido", () => {
+    const p = leerProducto("PROD_001", { nombre: "Pavo Relleno", imagen: "https://otro-sitio.com/x.jpg" });
+    const r = fotosParaFicha(p, productos, fotosPlatillos);
+    expect(r.dePagina).toBe(true);
+    expect(r.fotos.map((f) => f.url)).toEqual([`${SITIO}/img/galeria/pavo-relleno.jpg`, `${SITIO}/img/galeria/medio-pavo-relleno.jpg`]);
+    expect(r.imagen).toBe(`${SITIO}/img/galeria/pavo-relleno.jpg`);
+    // Solo en el primer id de la pechuga, para no repetirlas.
+    expect(fotosParaFicha(leerProducto("PROD_018", {}), productos, fotosPlatillos).fotos).toEqual([]);
+    expect(fotosParaFicha(leerProducto("PROD_017", {}), productos, fotosPlatillos).fotos).toHaveLength(2);
+  });
+
+  it("con fotos en Firestore manda el panel, aunque la lista esté vacía", () => {
+    const p = leerProducto("PROD_009", { imagen: ST, fotos: [{ url: ST, forma: "v" }, { forma: "h" }] });
+    expect(p.fotos).toEqual([{ url: ST, forma: "v" }]);
+    expect(fotosParaFicha(p, productos, fotosPlatillos)).toEqual({ fotos: [{ url: ST, forma: "v" }], imagen: ST, dePagina: false });
+    expect(fotosParaFicha(leerProducto("PROD_009", { fotos: [] }), productos, fotosPlatillos).fotos).toEqual([]);
+  });
+
+  it("solo manda las fotos a Firestore si cambiaron", () => {
+    const a = leerProducto("PROD_009", { nombre: "Romeritos", menudeo: 290, imagen: ST, fotos: [{ url: ST, forma: "h" }] });
+    expect(cambios(a, { ...a, fotos: [{ url: ST, forma: "h" }] })).toEqual({});
+    expect(cambios(a, { ...a, fotos: [] })).toEqual({ fotos: [] });
+  });
+
+  it("pide marcar una principal cuando hay fotos", () => {
+    const a = leerProducto("PROD_009", { nombre: "Romeritos", menudeo: 290, imagen: "", fotos: [{ url: ST, forma: "h" }] });
+    expect(validar(a, [])).toMatch(/principal/);
+    expect(validar({ ...a, imagen: ST }, [])).toBeNull();
+  });
+
+  it("las fotos de la página se ven desde el mismo sitio", () => {
+    expect(urlVista(`${SITIO}/img/galeria/bacalao.jpg`)).toBe("/img/galeria/bacalao.jpg");
+    expect(urlVista(ST)).toBe(ST);
   });
 });

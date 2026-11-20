@@ -49,7 +49,7 @@ Página sin enlace en el menú (y con `noindex`) en `lawalkiria.com.mx/admin.htm
 - Solo entra quien tenga un documento en `superadmins/{uid}` (se crea a mano en la consola, vacío
   o con `{ nombre: "Carlos" }`). Ni un ADMIN de la app puede darse ese permiso.
 - Lista todos los productos (comida por grupo, envíos y empaques) con el interruptor rápido de
-  **Disponible**. Al tocar uno se abre su ficha: foto (se sube a Storage reducida a 1200 px),
+  **Disponible**. Al tocar uno se abre su ficha: fotos (varias, una principal; ver "Galería ligada a los productos"),
   nombre, menudeo, mayoreo, categoría, grupo, tipo de venta, presentación, Disponible, Mostrar
   (`oculto`), peso ajustable y maquila.
 - Cada cambio guarda `actualizadoEn` (hora del servidor) y `actualizadoPor` (correo) en el producto,
@@ -137,6 +137,27 @@ con la pantalla en compu, hasta 144 px.
 
 La web solo usa la foto de `products` si se subió desde el panel (Firebase Storage); las que ya
 traía la colección son de relleno de otros sitios y se ignoran.
+
+## Galería ligada a los productos
+
+Cada foto de `src/data/galeria.ts` dice a qué producto pertenece (`producto`, id de `productos.ts`).
+La galería y el carrusel del inicio leen `publicWeb/disponibilidad` igual que el pedido:
+
+- Producto oculto (**Mostrar** apagado): sus fotos no salen.
+- Producto agotado: sus fotos salen con la marca **Agotado** y un poco apagadas.
+- Fotos sin producto (lechón, codornices, lomo a la espinaca, lomo horneado): salen siempre.
+
+En la ficha del súper panel, **Fotos** deja subir varias a la vez (se reducen a 1200 px). La que lleva
+**★ Principal** se guarda en `imagen`: es la de la app y la del renglón del pedido. Todas se guardan en
+`fotos` (`[{ url, forma }]`) y salen en la galería. Si un producto aún no tiene `fotos`, la ficha muestra
+las que la página ya traía; al agregar, quitar o cambiar la principal, el panel se queda a cargo de
+todas (las de la página se guardan con su dirección `https://www.lawalkiria.com.mx/img/galeria/…`).
+`fotos: []` significa que se quitaron todas: ya no sale ninguna de ese producto.
+
+Necesita la versión de `onProductWritten` que publica `fotos` (repo de la app). Mientras no se
+despliegue, la galería sigue con las fotos de la página, pero ya oculta y marca agotados.
+
+Para probar en local: `galeria.html?agotados=PROD_009&ocultos=PROD_001` (también en el inicio).
 
 ## Foto de la cena
 
