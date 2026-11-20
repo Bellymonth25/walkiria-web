@@ -43,6 +43,7 @@ const vistas = { sinConfig: $("#sinConfig"), entrar: $("#entrar"), panel: $("#pa
 const salir = $<HTMLButtonElement>("#salir");
 
 function mostrar(v: keyof typeof vistas): void {
+  if (v !== "cargando") window.clearTimeout(esperaLenta);
   for (const [k, el] of Object.entries(vistas)) el.hidden = k !== v;
   salir.hidden = v !== "panel";
 }
@@ -55,6 +56,21 @@ function aviso(texto: string, error = false): void {
   el.hidden = false;
   window.clearTimeout(temporizador);
   temporizador = window.setTimeout(() => (el.hidden = true), error ? 5000 : 2200);
+}
+
+// El código del panel sí cargó (ver el aviso de admin.html si no carga).
+(window as { __adminArranco?: boolean }).__adminArranco = true;
+
+/** Si Firebase tarda demasiado, se explica en pantalla con un botón para recargar. */
+let esperaLenta: number | undefined;
+function vigilarCarga(): void {
+  window.clearTimeout(esperaLenta);
+  $("#cargandoTexto").textContent = "Cargando…";
+  $("#recargar").hidden = true;
+  esperaLenta = window.setTimeout(() => {
+    $("#cargandoTexto").textContent = "Firebase está tardando en responder. Revisa tu conexión (o un bloqueador de anuncios) y toca Recargar.";
+    $("#recargar").hidden = false;
+  }, 15000);
 }
 
 if (!firebaseWeb.apiKey || !firebaseWeb.appId) {
@@ -107,6 +123,7 @@ function iniciar(): void {
     dejarDeEscuchar = null;
     if (!usuario) return mostrar("entrar");
     mostrar("cargando");
+    vigilarCarga();
     const rol = await esSuperadmin(usuario);
     if (!rol.ok) {
       await signOut(auth);
@@ -131,9 +148,25 @@ function iniciar(): void {
     dejarDeEscuchar = onSnapshot(
       collection(db, "products"),
       (snap) => {
-        lista = snap.docs.map((d) => leerProducto(d.id, d.data()));
+        // Un producto con datos raros no debe dejar el panel en "Cargando…": se salta y se avisa.
+        const malos: string[] = [];
+        lista = snap.docs.flatMap((d) => {
+          try {
+            return [leerProducto(d.id, d.data())];
+          } catch (e) {
+            console.error("admin: no se pudo leer " + d.id, e);
+            malos.push(d.id);
+            return [];
+          }
+        });
         mostrar("panel");
-        pintar();
+        try {
+          pintar();
+        } catch (e) {
+          console.error("admin: no se pudo pintar la lista", e);
+          aviso("Algo falló al mostrar la lista. Toca Recargar o avísale a soporte.", true);
+        }
+        if (malos.length) aviso(`No se pudieron leer: ${malos.join(", ")}.`, true);
       },
       () => {
         aviso("No se pudieron leer los productos. Revisa las reglas de Firestore.", true);
