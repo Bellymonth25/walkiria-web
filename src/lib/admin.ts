@@ -238,8 +238,11 @@ export function fotosParaFicha(p: ProductoFirestore, web: readonly Producto[], c
   return { fotos, imagen: principal || (fotos[0]?.url ?? ""), dePagina: dePagina.length > 0 };
 }
 
-/** La foto como se puede ver aquí mismo: las de la página se cargan del mismo sitio (sirve en local). */
-export const urlVista = (url: string): string => (url.startsWith(`${SITIO}/`) ? `/${url.slice(SITIO.length + 1)}` : url);
+/**
+ * La foto como se puede ver aquí mismo: las de la página se cargan del mismo sitio, con ruta relativa
+ * para que funcione en el dominio, en la vista previa de GitHub Pages (/walkiria-web/) y en local.
+ */
+export const urlVista = (url: string): string => (url.startsWith(`${SITIO}/`) ? url.slice(SITIO.length + 1) : url);
 
 /** Para el contador del renglón: cuántas fotos tiene (las del panel o, si no hay, las de la página). */
 export function cuantasFotos(p: ProductoFirestore, web: readonly Producto[], curadas: readonly FotoGaleria[]): number {

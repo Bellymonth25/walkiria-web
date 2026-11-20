@@ -240,7 +240,7 @@ function iniciar(): void {
     const n = cuantasFotos(p, productosWeb, fotosPlatillos);
     // Con el mismo encuadre que ve el cliente al pedir.
     const enc = estiloEncuadre(todas.find((x) => x.url === principal)?.encuadre);
-    const foto = `<span class="adm-mini-caja">${principal ? `<span class="adm-mini adm-recorte"><img src="${escapar(urlVista(principal))}" alt="" loading="lazy"${enc ? ` style="${enc}"` : ""}></span>` : `<span class="adm-mini" aria-hidden="true"></span>`}${n > 1 ? `<span class="adm-mini-n" title="${n} fotos">${n}</span>` : ""}</span>`;
+    const foto = `<span class="adm-mini-caja">${principal ? `<span class="adm-mini adm-recorte"><img src="${escapar(urlVista(principal))}" alt="" loading="lazy" onerror="this.remove()"${enc ? ` style="${enc}"` : ""}></span>` : `<span class="adm-mini" aria-hidden="true"></span>`}${n > 1 ? `<span class="adm-mini-n" title="${n} fotos">${n}</span>` : ""}</span>`;
     const mod = p.actualizadoEn ? `${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? `<small>${escapar(p.actualizadoPor.split("@")[0]!)}</small>` : ""}` : `<span class="adm-vacio">—</span>`;
     return `<tr class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}">
       <td class="c-prod"><div class="adm-abrir">${foto}<span class="adm-nombre">${escapar(p.nombre)}</span></div></td>

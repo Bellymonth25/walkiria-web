@@ -834,7 +834,8 @@ button.cal-day:hover{border-color:var(--primary)}
 .row{grid-template-columns:var(--thumb-w) minmax(0,1fr) auto auto}
 .thumb{position:relative;width:var(--thumb-w);height:var(--thumb-h);flex:none;padding:0;border:0;border-radius:12px;overflow:hidden;background:var(--surface-2);display:grid;place-items:center;align-self:center}
 button.thumb{cursor:zoom-in;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--fg) 10%,transparent)}
-.thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}
+/* La foto llena el recuadro sin importar su forma (vertical u horizontal), para que el encuadre del panel se vea igual aquí. */
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}
 button.thumb:hover img{transform:scale(1.06)}
 button.thumb:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 /* Indicador de "se abre": con mouse, la foto va limpia y al pasar el mouse aparece una lupa al centro.
