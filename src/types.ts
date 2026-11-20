@@ -58,6 +58,22 @@ export interface Producto {
   imagen?: string;
   /** Miniatura 4:3 de ~320 px para la lista. Si falta, se usa `imagen`. */
   imagenMini?: string;
+  /**
+   * Fotos de la galería subidas desde el súper panel (todas las de sus ids de Firestore).
+   * Si existe, reemplaza a las fotos de `data/galeria.ts` que apuntan a este producto.
+   */
+  fotos?: readonly FotoProducto[];
+}
+
+/** Una foto de un producto en Firestore (`products/{id}.fotos`). La principal es la que está en `imagen`. */
+export interface FotoProducto {
+  url: string;
+  /** "h" horizontal, "v" vertical (en la galería las verticales miden el doble de alto). */
+  forma: "h" | "v";
+  /** A lo ancho de dos columnas en la galería. */
+  ancha?: boolean;
+  /** false: solo en la página de galería, no en el carrusel del inicio. */
+  carrusel?: boolean;
 }
 
 /** Precio por kilo de cada parte del Combo Pavo. */

@@ -26,7 +26,7 @@ describe("Combo Pavo", () => {
     expect(textoCantidad(combo, l)).toBe("para 4 personas");
   });
   it("el precio sigue a Firestore", () => {
-    const c = aplicarCatalogo(productos, new Map([["PROD_032", { nombre: "Pierna", precio: 250, imagen: "", grupo: "AVES", unidad: "kg" }]]));
+    const c = aplicarCatalogo(productos, new Map([["PROD_032", { nombre: "Pierna", precio: 250, imagen: "", grupo: "AVES", unidad: "kg", }]]));
     expect(c.find((p) => p.id === "combo-pavo")!.combo!.pierna).toBe(250);
   });
   it("+ y − entre 2 y 5 personas", () => {

@@ -6,24 +6,33 @@
  */
 const ESPACIO = 8;
 
-export function iniciarCarrusel(caja: HTMLElement, pista: HTMLElement): void {
-  const originales = [...pista.children] as HTMLElement[];
-  const n = originales.length;
-  if (!n) return;
-  // Tres vueltas seguidas para que el carrusel nunca se acabe: se trabaja en la de en medio.
-  const copiar = () =>
-    originales.map((el) => {
-      const c = el.cloneNode(true) as HTMLElement;
-      c.setAttribute("data-copia", "");
-      c.setAttribute("aria-hidden", "true");
-      c.tabIndex = -1;
-      return c;
-    });
-  pista.prepend(...copiar());
-  pista.append(...copiar());
-  const fotos = [...pista.children] as HTMLElement[];
+export interface Carrusel {
+  /** Vuelve a armar el carrusel con las fotos que ahora tiene la pista (por ejemplo, si se ocultó un producto). */
+  rehacer(): void;
+}
 
-  let actual = n; // primera foto grande
+export function iniciarCarrusel(caja: HTMLElement, pista: HTMLElement): Carrusel {
+  let n = 0;
+  let fotos: HTMLElement[] = [];
+  let actual = 0; // primera foto grande
+  // Tres vueltas seguidas para que el carrusel nunca se acabe: se trabaja en la de en medio.
+  const montar = () => {
+    const originales = [...pista.children].filter((el) => !el.hasAttribute("data-copia")) as HTMLElement[];
+    n = originales.length;
+    const copiar = () =>
+      originales.map((el) => {
+        const c = el.cloneNode(true) as HTMLElement;
+        c.setAttribute("data-copia", "");
+        c.setAttribute("aria-hidden", "true");
+        c.tabIndex = -1;
+        return c;
+      });
+    pista.replaceChildren(...copiar(), ...originales, ...copiar());
+    fotos = [...pista.children] as HTMLElement[];
+    actual = n;
+  };
+  montar();
+
   let grandes = 3;
   let anchos = { chica: 56, mediana: 200, grande: 300 };
 
@@ -54,6 +63,7 @@ export function iniciarCarrusel(caja: HTMLElement, pista: HTMLElement): void {
   };
 
   const ir = (destino: number) => {
+    if (!n) return;
     actual = destino;
     pintar();
     // Al salir de la vuelta de en medio, regresa sin que se note.
@@ -125,12 +135,17 @@ export function iniciarCarrusel(caja: HTMLElement, pista: HTMLElement): void {
   caja.parentElement?.querySelector<HTMLButtonElement>("[data-carrusel='ant']")?.addEventListener("click", anterior);
   caja.parentElement?.querySelector<HTMLButtonElement>("[data-carrusel='sig']")?.addEventListener("click", siguiente);
 
-  medir();
-  pintar(false);
-  pista.classList.remove("sin-animar");
-  new ResizeObserver(() => {
+  const repintar = () => {
     medir();
     pintar(false);
     pista.classList.remove("sin-animar");
-  }).observe(caja);
+  };
+  repintar();
+  new ResizeObserver(repintar).observe(caja);
+  return {
+    rehacer() {
+      montar();
+      repintar();
+    },
+  };
 }

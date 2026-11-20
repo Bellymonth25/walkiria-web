@@ -112,11 +112,6 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-ficha input[type=text],.adm-ficha input[type=url],.adm-ficha input[type=number],.adm-ficha select{font:500 1rem var(--font-body);color:var(--fg);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;width:100%;min-width:0}
 .adm-ficha input:focus,.adm-ficha select:focus{outline:none;border-color:var(--primary)}
 .adm-dos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.adm-foto{display:flex;align-items:center;gap:14px}
-.adm-foto img,#fFotoVacia{flex:none;width:96px;height:96px;border-radius:12px;object-fit:cover;background:var(--surface-3)}
-#fFotoVacia{display:grid;place-items:center;color:var(--muted);font-size:.85rem}
-#fFotoVacia[hidden]{display:none}
-.adm-foto-acc{display:flex;flex-wrap:wrap;gap:8px}
 .adm-checks{display:grid;gap:4px}
 .adm-check{display:flex;align-items:center;gap:12px;min-height:56px;cursor:pointer}
 .adm-check > span:last-child{display:grid}
@@ -134,3 +129,28 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 @media (max-width:560px){.adm-ficha.adm-confirmar{height:fit-content;margin:auto 0 0;border-radius:var(--r) var(--r) 0 0}}
 /* Spinner dentro de un botón: toma el color del texto del botón. */
 .adm-giro.chico{display:inline-block;vertical-align:-3px;width:16px;height:16px;margin:0 8px 0 0;border:2px solid color-mix(in srgb,currentColor 30%,transparent);border-top-color:currentColor}
+
+/* Fotos del producto en la ficha: la principal con borde dorado y su etiqueta; las demás con "☆ Principal" a un toque. */
+.adm-fotos{display:grid;gap:8px}
+.adm-fotos-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.adm-fotos-top h3{margin:0;font:700 1rem var(--font-body)}
+.adm-fotos-n{color:var(--muted);font-weight:500}
+.adm-fotos-ayuda,.adm-fotos-nota,.adm-fotos-estado{margin:0;font-size:.84rem;color:var(--muted)}
+.adm-fotos-estado{color:var(--fg);background:var(--surface-2);border-left:4px solid var(--gold);padding:8px 10px;border-radius:8px}
+.adm-fotos-estado.oculto{border-left-color:var(--muted)}
+.adm-fotos-lista{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.adm-fotito{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--surface-3);border:2px solid transparent}
+.adm-fotito img{width:100%;height:100%;object-fit:cover;display:block}
+.adm-fotito.principal{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.adm-fotito .adm-es-principal,.adm-fotito .adm-hacer{position:absolute;left:6px;bottom:6px;font:700 .76rem/1 var(--font-body);padding:7px 9px;border-radius:999px;border:0}
+.adm-fotito .adm-es-principal{background:var(--gold);color:#2B1D00}
+.adm-fotito .adm-hacer{white-space:nowrap;font-size:.7rem;padding:7px 8px;background:rgba(255,255,255,.92);color:#2B1D00;cursor:pointer;min-height:30px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.adm-fotito .adm-hacer:hover{background:#fff;outline:2px solid var(--gold)}
+.adm-fotito .adm-x{position:absolute;top:4px;right:4px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.62);color:#fff;font-size:1rem;cursor:pointer;display:grid;place-items:center}
+.adm-fotito .adm-x:hover{background:#8E1B1B}
+.adm-fotito.subiendo{display:grid;place-items:center;align-content:center;gap:8px;color:var(--muted);font-size:.8rem;border:2px dashed var(--line)}
+.adm-fotos-vacia{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;min-height:96px;border:2px dashed var(--line);border-radius:12px;color:var(--muted);cursor:pointer;font-weight:600;text-align:center;padding:12px}
+.adm-fotos-vacia:hover{border-color:var(--gold);color:var(--fg)}
+/* Renglón de la lista: la miniatura lleva cuántas fotos tiene el producto. */
+.adm-mini-caja{position:relative;flex:none;display:inline-flex}
+.adm-mini-n{position:absolute;right:-6px;bottom:-6px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--surface);border:1.5px solid var(--line);font:700 .72rem/19px var(--font-body);text-align:center;color:var(--fg)}

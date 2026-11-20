@@ -6,7 +6,8 @@ import { $ } from "./ui/dom";
 import { iniciarVisor } from "./ui/visor";
 import { iniciarFotos, pintarFotos } from "./ui/galeria";
 import { iniciarCarrusel } from "./ui/carrusel";
-import { fotosPlatillos } from "./data/galeria";
+import { galeriaViva } from "./ui/galeria-viva";
+import type { Carrusel } from "./ui/carrusel";
 import { iniciarFondoVideo } from "./ui/fondo-video";
 import { iniciarApariciones } from "./ui/aparecer";
 import "./portadas.css";
@@ -66,9 +67,14 @@ $("#cal").innerHTML = fiestas
 const visor = iniciarVisor();
 const pista = document.querySelector<HTMLElement>("#carrusel");
 if (pista) {
-  pintarFotos(pista, fotosPlatillos.filter((f) => f.carrusel !== false));
-  iniciarCarrusel(pista.parentElement!, pista);
-  iniciarFotos(visor, pista);
+  // Sigue al súper panel: un producto oculto sale del carrusel y uno agotado lleva la marca.
+  let carrusel: Carrusel | null = null;
+  galeriaViva((fotos) => {
+    pintarFotos(pista, fotos.filter((f) => f.carrusel !== false));
+    if (carrusel) carrusel.rehacer();
+    else carrusel = iniciarCarrusel(pista.parentElement!, pista);
+    iniciarFotos(visor, pista);
+  });
   // Al cerrar el visor el foco regresa a la foto; se suelta para que el carrusel siga corriendo.
   document.querySelector("#visor")?.addEventListener("close", () => {
     setTimeout(() => {

@@ -1,4 +1,6 @@
-import type { Producto } from "../types";
+import type { FotoProducto, Producto } from "../types";
+import type { FotoGaleria } from "../data/galeria";
+import { fotosDeLaPagina, SITIO } from "./galeria";
 
 /**
  * Producto de Firestore (`products`) tal como lo usa el súper panel.
@@ -14,7 +16,12 @@ export interface ProductoFirestore {
   /** tipoVenta de la app: Kg, Pza, Lt, Envio. */
   unidad: string;
   presentacion: string;
+  /** Foto principal: la que se ve en la app y al elegir el producto en el pedido. Es una de `fotos`. */
   imagen: string;
+  /** Todas las fotos del producto; todas salen en la galería de la página. */
+  fotos: FotoProducto[];
+  /** El producto ya tiene la lista `fotos` en Firestore (aunque esté vacía): el panel manda sobre sus fotos. */
+  conFotos: boolean;
   maquila: boolean;
   pesoAjustable: boolean;
   disponible: boolean;
@@ -71,6 +78,8 @@ export function leerProducto(id: string, d: Record<string, unknown>): ProductoFi
     unidad: texto(d.tipoVenta),
     presentacion: texto(d.presentacion),
     imagen: texto(d.imagen),
+    fotos: leerFotos(d.fotos),
+    conFotos: Array.isArray(d.fotos),
     maquila: d.isMaquila === true,
     pesoAjustable: d.isWeightAdjustable === true,
     // Igual que la app: sin el campo, cuenta como agotado.
@@ -79,6 +88,17 @@ export function leerProducto(id: string, d: Record<string, unknown>): ProductoFi
     actualizadoEn: aFecha(d.actualizadoEn),
     actualizadoPor: texto(d.actualizadoPor),
   };
+}
+
+/** Lista `fotos` de Firestore sin confiar en sus tipos: solo pasan las que traen url. */
+export function leerFotos(v: unknown): FotoProducto[] {
+  if (!Array.isArray(v)) return [];
+  return v.flatMap((x): FotoProducto[] => {
+    const f = (x ?? {}) as Record<string, unknown>;
+    const url = texto(f.url);
+    if (!url) return [];
+    return [{ url, forma: f.forma === "v" ? "v" : "h", ...(f.ancha === true ? { ancha: true } : {}), ...(f.carrusel === false ? { carrusel: false } : {}) }];
+  });
 }
 
 /** Acepta un Timestamp de Firestore (con toDate) o una fecha; cualquier otra cosa es null. */
@@ -101,8 +121,10 @@ export function textoModificacion(p: ProductoFirestore): string {
   return `Última modificación: ${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? ` por ${p.actualizadoPor}` : ""}.`;
 }
 
+type ValorDoc = string | number | boolean | FotoProducto[];
+
 /** Lo que se guarda en Firestore, con los nombres de campo de la app. */
-export function aDocumento(p: ProductoFirestore): Record<string, string | number | boolean> {
+export function aDocumento(p: ProductoFirestore): Record<string, ValorDoc> {
   return {
     id: p.id,
     nombre: p.nombre,
@@ -113,6 +135,7 @@ export function aDocumento(p: ProductoFirestore): Record<string, string | number
     tipoVenta: p.unidad,
     presentacion: p.presentacion,
     imagen: p.imagen,
+    fotos: p.fotos,
     isMaquila: p.maquila,
     isWeightAdjustable: p.pesoAjustable,
     estaDisponible: p.disponible,
@@ -161,6 +184,8 @@ export function productoNuevo(id: string): ProductoFirestore {
     unidad: "Kg",
     presentacion: "",
     imagen: "",
+    fotos: [],
+    conFotos: false,
     maquila: false,
     pesoAjustable: true,
     disponible: true,
@@ -178,14 +203,42 @@ export function validar(p: ProductoFirestore, otros: readonly ProductoFirestore[
   if (!(p.menudeo > 0)) return "El precio de menudeo debe ser mayor a 0.";
   if (p.mayoreo < 0) return "El precio de mayoreo no puede ser negativo.";
   if (p.imagen && !/^https:\/\//.test(p.imagen)) return "La foto debe ser un enlace que empiece con https://";
+  if (p.fotos.length && !p.fotos.some((f) => f.url === p.imagen)) return "Marca con ★ cuál foto es la principal.";
   return null;
 }
 
+/**
+ * Fotos con las que abre la ficha. Si el producto aún no tiene `fotos` en Firestore, se muestran las
+ * que la página ya traía para él (solo en su primer id, para no repetirlas en la pechuga y sus
+ * versiones) y su foto principal. Así, al agregar o quitar una, el panel se queda a cargo de todas.
+ * Las fotos de relleno de otros sitios no se ofrecen.
+ */
+export function fotosParaFicha(p: ProductoFirestore, web: readonly Producto[], curadas: readonly FotoGaleria[]): { fotos: FotoProducto[]; imagen: string; dePagina: boolean } {
+  if (p.conFotos) return { fotos: p.fotos, imagen: p.fotos.some((f) => f.url === p.imagen) ? p.imagen : (p.fotos[0]?.url ?? ""), dePagina: false };
+  const propia = (u: string) => /^https:\/\/firebasestorage\.googleapis\.com\//.test(u) || u.startsWith(`${SITIO}/img/`);
+  const pw = web.find((x) => x.firebaseIds[0] === p.id);
+  const dePagina = fotosDeLaPagina(curadas, { productoWeb: pw?.id, firebaseId: p.id });
+  // La principal: la que ya se sube desde el panel o, si no, la que usa la página en el pedido.
+  const principalWeb = pw?.imagen && /^img\/galeria\//.test(pw.imagen) ? `${SITIO}/${pw.imagen}` : "";
+  const principal = propia(p.imagen) ? p.imagen : principalWeb;
+  const fotos = [...dePagina];
+  if (principal && !fotos.some((f) => f.url === principal)) fotos.unshift({ url: principal, forma: "h" });
+  return { fotos, imagen: principal || (fotos[0]?.url ?? ""), dePagina: dePagina.length > 0 };
+}
+
+/** La foto como se puede ver aquí mismo: las de la página se cargan del mismo sitio (sirve en local). */
+export const urlVista = (url: string): string => (url.startsWith(`${SITIO}/`) ? `/${url.slice(SITIO.length + 1)}` : url);
+
+/** Para el contador del renglón: cuántas fotos tiene (las del panel o, si no hay, las de la página). */
+export function cuantasFotos(p: ProductoFirestore, web: readonly Producto[], curadas: readonly FotoGaleria[]): number {
+  return fotosParaFicha(p, web, curadas).fotos.length;
+}
+
 /** Campos que cambiaron entre dos versiones (para no reescribir lo que no se tocó). */
-export function cambios(antes: ProductoFirestore, despues: ProductoFirestore): Record<string, string | number | boolean> {
+export function cambios(antes: ProductoFirestore, despues: ProductoFirestore): Record<string, ValorDoc> {
   const a = aDocumento(antes);
   const d = aDocumento(despues);
-  return Object.fromEntries(Object.entries(d).filter(([k, v]) => a[k] !== v));
+  return Object.fromEntries(Object.entries(d).filter(([k, v]) => JSON.stringify(a[k]) !== JSON.stringify(v)));
 }
 
 /** Para eliminar hay que escribir el nombre exacto del producto (como en Firebase). */
