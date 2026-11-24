@@ -30,7 +30,6 @@ let anterior: string | null = null;
 export function iniciarFondoVideo(): void {
   const caja = document.querySelector<HTMLElement>(".hero-fondo");
   if (!caja) return;
-  caja.style.backgroundImage = `url("${import.meta.env.BASE_URL}video/cena-poster.jpg")`;
 
   // Los videos corren aunque la computadora tenga desactivadas las animaciones
   // (Windows y Chrome lo piden así a menudo sin que el visitante lo sepa). Solo se omiten con ahorro de datos.

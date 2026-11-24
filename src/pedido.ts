@@ -227,19 +227,22 @@ function revisarDia(): void {
 async function cargarDisponibilidad(): Promise<void> {
   const leidos = await leerDisponibilidad(firebase.proyecto, firebase.documento);
   if (!leidos) return;
+  // Nombres de antes: si un producto se eliminó en el panel, ya no estará en el catálogo nuevo.
+  const nombreAntes = new Map(catalogo.map((p) => [p.id, p.nombre]));
   catalogo.splice(0, catalogo.length, ...aplicarCatalogo(productos, leidos.catalogo));
   agotados = new Set([...leidos.agotados, ...pruebaLista("agotados")]);
   ocultos = new Set([...leidos.ocultos, ...pruebaLista("ocultos")]);
   const quitados = Object.entries(pedido.lineas).filter(([, l]) => {
     const p = producto(l.productoId);
-    return p && noDisponible(p);
+    return !p || noDisponible(p);
   });
   quitados.forEach(([id]) => ponerLinea(id, null));
-  const nombres = [...new Set(quitados.map(([, l]) => producto(l.productoId)!.nombre))];
+  const nombres = [...new Set(quitados.map(([, l]) => producto(l.productoId)?.nombre ?? nombreAntes.get(l.productoId)).filter((n): n is string => !!n))];
   if (nombres.length) aviso(`Ya no está disponible: ${nombres.join(", ")}. Lo quitamos de tu pedido.`);
   pintarMenu(vista());
   pintarChips(vista());
   pintarPedido();
+  refrescarCalculadora();
 }
 
 /** Para probar en local: ?agotados=PROD_001,PROD_008 y ?ocultos=PROD_002 */
@@ -597,7 +600,7 @@ pintarMenu(vista());
 pintarDias();
 revisarDia();
 pintarPedido();
-iniciarCalculadora($("#calc"), catalogo, noDisponible, agregarDeCalculadora);
+const refrescarCalculadora = iniciarCalculadora($("#calc"), catalogo, noDisponible, agregarDeCalculadora);
 iniciarHoja($("#order"), $<HTMLButtonElement>("#bar"), $("#barBtn"));
 
 

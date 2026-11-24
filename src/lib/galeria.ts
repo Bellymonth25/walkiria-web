@@ -115,3 +115,47 @@ export function fotosDeLaPagina(curadas: readonly FotoGaleria[], de: { productoW
 
 /** Firma corta para saber si la galería cambió y vale la pena volver a pintarla. */
 export const firmaGaleria = (fotos: readonly FotoVista[]): string => fotos.map((f) => `${f.clave}|${f.url}|${f.agotado ? 1 : 0}|${f.carrusel === false ? 0 : 1}`).join(",");
+
+/**
+ * Revuelve la lista al azar cuidando que dos seguidas no sean del mismo producto (misma `clave`),
+ * tampoco la última con la primera (el carrusel da la vuelta). Si un producto tiene tantas fotos que
+ * no se puede evitar, se acerca lo más posible.
+ */
+export function mezclarSinRepetir<T>(lista: readonly T[], clave: (x: T) => string, azar: () => number = Math.random): T[] {
+  const intento = (): T[] => {
+    const grupos = new Map<string, T[]>();
+    for (const x of lista) {
+      const k = clave(x);
+      grupos.set(k, [...(grupos.get(k) ?? []), x]);
+    }
+    // Cada grupo revuelto por dentro (Fisher-Yates).
+    for (const g of grupos.values()) {
+      for (let i = g.length - 1; i > 0; i--) {
+        const j = Math.floor(azar() * (i + 1));
+        [g[i], g[j]] = [g[j]!, g[i]!];
+      }
+    }
+    const salida: T[] = [];
+    let anterior: string | null = null;
+    for (let quedan = lista.length; quedan > 0; quedan--) {
+      const vivos = [...grupos].filter(([, g]) => g.length > 0);
+      const opciones = vivos.filter(([k]) => k !== anterior);
+      // Si un producto ya ocupa más de la mitad de lo que falta, tiene que ir ahora o quedarán juntas.
+      const urgente = opciones.find(([, g]) => g.length * 2 > quedan);
+      let elegido: [string, T[]];
+      if (urgente) elegido = urgente;
+      else if (!opciones.length) elegido = vivos[0]!;
+      else {
+        // Al azar, con más probabilidad para el producto que tiene más fotos pendientes.
+        let r = azar() * opciones.reduce((a, [, g]) => a + g.length, 0);
+        elegido = opciones.find(([, g]) => (r -= g.length) < 0) ?? opciones[opciones.length - 1]!;
+      }
+      salida.push(elegido[1].pop()!);
+      anterior = elegido[0];
+    }
+    return salida;
+  };
+  let mejor = intento();
+  for (let i = 0; i < 12 && mejor.length > 2 && clave(mejor[0]!) === clave(mejor[mejor.length - 1]!); i++) mejor = intento();
+  return mejor;
+}

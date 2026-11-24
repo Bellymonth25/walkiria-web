@@ -22,6 +22,8 @@ la maquila (precio, relleno y la lista de "¿Qué nos trae?") y los datos del ne
 - `calculadora` y `tiposCena` en `temporada.ts`: porciones por persona (todos cuentan igual) y las dos
   cenas base, **Básica** (carne, pasta, ensalada y postre) y **Todo incluido** (además romeritos,
   bacalao y panecillos). El cliente puede prender o apagar romeritos, bacalao, panecillos y postre.
+  Un extra cuyo producto se eliminó, se ocultó o está agotado deja de ofrecerse, y el texto de cada cena
+  ("Lo de la básica + …") se arma solo con lo que sí se puede pedir.
 - `combo` en `temporada.ts`: Combo Pavo (pechuga, relleno y 2 piernas en una charola) para 5 personas
   o menos. Su precio sale de los precios por kilo de pechuga, relleno y pierna (`src/lib/combo.ts`),
   y el mensaje de WhatsApp lleva el desglose para producción. Se agota si falta cualquiera de sus partes.
@@ -36,6 +38,9 @@ cuando todos sus `firebaseIds` (en `productos.ts`) están en esa lista.
 
 Reglas de Firestore necesarias: lectura abierta de `publicWeb` sin que otra regla general la tape. El
 texto completo está en la sección "Súper panel de productos", más abajo.
+
+Un producto de `productos.ts` cuyos `firebaseIds` ya no están en el documento (se eliminó en el panel) no
+se muestra en ningún lado. Los que no tienen id (Combo Pavo, o los que faltan de dar de alta) siempre salen.
 
 Si no se puede leer el documento, la página muestra todo disponible.
 

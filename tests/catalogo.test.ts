@@ -67,3 +67,23 @@ describe("catálogo desde Firestore", () => {
     expect(esFotoPropia("")).toBe(false);
   });
 });
+
+describe("productos eliminados en el panel", () => {
+  it("un producto de la web cuyo id ya no está en Firestore no sale", () => {
+    const c = new Map([["PROD_025", pub({ nombre: "Strudel de Manzana", precio: 520 })]]);
+    const l = aplicarCatalogo(productos, c);
+    expect(l.find((p) => p.id === "panecillos")).toBeUndefined();
+    expect(l.find((p) => p.id === "strudel")).toBeDefined();
+  });
+
+  it("los productos sin id (combo, los que faltan de dar de alta) se quedan", () => {
+    const l = aplicarCatalogo(productos, new Map([["PROD_025", pub({ nombre: "Strudel de Manzana", precio: 520 })]]));
+    expect(l.find((p) => p.id === "combo-pavo")).toBeDefined();
+    expect(l.find((p) => p.id === "costilla-adobada")).toBeDefined();
+  });
+
+  it("con versiones, basta con que quede uno de sus ids", () => {
+    const l = aplicarCatalogo(productos, new Map([["PROD_030", pub({ nombre: "Espagueti 3 quesos", precio: 250 })]]));
+    expect(l.find((p) => p.id === "espagueti")).toBeDefined();
+  });
+});

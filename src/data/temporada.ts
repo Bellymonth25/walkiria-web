@@ -161,15 +161,13 @@ export type TipoCena = "basica" | "completa";
  * Las dos cenas base. Son el punto de partida: el cliente puede prender o apagar cada extra.
  * Carne, pasta y ensalada van siempre.
  */
-export const tiposCena: Record<TipoCena, { nombre: string; incluye: string; extras: Record<ExtraCena, boolean> }> = {
+export const tiposCena: Record<TipoCena, { nombre: string; extras: Record<ExtraCena, boolean> }> = {
   basica: {
     nombre: "Básica",
-    incluye: "Carne, pasta, ensalada y postre",
     extras: { romeritos: false, bacalao: false, panes: false, postre: true },
   },
   completa: {
     nombre: "Todo incluido",
-    incluye: "Lo de la básica + romeritos, bacalao y panecillos",
     extras: { romeritos: true, bacalao: true, panes: true, postre: true },
   },
 };
