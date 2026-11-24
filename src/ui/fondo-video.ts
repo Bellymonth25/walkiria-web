@@ -1,7 +1,10 @@
 // Fondo de la portada: los videos de cenas navideñas pasan uno tras otro, con un fundido entre cada uno.
 // La lista se baraja una vez al abrir la página y se recorre en ese orden: ninguno se repite hasta que
 // han pasado todos. Se pausan cuando la portada no se ve.
-const videos = [1, 3, 4, 5, 6].map((n) => `${import.meta.env.BASE_URL}video/cena-${n}.mp4`);
+// En pantallas de más de 1280 pixeles (casi toda computadora) va la versión 1080p;
+// en celular, la de 720p, que pesa menos.
+const grande = Math.max(screen.width, screen.height) * (window.devicePixelRatio || 1) > 1280 && window.innerWidth > 760;
+const videos = [1, 3, 4, 5, 6].map((n) => `${import.meta.env.BASE_URL}video/cena-${n}${grande ? "-1080" : ""}.mp4`);
 
 /** Baraja la lista (Fisher-Yates). */
 function barajar<T>(lista: T[]): T[] {

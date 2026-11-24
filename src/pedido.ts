@@ -12,7 +12,7 @@ import {
   alcaldiaValida, idLinea, normalizarKgRelleno, nuevaLinea, OTRA_ALCALDIA, textoFaltantes, variasLineas,
 } from "./lib/pedido";
 import { $, aviso } from "./ui/dom";
-import { actualizarPreciosPresentacion, claveFila, urlImagen, pintarChips, pintarFilaPorClave, pintarMenu, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
+import { actualizarPreciosPresentacion, claveFila, urlImagen, pintarChips, pintarFilaPorClave, pintarMenu as pintarMenuLista, pintarRenglon, textoDetalle, type Filtro, type VistaMenu } from "./ui/menu";
 import { pintarOrden, textoPedido, type ContextoOrden } from "./ui/orden";
 import { pintarCalendario, rangoMeses } from "./ui/calendario";
 import { iniciarHoja } from "./ui/hoja";
@@ -36,6 +36,16 @@ const pedido: Pedido = {
 let filtro: Filtro = "todo";
 let busqueda = "";
 const guardada = disponibilidadGuardada();
+/**
+ * Primera visita (sin catálogo guardado): mientras llegan productos y precios de Firestore se ve
+ * "Cargando productos…" en lugar de la lista de la página, que podría traer precios o productos viejos.
+ * Si Firestore no responde (leerDisponibilidad se rinde a los 5 s), se muestra la lista de la página.
+ */
+let cargandoCatalogo = !guardada;
+function pintarMenu(v: VistaMenu): void {
+  if (!cargandoCatalogo) return pintarMenuLista(v);
+  $("#menu").innerHTML = `<div class="menu-cargando" role="status"><span class="menu-spinner" aria-hidden="true"></span><span>Cargando productos y precios…</span></div>`;
+}
 /**
  * Productos de la web con nombre, precio y foto de Firestore. Se cambia en su lugar (no se
  * reasigna) para que el contexto del pedido y la calculadora vean siempre lo último.
@@ -226,7 +236,12 @@ function revisarDia(): void {
 // ---------- Agotados ----------
 async function cargarDisponibilidad(): Promise<void> {
   const leidos = await leerDisponibilidad(firebase.proyecto, firebase.documento);
-  if (!leidos) return;
+  const estabaCargando = cargandoCatalogo;
+  cargandoCatalogo = false;
+  if (!leidos) {
+    if (estabaCargando) pintarMenu(vista());
+    return;
+  }
   // Nombres de antes: si un producto se eliminó en el panel, ya no estará en el catálogo nuevo.
   const nombreAntes = new Map(catalogo.map((p) => [p.id, p.nombre]));
   catalogo.splice(0, catalogo.length, ...aplicarCatalogo(productos, leidos.catalogo));
