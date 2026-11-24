@@ -14,7 +14,7 @@ export interface Agregado {
 const EXTRAS: Array<[ExtraCena, string]> = [
   ["romeritos", "Romeritos"],
   ["bacalao", "Bacalao"],
-  ["panes", "Panecillos"],
+  ["panes", "Chapatas"],
   ["postre", "Postre (strudel)"],
 ];
 
@@ -22,11 +22,11 @@ const EXTRAS: Array<[ExtraCena, string]> = [
 const PRODUCTOS_EXTRA: Record<ExtraCena, string[]> = {
   romeritos: ["romeritos"],
   bacalao: ["bacalao"],
-  panes: ["panecillos"],
+  panes: ["chapata"],
   postre: ["strudel", "strudel-individual"],
 };
 /** Cómo se nombra cada extra en "Qué cena". */
-const NOMBRE_EXTRA: Record<ExtraCena, string> = { romeritos: "romeritos", bacalao: "bacalao", panes: "panecillos", postre: "postre" };
+const NOMBRE_EXTRA: Record<ExtraCena, string> = { romeritos: "romeritos", bacalao: "bacalao", panes: "chapatas", postre: "postre" };
 
 /** "a", "a y b", "a, b y c". */
 const enLista = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} y ${xs[xs.length - 1]}`);
@@ -184,7 +184,7 @@ export function iniciarCalculadora(
       if (!x || !n || agotado(x)) return;
       filas.push({ nombre: x.nombre, cantidad: `${n} ${n === 1 ? "pza" : "pzas"}${extra}`, importe: n * x.precio, agregado: [{ productoId: id, cambios: { cantidad: n } }] });
     };
-    if (extras.panes) piezas("panecillos", c.panes);
+    if (extras.panes) piezas("chapata", c.panes);
     if (extras.postre) {
       piezas("strudel", c.strudelGrande, " (para 10)");
       piezas("strudel-individual", c.strudelIndividual);

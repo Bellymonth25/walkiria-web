@@ -72,7 +72,7 @@ describe("productos eliminados en el panel", () => {
   it("un producto de la web cuyo id ya no está en Firestore no sale", () => {
     const c = new Map([["PROD_025", pub({ nombre: "Strudel de Manzana", precio: 520 })]]);
     const l = aplicarCatalogo(productos, c);
-    expect(l.find((p) => p.id === "panecillos")).toBeUndefined();
+    expect(l.find((p) => p.id === "chapata")).toBeUndefined();
     expect(l.find((p) => p.id === "strudel")).toBeDefined();
   });
 

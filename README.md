@@ -21,7 +21,7 @@ la maquila (precio, relleno y la lista de "¿Qué nos trae?") y los datos del ne
 
 - `calculadora` y `tiposCena` en `temporada.ts`: porciones por persona (todos cuentan igual) y las dos
   cenas base, **Básica** (carne, pasta, ensalada y postre) y **Todo incluido** (además romeritos,
-  bacalao y panecillos). El cliente puede prender o apagar romeritos, bacalao, panecillos y postre.
+  bacalao y chapatas). El cliente puede prender o apagar romeritos, bacalao, chapatas y postre.
   Un extra cuyo producto se eliminó, se ocultó o está agotado deja de ofrecerse, y el texto de cada cena
   ("Lo de la básica + …") se arma solo con lo que sí se puede pedir.
 - `combo` en `temporada.ts`: Combo Pavo (pechuga, relleno y 2 piernas en una charola) para 5 personas
