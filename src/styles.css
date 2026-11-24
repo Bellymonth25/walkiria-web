@@ -43,7 +43,7 @@ html{scroll-behavior:smooth}
 /* "Reducir movimiento" (Windows: Efectos de animación apagados) quita las animaciones de la página.
    La explicación del gravy es la excepción: el cliente la pide con "Ver explicación". */
 /* Con "menos movimiento" se apagan las animaciones, menos la escena del gravy, el carrusel y los videos de la portada */
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}:not(.expl-escena *):not(.carrusel-pista):not(.carrusel-pista *):not(.hero-fondo video),:not(.expl-escena *)::before,:not(.expl-escena *)::after{transition:none!important;animation:none!important}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}:not(.expl-escena *):not(.carrusel-pista):not(.carrusel-pista *):not(.hero-capa video),:not(.expl-escena *)::before,:not(.expl-escena *)::after{transition:none!important;animation:none!important}}
 body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--hero)}
 .wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -666,24 +666,27 @@ button.cal-day:hover{border-color:var(--primary)}
 
 /* Portada con videos de fondo bajo una máscara roja */
 .hero{isolation:isolate}
-/* La foto de espera va en el CSS (no la pone el script) y, mientras llega, un color parecido al de la foto:
-   así la portada se ve igual desde el primer instante y no pasa de rojo oscuro a más claro. */
-.hero-fondo{position:absolute;inset:0;z-index:-1;overflow:hidden;background:#A37C5C url("/video/cena-poster.jpg") center/cover no-repeat}
+/* Máscara roja sin nada encima del video. Antes era una capa roja semitransparente (::after) sobre el
+   video; Firefox y Opera GX, al empezar a reproducir, a veces pintan el video en una capa aparte por encima
+   de esa máscara y la portada brincaba de rojo a "más clara" (o se veía una franja clara). Ahora el rojo es
+   el fondo y lo que se vuelve transparente es el video: mismo color final (rojo × m + video × (1 − m)),
+   pero ya no hay una capa encima que el navegador pueda saltarse.
+   La máscara usa siempre el rojo del tema oscuro: deja ver mejor el video en los dos temas. */
+.hero-fondo{position:absolute;inset:0;z-index:-1;overflow:hidden;background:var(--veil)}
+/* Capa del video (y de la foto de espera, que va en el CSS para que la portada se vea igual desde el
+   primer instante). Su transparencia es el nivel de la máscara. */
+.hero-capa{position:absolute;inset:0;opacity:calc(1 - var(--m));background:#A37C5C url("/video/cena-poster.jpg") center/cover no-repeat}
 /* El desenfoque ligero que suaviza los cuadritos de compresión ya viene dentro de los videos (public/video).
    No usar filter:blur aquí: en Chrome obliga a desenfocar cada cuadro del video en la tarjeta de video
    y la portada (video + nieve) se traba. Safari y Opera lo aguantan, Chrome no. */
-.hero-fondo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s ease;transform:translateZ(0) scale(1.04)}
-.hero-fondo video.activo{opacity:1}
-.hero-fondo video.arriba{z-index:1}
-/* Máscara roja: un solo color parejo (un degradado tan suave se veía en franjas o "columnas").
-   Niveles para comparar con ?mascara=1, 2, 3 o 4 en la dirección. El 1 (el más claro, deja ver más el
-   video) es el elegido para la página. */
-.hero{--m:70%}
-.hero[data-mascara="2"]{--m:78%}
-.hero[data-mascara="3"]{--m:85%}
-.hero[data-mascara="4"]{--m:91%}
-/* La máscara usa siempre el rojo del tema oscuro: deja ver mejor el video en los dos temas. */
-.hero-fondo::after{content:"";position:absolute;inset:0;z-index:2;transform:translateZ(0);background:color-mix(in srgb,var(--veil) var(--m),transparent)}
+.hero-capa video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s ease;transform:scale(1.04)}
+.hero-capa video.activo{opacity:1}
+.hero-capa video.arriba{z-index:1}
+/* Niveles de la máscara para comparar con ?mascara=1, 2, 3 o 4 en la dirección. El 3 es el elegido. */
+.hero{--m:.85}
+.hero[data-mascara="1"]{--m:.70}
+.hero[data-mascara="2"]{--m:.78}
+.hero[data-mascara="4"]{--m:.91}
 /* Un poco de sombra para que el texto se lea sobre el video */
 .hero-texto{text-shadow:0 2px 14px rgba(0,0,0,.35)}
 .hero-texto .eyebrow{text-shadow:0 1px 6px rgba(0,0,0,.6)}
