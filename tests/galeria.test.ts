@@ -3,7 +3,7 @@ import { productos } from "../src/data/productos";
 import { fotosPlatillos } from "../src/data/galeria";
 import { aplicarCatalogo, parsearCatalogo, type ProductoPublico } from "../src/lib/catalogo";
 import { estaAgotado, estaOculto } from "../src/lib/disponibilidad";
-import { armarGaleria, fotosDeLaPagina, SITIO } from "../src/lib/galeria";
+import { armarGaleria, fotosDeLaPagina, mezclarSinRepetir, SITIO } from "../src/lib/galeria";
 
 const STORAGE = (n: number) => `https://firebasestorage.googleapis.com/v0/b/x/o/productos%2FPROD_009%2F${n}.jpg?alt=media`;
 const pub = (p: Partial<ProductoPublico>): ProductoPublico => ({ nombre: "x", precio: 100, imagen: "", grupo: "", unidad: "Kg", ...p });
@@ -125,5 +125,30 @@ describe("galería ligada a los productos", () => {
       { url: `${SITIO}/img/galeria/pavo-relleno.jpg`, forma: "h", ancha: true },
       { url: `${SITIO}/img/galeria/medio-pavo-relleno.jpg`, forma: "v" },
     ]);
+  });
+});
+
+describe("mezclar la galería", () => {
+  // Azar repetible para que la prueba no dependa de la suerte.
+  const semilla = (n: number) => () => ((n = (n * 16807) % 2147483647) - 1) / 2147483646;
+  const fotos = ["a", "a", "a", "b", "b", "b", "c", "c", "d", "d", "e", "f"].map((nombre, i) => ({ nombre, i }));
+
+  it("no deja dos fotos seguidas del mismo producto (tampoco al dar la vuelta)", () => {
+    for (let s = 1; s <= 200; s++) {
+      const m = mezclarSinRepetir(fotos, (f) => f.nombre, semilla(s));
+      expect(m).toHaveLength(fotos.length);
+      expect(new Set(m.map((f) => f.i)).size).toBe(fotos.length);
+      m.forEach((f, i) => expect(f.nombre).not.toBe(m[(i + 1) % m.length]!.nombre));
+    }
+  });
+
+  it("cambia el orden entre visitas", () => {
+    const ordenes = new Set([1, 2, 3, 4, 5].map((s) => mezclarSinRepetir(fotos, (f) => f.nombre, semilla(s)).map((f) => f.i).join(",")));
+    expect(ordenes.size).toBeGreaterThan(1);
+  });
+
+  it("si un producto tiene casi todas las fotos, las separa lo más posible", () => {
+    const m = mezclarSinRepetir(["a", "a", "a", "b"].map((nombre, i) => ({ nombre, i })), (f) => f.nombre, semilla(7));
+    expect(m).toHaveLength(4);
   });
 });

@@ -18,6 +18,8 @@
   <meta property="og:image" content="/img/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Foto de fondo de la portada: se pide desde el inicio para que la portada no cambie de tono al cargar. -->
+  <link rel="preload" as="image" href="/video/cena-poster.jpg" fetchpriority="high">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600;700&display=swap">
 </head>
 <body>
@@ -121,8 +123,9 @@
 
   <section class="sec galeria-sec" id="galeria-sec">
     <div class="wrap">
-      <div class="sec-head" data-aparece><div><div class="eyebrow">Hecho en casa</div><h2>La galería</h2><p>Así llegan nuestros platillos a tu mesa. Toca una foto para verla en grande.</p></div></div>
+      <div class="sec-head" data-aparece><div><div class="eyebrow">Hecho en casa</div><h2>La galería</h2><p>Nuestros platillos de cada temporada. Toca una foto para verla en grande.</p></div></div>
       <div class="carrusel" data-aparece aria-label="Fotos de nuestros platillos"><div class="carrusel-pista" id="carrusel"></div></div>
+      <p class="nota-fotos nota-fotos-centro">Las fotos son ilustrativas: así nos gusta servirlos en casa. Nosotros te entregamos tu pedido por kilo o ya empacado, y el emplatado queda a tu gusto.</p>
       <div class="carrusel-pie">
         <a class="ver-todas" href="galeria.html"><span class="vt-txt">Ver todas las fotos</span><span aria-hidden="true">→</span></a>
         <div class="carrusel-flechas"><button type="button" data-carrusel="ant" aria-label="Foto anterior">‹</button><button type="button" data-carrusel="sig" aria-label="Foto siguiente">›</button></div>

@@ -18,6 +18,19 @@ const EXTRAS: Array<[ExtraCena, string]> = [
   ["postre", "Postre (strudel)"],
 ];
 
+/** Productos de cada extra. Si ninguno se puede pedir (eliminado, oculto o agotado), el extra no se ofrece. */
+const PRODUCTOS_EXTRA: Record<ExtraCena, string[]> = {
+  romeritos: ["romeritos"],
+  bacalao: ["bacalao"],
+  panes: ["panecillos"],
+  postre: ["strudel", "strudel-individual"],
+};
+/** Cómo se nombra cada extra en "Qué cena". */
+const NOMBRE_EXTRA: Record<ExtraCena, string> = { romeritos: "romeritos", bacalao: "bacalao", panes: "panecillos", postre: "postre" };
+
+/** "a", "a y b", "a, b y c". */
+const enLista = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} y ${xs[xs.length - 1]}`);
+
 /** Presentación para todo el pedido. El pavo entero no cabe en acrílico: va en bolsa o caja. */
 const PRESENTACIONES: Array<[Presentacion, string, string]> = [
   ["acrilico", "Acrílico", "Sin costo"],
@@ -39,8 +52,19 @@ export function iniciarCalculadora(
   catalogo: readonly Producto[],
   agotado: (p: Producto) => boolean,
   alAgregar: (items: Agregado[], personas: number) => void,
-): void {
+): () => void {
   const p = (id: string) => catalogo.find((x) => x.id === id);
+  const hayExtra = (k: ExtraCena) => PRODUCTOS_EXTRA[k].some((id) => {
+    const x = p(id);
+    return !!x && !agotado(x);
+  });
+  /** Lo que incluye cada cena, solo con los extras que se pueden pedir hoy. */
+  const incluye = (t: TipoCena): string => {
+    const de = (tc: TipoCena) => (Object.keys(tiposCena[tc].extras) as ExtraCena[]).filter((k) => tiposCena[tc].extras[k] && hayExtra(k));
+    if (t === "basica") return enLista(["Carne", "pasta", "ensalada", ...de("basica").map((k) => NOMBRE_EXTRA[k])]);
+    const mas = de(t).filter((k) => !tiposCena.basica.extras[k]).map((k) => NOMBRE_EXTRA[k]);
+    return mas.length ? `Lo de la básica + ${enLista(mas)}` : "Lo de la básica";
+  };
 
   // Carnes que se pueden elegir. Las que tienen versiones (pechuga, pierna) van en cada una.
   const carnes: Carne[] = [];
@@ -293,7 +317,7 @@ export function iniciarCalculadora(
         <div class="calc-tipos">${(Object.keys(tiposCena) as TipoCena[])
           .map(
             (t) => `<label class="calc-tipo"><input type="radio" name="calcTipo" value="${t}"${t === tipo ? " checked" : ""}>
-              <span><b>${escapar(tiposCena[t].nombre)}</b><small>${escapar(tiposCena[t].incluye)}</small></span></label>`,
+              <span><b>${escapar(tiposCena[t].nombre)}</b><small data-incluye="${t}">${escapar(incluye(t))}</small></span></label>`,
           )
           .join("")}</div>
       </fieldset>
@@ -312,7 +336,7 @@ export function iniciarCalculadora(
           .join("")}</select></label>
         <fieldset class="calc-campo"><legend class="calc-sub">Incluye (toca para quitar o agregar)</legend>
           <div class="calc-extras">${EXTRAS.map(
-            ([k, t]) => `<label class="calc-chk"><input type="checkbox" data-extra="${k}"${extras[k] ? " checked" : ""}><span>${t}</span></label>`,
+            ([k, t]) => `<label class="calc-chk"${hayExtra(k) ? "" : " hidden"}><input type="checkbox" data-extra="${k}"${extras[k] ? " checked" : ""}><span>${t}</span></label>`,
           ).join("")}</div>
         </fieldset>
         <div class="calc-campo"><span class="calc-sub">Presentación para todo</span>
@@ -387,6 +411,25 @@ export function iniciarCalculadora(
     const el = e.target as HTMLInputElement;
     if (el.id === "calcN") el.value = String(personas);
   });
+  /** El texto de arriba de la calculadora ("Básica (…) o Todo incluido (…)") también sigue al catálogo. */
+  const pintarReco = () =>
+    document.querySelectorAll<HTMLElement>("[data-reco]").forEach((el) => {
+      const t = el.dataset.reco as TipoCena;
+      const txt = incluye(t);
+      el.textContent = t === "basica" ? txt.toLowerCase() : txt.startsWith("Lo de la básica + ") ? `además ${txt.slice(18)}` : "lo mismo que la básica";
+    });
+
   pintarCarnes();
   pintarResultado();
+  pintarReco();
+
+  /** Cuando llega el catálogo de Firestore: quita los extras que ya no se pueden pedir y recalcula. */
+  return () => {
+    raiz.querySelectorAll<HTMLInputElement>("[data-extra]").forEach((c) => {
+      c.closest<HTMLElement>(".calc-chk")!.hidden = !hayExtra(c.dataset.extra as ExtraCena);
+    });
+    raiz.querySelectorAll<HTMLElement>("[data-incluye]").forEach((el) => (el.textContent = incluye(el.dataset.incluye as TipoCena)));
+    pintarReco();
+    pintarResultado();
+  };
 }

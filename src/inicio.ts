@@ -7,6 +7,7 @@ import { iniciarVisor } from "./ui/visor";
 import { iniciarFotos, pintarFotos } from "./ui/galeria";
 import { iniciarCarrusel } from "./ui/carrusel";
 import { galeriaViva } from "./ui/galeria-viva";
+import { mezclarSinRepetir } from "./lib/galeria";
 import type { Carrusel } from "./ui/carrusel";
 import { iniciarFondoVideo } from "./ui/fondo-video";
 import { iniciarApariciones } from "./ui/aparecer";
@@ -70,7 +71,8 @@ if (pista) {
   // Sigue al súper panel: un producto oculto sale del carrusel y uno agotado lleva la marca.
   let carrusel: Carrusel | null = null;
   galeriaViva((fotos) => {
-    pintarFotos(pista, fotos.filter((f) => f.carrusel !== false));
+    // En otro orden en cada visita, sin dos fotos seguidas del mismo producto.
+    pintarFotos(pista, mezclarSinRepetir(fotos.filter((f) => f.carrusel !== false), (f) => f.nombre));
     if (carrusel) carrusel.rehacer();
     else carrusel = iniciarCarrusel(pista.parentElement!, pista);
     iniciarFotos(visor, pista);

@@ -29,6 +29,9 @@
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+/* "Las fotos son ilustrativas": discreta, pero que se lea. */
+.nota-fotos{margin:10px 0 0;font-size:.88rem;line-height:1.45;color:var(--muted);max-width:62ch}
+.nota-fotos-centro{text-align:center;margin:14px auto 0}
 html{scroll-behavior:smooth}
 /* "Reducir movimiento" (Windows: Efectos de animación apagados) quita las animaciones de la página.
    La explicación del gravy es la excepción: el cliente la pide con "Ver explicación". */
@@ -270,7 +273,7 @@ footer .pie-aviso:hover{color:var(--gold)}
 #snow{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:15}
 .snow-toggle{background:none;border:1px solid color-mix(in srgb,var(--hero-fg) 40%,transparent);color:inherit;font:600 .82rem var(--font-body);padding:6px 12px;border-radius:999px;cursor:pointer}
 
-.hero-logo{width:clamp(110px,16vw,170px);height:auto;display:block;margin-bottom:14px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.35))}
+.hero-logo{width:clamp(110px,16vw,170px);height:auto;display:block;margin-bottom:14px}
 
 /* ¿Le regalaron el pavo? */
 .regalo-sec{padding-block:8px clamp(64px,9vw,112px)}
@@ -656,7 +659,9 @@ button.cal-day:hover{border-color:var(--primary)}
 
 /* Portada con videos de fondo bajo una máscara roja */
 .hero{isolation:isolate}
-.hero-fondo{position:absolute;inset:0;z-index:-1;overflow:hidden;background:var(--hero) center/cover no-repeat}
+/* La foto de espera va en el CSS (no la pone el script) y, mientras llega, un color parecido al de la foto:
+   así la portada se ve igual desde el primer instante y no pasa de rojo oscuro a más claro. */
+.hero-fondo{position:absolute;inset:0;z-index:-1;overflow:hidden;background:#A37C5C url("/video/cena-poster.jpg") center/cover no-repeat}
 /* El desenfoque ligero que suaviza los cuadritos de compresión ya viene dentro de los videos (public/video).
    No usar filter:blur aquí: en Chrome obliga a desenfocar cada cuadro del video en la tarjeta de video
    y la portada (video + nieve) se traba. Safari y Opera lo aguantan, Chrome no. */
@@ -664,10 +669,11 @@ button.cal-day:hover{border-color:var(--primary)}
 .hero-fondo video.activo{opacity:1}
 .hero-fondo video.arriba{z-index:1}
 /* Máscara roja: un solo color parejo (un degradado tan suave se veía en franjas o "columnas").
-   Niveles para comparar con ?mascara=1, 2, 3 o 4 en la dirección (3 es el de siempre). */
-.hero{--m:85%}
-.hero[data-mascara="1"]{--m:70%}
+   Niveles para comparar con ?mascara=1, 2, 3 o 4 en la dirección. El 1 (el más claro, deja ver más el
+   video) es el elegido para la página. */
+.hero{--m:70%}
 .hero[data-mascara="2"]{--m:78%}
+.hero[data-mascara="3"]{--m:85%}
 .hero[data-mascara="4"]{--m:91%}
 /* La máscara usa siempre el rojo del tema oscuro: deja ver mejor el video en los dos temas. */
 .hero-fondo::after{content:"";position:absolute;inset:0;z-index:2;transform:translateZ(0);background:color-mix(in srgb,var(--veil) var(--m),transparent)}

@@ -117,6 +117,8 @@ const CATEGORIA_DE_GRUPO: Record<string, CategoriaId> = {
  * - Un producto de la web sin id se liga al de Firestore con el mismo nombre (así se da de alta
  *   desde el panel, como la costilla adobada).
  * - Lo que está en Firestore y no en la web se agrega como producto sencillo.
+ * - Un producto de la web ligado a ids que ya no están en Firestore (se eliminó en el panel) no sale.
+ *   Los que no tienen id (combo, o los que aún no se dan de alta) se quedan.
  * Agotados y ocultos se resuelven aparte, con las listas de ids.
  */
 export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<string, ProductoPublico>): Producto[] {
@@ -124,7 +126,8 @@ export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<
   const porNombre = new Map([...publico].map(([id, p]) => [normalizar(p.nombre.trim()), id]));
   const usados = new Set<string>();
 
-  const lista = base.map((p): Producto => {
+  const eliminado = (p: Producto) => p.firebaseIds.length > 0 && p.firebaseIds.every((id) => !publico.has(id));
+  const lista = base.filter((p) => !eliminado(p)).map((p): Producto => {
     const ligado = p.firebaseIds.length ? p.firebaseIds : [porNombre.get(normalizar(p.nombre.trim()))].filter((x): x is string => !!x);
     ligado.forEach((id) => usados.add(id));
     const fs = ligado.length ? publico.get(ligado[0]!) : undefined;
