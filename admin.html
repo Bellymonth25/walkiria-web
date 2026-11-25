@@ -98,7 +98,7 @@
         <p class="adm-fotos-nota" id="fFotosNota" hidden>Estas fotos ya estaban en la página. Si agregas, quitas o cambias la principal, desde ese momento se manejan aquí.</p>
       </section>
       <label>Nombre<input id="fNombre" type="text" required autocomplete="off"></label>
-      <div class="adm-dos">
+      <div class="adm-dos" id="fPrecios">
         <label>Precio menudeo<input id="fMenudeo" type="number" inputmode="decimal" min="0" step="0.5" required></label>
         <label>Precio mayoreo<input id="fMayoreo" type="number" inputmode="decimal" min="0" step="0.5"></label>
       </div>
@@ -108,7 +108,7 @@
       </div>
       <div class="adm-dos">
         <label>Se vende por<select id="fUnidad"></select></label>
-        <label>Presentación<select id="fPresentacion"></select></label>
+        <label id="fPresentacionCampo">Presentación<select id="fPresentacion"></select></label>
       </div>
       <div class="adm-checks">
         <label class="adm-check"><input id="fDisponible" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Disponible</b><small>Apagado: sale "Agotado" y no se puede pedir.</small></span></label>

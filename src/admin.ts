@@ -255,7 +255,7 @@ function iniciar(): void {
     const mod = p.actualizadoEn ? `${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? `<small>${escapar(p.actualizadoPor.split("@")[0]!)}</small>` : ""}` : `<span class="adm-vacio">—</span>`;
     return `<tr class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}">
       <td class="c-prod"><div class="adm-abrir">${foto}<span class="adm-nombre">${escapar(p.nombre)}</span></div></td>
-      <td class="c-precio" data-label="Precio">${dinero(p.menudeo)}${unidad}</td>
+      <td class="c-precio" data-label="Precio">${p.receta ? `<small>Combo · por sus partes</small>` : `${dinero(p.menudeo)}${unidad}`}</td>
       ${celdaSwitch(p, "estaDisponible", "Disponible")}
       ${celdaSwitch(p, "oculto", "Mostrar")}
       <td class="c-mod" data-label="Modificado">${mod}</td>
@@ -323,6 +323,8 @@ function iniciar(): void {
     grupo: $<HTMLSelectElement>("#fGrupo"),
     unidad: $<HTMLSelectElement>("#fUnidad"),
     presentacion: $<HTMLSelectElement>("#fPresentacion"),
+    precios: $("#fPrecios"),
+    presentacionCampo: $("#fPresentacionCampo"),
     disponible: $<HTMLInputElement>("#fDisponible"),
     mostrar: $<HTMLInputElement>("#fMostrar"),
     peso: $<HTMLInputElement>("#fPeso"),
@@ -402,6 +404,7 @@ function iniciar(): void {
 
   function leerFicha(): ProductoFirestore {
     const num = (i: HTMLInputElement): number => (i.value.trim() === "" ? 0 : Number(i.value));
+    const combo = f.esCombo.checked;
     return {
       ...original!,
       nombre: f.nombre.value.trim(),
@@ -409,12 +412,14 @@ function iniciar(): void {
       // Si se quitaron todas las fotos que tenía, también se quita la principal.
       imagen: fotos.length ? principal : original!.fotos.length ? "" : original!.imagen,
       fotos,
-      menudeo: num(f.menudeo),
-      mayoreo: num(f.mayoreo),
+      // Un combo no lleva precio ni presentación propios: se cobra por sus partes y el empaque
+      // se elige con el cliente. Se guarda como pieza para que la app de siempre lo entienda.
+      menudeo: combo ? 0 : num(f.menudeo),
+      mayoreo: combo ? 0 : num(f.mayoreo),
       categoria: f.categoria.value as Categoria,
       grupo: f.grupo.value,
-      unidad: f.unidad.value,
-      presentacion: f.presentacion.value,
+      unidad: combo ? "Pza" : f.unidad.value,
+      presentacion: combo ? "" : f.presentacion.value,
       disponible: f.disponible.checked,
       oculto: !f.mostrar.checked,
       pesoAjustable: f.peso.checked,
@@ -436,7 +441,21 @@ function iniciar(): void {
 
   /** Prende o apaga la sección de receta. Al prenderla por primera vez se arranca con lo de siempre. */
   function mostrarReceta(): void {
-    f.receta.hidden = !f.esCombo.checked;
+    const combo = f.esCombo.checked;
+    f.receta.hidden = !combo;
+    // Lo que un combo no necesita se esconde: precios (salen de las partes) y presentación (con el cliente)
+    f.precios.hidden = combo;
+    f.presentacionCampo.hidden = combo;
+    f.menudeo.required = !combo;
+    // "Se vende por" queda fijo en Combo (se guarda como pieza)
+    if (combo) {
+      f.unidad.innerHTML = `<option value="Pza">Combo</option>`;
+      f.unidad.disabled = true;
+    } else if (f.unidad.disabled) {
+      f.unidad.disabled = false;
+      opciones(f.unidad, UNIDADES);
+      elegir(f.unidad, original?.unidad ?? "Kg");
+    }
     if (f.esCombo.checked && !receta) receta = recetaNueva();
     if (f.esCombo.checked) pintarReceta();
   }
