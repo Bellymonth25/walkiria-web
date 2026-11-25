@@ -498,17 +498,40 @@ function iniciar(): void {
           ${faltantes.length ? `<select class="adm-agrega-op" data-agregaop="${i}"><option value="">+ Agregar producto</option>${faltantes.map((p) => `<option value="${escapar(p.id)}">${escapar(p.nombre)}</option>`).join("")}</select>` : ""}
         </div>
         <div class="adm-parte-nums">
-          <label>Cómo se calcula<select data-parte="${i}" data-campo="modo"><option value="POR_PERSONA"${c.modo === "POR_PERSONA" ? " selected" : ""}>Por persona</option><option value="FIJA"${c.modo === "FIJA" ? " selected" : ""}>Fija</option></select></label>
-          <label>Cantidad<input type="number" inputmode="decimal" min="0" step="0.005" data-parte="${i}" data-campo="cantidad" value="${c.cantidad}"></label>
-          <label>Se cuenta por<select data-parte="${i}" data-campo="unidad"><option value="GRANEL"${c.unidad === "GRANEL" ? " selected" : ""}>Kilos</option><option value="PIEZA"${c.unidad === "PIEZA" ? " selected" : ""}>Piezas</option></select></label>
-          <label>Mínimo<input type="number" inputmode="decimal" min="0" step="0.005" data-parte="${i}" data-campo="minimo" value="${c.minimo}"></label>
-          ${c.unidad === "PIEZA" ? `<label>Kg por pieza<input type="number" inputmode="decimal" min="0" step="0.05" data-parte="${i}" data-campo="kgPorPieza" value="${c.kgPorPieza}"></label>` : ""}
+          <label>Cómo se calcula<select data-parte="${i}" data-campo="modo"><option value="POR_PERSONA"${c.modo === "POR_PERSONA" ? " selected" : ""}>Según las personas</option><option value="FIJA"${c.modo === "FIJA" ? " selected" : ""}>Siempre lo mismo</option></select></label>
+          <label>Se cuenta en<select data-parte="${i}" data-campo="unidad"><option value="GRANEL"${c.unidad === "GRANEL" ? " selected" : ""}>Kilos</option><option value="PIEZA"${c.unidad === "PIEZA" ? " selected" : ""}>Piezas</option></select></label>
+          <label>${etiquetaCantidad(c)}<input type="number" inputmode="decimal" min="0" step="${c.unidad === "PIEZA" ? 1 : 0.005}" data-parte="${i}" data-campo="cantidad" value="${c.cantidad}"></label>
+          ${c.modo === "POR_PERSONA" ? `<label>Nunca menos de (${c.unidad === "PIEZA" ? "pzas" : "kg"})<input type="number" inputmode="decimal" min="0" step="${c.unidad === "PIEZA" ? 1 : 0.005}" data-parte="${i}" data-campo="minimo" value="${c.minimo}"></label>` : ""}
+          ${c.unidad === "PIEZA" ? `<label>Peso aprox. de cada pieza (kg)<input type="number" inputmode="decimal" min="0" step="0.05" data-parte="${i}" data-campo="kgPorPieza" value="${c.kgPorPieza}"></label>` : ""}
         </div>
-        <label class="adm-check adm-parte-opc"><input type="checkbox" role="switch" data-parte="${i}" data-campo="opcional"${c.opcional ? " checked" : ""}><span class="adm-switch" aria-hidden="true"></span><span><b>Se puede quitar</b><small>Va incluida, pero el cliente o la caja la pueden quitar.</small></span></label>
+        <p class="adm-parte-explica" data-explica="${i}">${explicaParte(c)}</p>
+        <label class="adm-check adm-parte-opc"><input type="checkbox" role="switch" data-parte="${i}" data-campo="opcional"${c.opcional ? " checked" : ""}><span class="adm-switch" aria-hidden="true"></span><span><b>Se puede quitar</b><small>Va incluida, pero el cliente o la caja la pueden quitar (p. ej. la pierna).</small></span></label>
       </li>`;
       })
       .join("");
     pintarPrevia();
+  }
+
+  /** Nombre del campo de cantidad según cómo se calcula la parte y en qué se cuenta. */
+  function etiquetaCantidad(c: RecetaAdmin["componentes"][number]): string {
+    const u = c.unidad === "PIEZA" ? "Piezas" : "Kg";
+    return c.modo === "FIJA" ? `${u} en total` : `${u} por persona`;
+  }
+
+  /** La parte en una frase, para que se entienda sin adivinar qué es cada campo. */
+  function explicaParte(c: RecetaAdmin["componentes"][number]): string {
+    const pieza = c.unidad === "PIEZA";
+    const cant = (n: number): string => (pieza ? `${n} ${n === 1 ? "pieza" : "piezas"}` : `${Math.round(n * 1000) / 1000} kg`);
+    let t = c.modo === "FIJA"
+      ? `Lleva siempre ${cant(c.cantidad)}, sean las personas que sean.`
+      : `Lleva ${cant(c.cantidad)} por cada persona${c.minimo > 0 ? `, y nunca menos de ${cant(c.minimo)}` : ""}.`;
+    if (pieza) {
+      t += c.kgPorPieza > 0
+        ? ` Cada pieza pesa como ${c.kgPorPieza} kg: si el producto se vende por kilo, se cobra ese peso.`
+        : ` Si el producto se vende por kilo, pon cuánto pesa cada pieza; si no, se cobraría cada pieza como 1 kg.`;
+    }
+    if (c.opcional) t += " El cliente la puede quitar.";
+    return escapar(t);
   }
 
   function pintarPrevia(): void {
@@ -568,6 +591,8 @@ function iniciar(): void {
     if (!c || !campo) return;
     if (campo === "nombre") c.nombre = el.value;
     else if (campo === "cantidad" || campo === "minimo" || campo === "kgPorPieza") c[campo] = el.value.trim() === "" ? 0 : Number(el.value);
+    const frase = f.recPartes.querySelector(`[data-explica="${i}"]`);
+    if (frase) frase.innerHTML = explicaParte(c);
     pintarPrevia();
   });
 
@@ -577,12 +602,18 @@ function iniciar(): void {
     const c = receta?.componentes[i];
     if (!c) return;
     const campo = el.dataset.campo;
-    if (campo === "modo") c.modo = el.value === "FIJA" ? "FIJA" : "POR_PERSONA";
-    else if (campo === "unidad") {
+    if (campo === "modo") {
+      c.modo = el.value === "FIJA" ? "FIJA" : "POR_PERSONA";
+      return pintarPartes(); // cambia el nombre de la cantidad y aparece o desaparece el mínimo
+    } else if (campo === "unidad") {
       c.unidad = el.value === "PIEZA" ? "PIEZA" : "GRANEL";
       if (c.unidad === "GRANEL") c.kgPorPieza = 0;
-      return pintarPartes(); // aparece o desaparece "Kg por pieza"
-    } else if (campo === "opcional") c.opcional = (el as HTMLInputElement).checked;
+      return pintarPartes(); // aparece o desaparece el peso de cada pieza
+    } else if (campo === "opcional") {
+      c.opcional = (el as HTMLInputElement).checked;
+      const frase = f.recPartes.querySelector(`[data-explica="${i}"]`);
+      if (frase) frase.innerHTML = explicaParte(c);
+    }
     else if (el.dataset.agregaop && el.value) {
       c.opciones = [...c.opciones, el.value];
       if (!c.alAgregar) c.alAgregar = el.value;
