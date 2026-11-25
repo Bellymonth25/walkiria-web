@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { productos } from "../src/data/productos";
-import { aplicarCatalogo, esFotoPropia, parsearCatalogo, type ProductoPublico } from "../src/lib/catalogo";
+import { aplicarCatalogo, esFotoPropia, parsearCatalogo, piezaDelPanel, type ProductoPublico } from "../src/lib/catalogo";
+import { nuevaLinea, textoCantidad } from "../src/lib/pedido";
 
 const pub = (p: Partial<ProductoPublico> & { nombre: string }): ProductoPublico => ({ precio: 0, imagen: "", grupo: "", unidad: "Kg", ...p });
 const buscar = (lista: { id: string }[], id: string) => lista.find((p) => p.id === id) as (typeof productos)[number];
@@ -132,5 +133,40 @@ describe("productos eliminados en el panel", () => {
   it("sin destacado en el panel, el producto no sale destacado", () => {
     const l = aplicarCatalogo(productos, new Map([["PROD_019", pub({ nombre: "Pechuga de Pavo Horneada", precio: 590 })]]));
     expect(buscar(l, "pechuga-pavo")?.destacado).toBeUndefined();
+  });
+});
+
+describe("se pide por pieza desde el súper panel", () => {
+  const conPieza = (id: string, nombre: string, kgPorPieza: number, precio = 200) =>
+    new Map([[id, pub({ nombre, precio, kgPorPieza })]]);
+
+  it("lee kgPorPieza del documento", () => {
+    const doc = { fields: { productos: { mapValue: { fields: { PROD_032: { mapValue: { fields: { nombre: { stringValue: "Pierna de Pavo" }, precio: { integerValue: "200" }, unidad: { stringValue: "Kg" }, kgPorPieza: { doubleValue: 0.7 } } } } } } } } };
+    expect(parsearCatalogo(doc).get("PROD_032")?.kgPorPieza).toBe(0.7);
+  });
+
+  it("la pierna de pavo se pide en piernas y se estima con el peso del panel", () => {
+    const pierna = buscar(aplicarCatalogo(productos, conPieza("PROD_032", "Pierna de Pavo", 0.7)), "pierna-pavo");
+    expect(pierna.pieza).toEqual({ nombre: "pierna", plural: "piernas", kgMin: 0.7, kgMax: 0.7, kgEstimado: 0.7 });
+    const l = { ...nuevaLinea(pierna), cantidad: 2 };
+    expect(textoCantidad(pierna, l)).toBe("2 piernas (≈ 0.7 kg c/u, aprox. 1.4 kg)");
+  });
+
+  it("sin el campo, la pierna se sigue pidiendo por kilo", () => {
+    const pierna = buscar(aplicarCatalogo(productos, new Map([["PROD_032", pub({ nombre: "Pierna de Pavo", precio: 200 })]])), "pierna-pavo");
+    expect(pierna.pieza).toBeUndefined();
+  });
+
+  it("el pato conserva cómo se llama y su rango si el peso del panel cae dentro", () => {
+    const pato = buscar(aplicarCatalogo(productos, conPieza("PROD_007", "Pato a la Naranja", 2.2, 500)), "pato-naranja");
+    expect(pato.pieza).toEqual({ nombre: "pato", plural: "patos", kgMin: 1.8, kgMax: 2.4, kgEstimado: 2.2 });
+    // Fuera del rango de la página, manda el panel
+    const otro = buscar(aplicarCatalogo(productos, conPieza("PROD_007", "Pato a la Naranja", 3, 500)), "pato-naranja");
+    expect(otro.pieza).toMatchObject({ kgMin: 3, kgMax: 3, kgEstimado: 3 });
+  });
+
+  it("no aplica a pavos enteros, combos, maquila ni a lo que se vende por pieza", () => {
+    expect(piezaDelPanel({ nombre: "Pavo", unidad: "kg", pavoEntero: true }, { unidad: "Kg", kgPorPieza: 6 })).toEqual({});
+    expect(piezaDelPanel({ nombre: "Strudel", unidad: "pza" }, { unidad: "Pza", kgPorPieza: 1 })).toEqual({});
   });
 });

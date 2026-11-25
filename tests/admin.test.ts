@@ -28,6 +28,8 @@ import {
   recetaNueva,
   validarReceta,
   vistaPreviaReceta,
+  sePidePorPieza,
+  ejemploPorPieza,
   type ProductoFirestore,
   type RecetaAdmin,
 } from "../src/lib/admin";
@@ -356,5 +358,47 @@ describe("id repetido dentro del documento", () => {
 
   it("la chapata de la página es PROD_054", () => {
     expect(productos.find((x) => x.id === "chapata")?.firebaseIds).toEqual(["PROD_054"]);
+  });
+});
+
+describe("se pide por pieza (Pierna de Pavo)", () => {
+  const pierna = (): ProductoFirestore => ({ ...prod("PROD_032", "Pierna de Pavo", 200, "Kg"), pesoAjustable: false, kgPorPieza: 0.7 });
+
+  it("lee y guarda el peso por pieza, y lo que se pide por pieza siempre se pesa", () => {
+    expect(leerProducto("PROD_032", { nombre: "Pierna", tipoVenta: "Kg", kgPorPieza: 0.7 }).kgPorPieza).toBe(0.7);
+    expect(leerProducto("PROD_032", { nombre: "Pierna", tipoVenta: "Kg" }).kgPorPieza).toBe(0);
+    expect(leerProducto("PROD_032", { nombre: "Pierna", tipoVenta: "Kg", kgPorPieza: -3 }).kgPorPieza).toBe(0);
+    const doc = aDocumento(pierna());
+    expect(doc.kgPorPieza).toBe(0.7);
+    expect(doc.isWeightAdjustable).toBe(true);
+  });
+
+  it("solo aplica a lo que se vende por kilo y no a un combo", () => {
+    expect(sePidePorPieza(pierna())).toBe(true);
+    expect(sePidePorPieza({ ...pierna(), kgPorPieza: 0 })).toBe(false);
+    expect(sePidePorPieza({ ...pierna(), unidad: "Pza" })).toBe(false);
+    expect(aDocumento({ ...pierna(), unidad: "Pza" }).kgPorPieza).toBeNull();
+    expect(aDocumento({ ...pierna(), receta: recetaNueva() }).kgPorPieza).toBeNull();
+  });
+
+  it("el diff detecta cuando se prende o se apaga", () => {
+    const antes = { ...pierna(), kgPorPieza: 0, pesoAjustable: true };
+    expect(cambios(antes, pierna()).kgPorPieza).toBe(0.7);
+    expect(cambios(pierna(), antes).kgPorPieza).toBeNull();
+  });
+
+  it("enseña el ejemplo de cobro", () => {
+    expect(ejemploPorPieza(0.7, 200)).toBe("2 piezas ≈ 1.4 kg ≈ $280");
+    expect(ejemploPorPieza(0.7, 0)).toBe("2 piezas ≈ 1.4 kg");
+  });
+
+  it("una parte de combo sin peso por pieza usa el del producto", () => {
+    const r: RecetaAdmin = {
+      ...recetaNueva(),
+      componentes: [{ ...componenteNuevo(), nombre: "Piernas", opciones: ["PROD_032"], alAgregar: "PROD_032", modo: "FIJA", cantidad: 2, unidad: "PIEZA", kgPorPieza: 0 }],
+    };
+    const v = vistaPreviaReceta(r, 4, [pierna()]);
+    expect(v.texto).toContain("2 pzas (aprox. 1.4 kg)");
+    expect(v.total).toBe(280);
   });
 });

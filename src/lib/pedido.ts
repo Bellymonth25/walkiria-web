@@ -169,7 +169,9 @@ export function textoCantidad(p: Producto, l: Linea): string {
   if (p.pieza) {
     const { nombre, plural, kgMin, kgMax } = p.pieza;
     const n = l.cantidad;
-    return `${n} ${n === 1 ? nombre : plural} (${kgMin} a ${kgMax} kg c/u, aprox. ${kilos(kgDe(p, l))})`;
+    // Con un solo peso (del súper panel) no hay rango: "2 piernas (≈ 0.7 kg c/u, aprox. 1.4 kg)".
+    const cu = kgMin === kgMax ? `≈ ${kgMin} kg c/u` : `${kgMin} a ${kgMax} kg c/u`;
+    return `${n} ${n === 1 ? nombre : plural} (${cu}, aprox. ${kilos(kgDe(p, l))})`;
   }
   if (p.maquila) return `aprox. ${kilos(l.cantidad)}`;
   return p.unidad === "pza" ? `${l.cantidad} ${l.cantidad === 1 ? "pza" : "pzas"}` : kilos(l.cantidad);

@@ -35,6 +35,8 @@ import {
   componenteNuevo,
   recetaNueva,
   validarReceta,
+  sePidePorPieza,
+  ejemploPorPieza,
   vistaPreviaReceta,
   type RecetaAdmin,
   visibilidad,
@@ -269,7 +271,9 @@ function iniciar(): void {
   }
 
   function fila(p: ProductoFirestore): string {
-    const unidad = p.unidad ? `<small>/ ${escapar(p.unidad)}</small>` : "";
+    const unidad = p.unidad
+      ? `<small>/ ${escapar(p.unidad)}${sePidePorPieza(p) ? ` · por pieza (≈ ${p.kgPorPieza} kg c/u)` : ""}</small>`
+      : "";
     const id = escapar(p.id);
     // Miniatura: la foto principal y, si tiene más de una, cuántas son.
     const { imagen, fotos: todas } = fotosParaFicha(p, productosWeb, fotosPlatillos);
@@ -354,6 +358,11 @@ function iniciar(): void {
     disponible: $<HTMLInputElement>("#fDisponible"),
     mostrar: $<HTMLInputElement>("#fMostrar"),
     peso: $<HTMLInputElement>("#fPeso"),
+    piezaCampo: $("#fPiezaCampo"),
+    porPieza: $<HTMLInputElement>("#fPorPieza"),
+    kgPiezaCampo: $("#fKgPiezaCampo"),
+    kgPieza: $<HTMLInputElement>("#fKgPieza"),
+    piezaEjemplo: $("#fPiezaEjemplo"),
     maquila: $<HTMLInputElement>("#fMaquila"),
     destacado: $<HTMLInputElement>("#fDestacado"),
     destacadoNota: $("#fDestacadoNota"),
@@ -421,7 +430,11 @@ function iniciar(): void {
     elegir(f.presentacion, p.presentacion);
     f.disponible.checked = p.disponible;
     f.mostrar.checked = !p.oculto;
+    f.peso.disabled = false;
     f.peso.checked = p.pesoAjustable;
+    pesoAntesDePieza = null;
+    f.porPieza.checked = p.kgPorPieza > 0;
+    f.kgPieza.value = p.kgPorPieza > 0 ? String(p.kgPorPieza) : "";
     f.maquila.checked = p.maquila;
     f.destacado.checked = p.destacado;
     notaDestacado(p);
@@ -429,6 +442,7 @@ function iniciar(): void {
     receta = p.receta ? { ...p.receta, personas: { ...p.receta.personas }, empaque: { ...p.receta.empaque }, componentes: p.receta.componentes.map((c) => ({ ...c, opciones: [...c.opciones] })) } : null;
     f.esCombo.checked = !!p.receta;
     mostrarReceta();
+    mostrarPieza();
     estadoFotos();
     f.error.hidden = true;
     f.guardar.textContent = nuevo ? "Crear producto" : "Guardar";
@@ -468,6 +482,7 @@ function iniciar(): void {
       disponible: f.disponible.checked,
       oculto: !f.mostrar.checked,
       pesoAjustable: f.peso.checked,
+      kgPorPieza: f.porPieza.checked && !combo && f.unidad.value.toLowerCase() === "kg" ? num(f.kgPieza) : 0,
       maquila: f.maquila.checked,
       destacado: f.destacado.checked,
       nuevo: f.nuevo.checked,
@@ -605,7 +620,44 @@ function iniciar(): void {
     f.recPrevia.classList.remove("mal");
   }
 
-  f.esCombo.addEventListener("change", mostrarReceta);
+  f.esCombo.addEventListener("change", () => {
+    mostrarReceta();
+    mostrarPieza();
+  });
+
+  // ---------- Se pide por pieza (Pierna de Pavo) ----------
+  /** Peso ajustable que tenía la ficha antes de prender "Se pide por pieza", para regresarlo. */
+  let pesoAntesDePieza: boolean | null = null;
+
+  /**
+   * "Se pide por pieza" solo tiene sentido en lo que se vende por kilo (y no en un combo). Prendido,
+   * pide el peso de cada pieza, enseña un ejemplo de cobro y deja fijo "Peso ajustable": cocina
+   * siempre lo pesa, porque se cobra lo que pese.
+   */
+  function mostrarPieza(): void {
+    const aplica = !f.esCombo.checked && f.unidad.value.toLowerCase() === "kg";
+    f.piezaCampo.hidden = !aplica;
+    const activo = aplica && f.porPieza.checked;
+    f.kgPiezaCampo.hidden = !activo;
+    f.kgPieza.required = activo;
+    if (activo) {
+      if (pesoAntesDePieza === null) pesoAntesDePieza = f.peso.checked;
+      f.peso.checked = true;
+      f.peso.disabled = true;
+    } else {
+      if (f.peso.disabled && pesoAntesDePieza !== null) f.peso.checked = pesoAntesDePieza;
+      f.peso.disabled = false;
+      pesoAntesDePieza = null;
+    }
+    const kg = Number(f.kgPieza.value);
+    f.piezaEjemplo.textContent = kg > 0
+      ? `Al pedir: ${ejemploPorPieza(kg, Number(f.menudeo.value) || 0)}. Se cobra lo que pese en cocina.`
+      : "Escribe cuánto pesa más o menos cada pieza.";
+  }
+  f.porPieza.addEventListener("change", mostrarPieza);
+  f.unidad.addEventListener("change", mostrarPieza);
+  f.kgPieza.addEventListener("input", mostrarPieza);
+  f.menudeo.addEventListener("input", mostrarPieza);
   f.recAgregarParte.addEventListener("click", () => {
     if (!receta) return;
     receta.componentes = [...receta.componentes, componenteNuevo()];
@@ -929,7 +981,9 @@ function iniciar(): void {
     e.preventDefault();
     if (!original || subiendo > 0) return;
     const p = leerFicha();
-    const problema = validar(p, lista) ?? (p.receta ? validarReceta(p.receta, lista) : null);
+    const sinPesoPieza = !f.piezaCampo.hidden && f.porPieza.checked && !(p.kgPorPieza > 0);
+    const problema = (sinPesoPieza ? 'Escribe cuánto pesa aprox. cada pieza (en kg), o apaga "Se pide por pieza".' : null) ??
+      validar(p, lista) ?? (p.receta ? validarReceta(p.receta, lista) : null);
     if (problema) {
       f.error.textContent = problema;
       f.error.hidden = false;
