@@ -548,6 +548,7 @@ button.cal-day:hover{border-color:var(--primary)}
 .antes-c .subr{text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:3px;font-weight:600}
 .antes-c .corte{display:block;margin-top:6px}
 .antes-c .aparte{font-size:.92em;color:var(--muted)}
+.antes-c .recomienda{padding:8px 12px;border-left:3px solid var(--ok);border-radius:6px;background:color-mix(in srgb,var(--ok) 10%,transparent)}
 .antes-c table{width:100%;border-collapse:collapse;margin-top:10px}
 .antes-c td{padding:7px 0;border-top:1px dashed var(--line)}
 .antes-c td:last-child{text-align:right;font-weight:700;font-size:1.15em;vertical-align:top;white-space:nowrap;padding-left:12px;font-variant-numeric:tabular-nums}
