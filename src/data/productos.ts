@@ -13,6 +13,8 @@ import type { Categoria, Producto } from "../types";
 const foto = (id: string) => ({ imagen: `img/galeria/${id}.jpg`, imagenMini: `img/productos/${id}-mini.webp` });
 
 export const categorias: readonly Categoria[] = [
+  // Maquila hasta arriba: es lo que más preguntan y abajo casi no se encontraba.
+  { id: "maquila", nombre: "Maquila: le cocinamos su carne a su gusto" },
   { id: "pavo", nombre: "Pavo y pato" },
   { id: "cerdo", nombre: "Cerdo" },
   { id: "trad", nombre: "Bacalao y romeritos" },
@@ -20,7 +22,6 @@ export const categorias: readonly Categoria[] = [
   { id: "pan", nombre: "Postres" },
   // Lo que se da de alta en el panel y no cae en otra sección.
   { id: "otros", nombre: "Más para su cena" },
-  { id: "maquila", nombre: "Maquila: le cocinamos su carne a su gusto" },
 ];
 
 export const productos: readonly Producto[] = [

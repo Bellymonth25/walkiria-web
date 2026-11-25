@@ -358,7 +358,9 @@ export function pintarMenu(v: VistaMenu): void {
   const destacados = v.filtro === "todo" && !q ? pintarDestacados(v, visibles) : "";
   menu.innerHTML = destacados + v.categorias
     .map((c) => {
-      const items = visibles.filter((f) => f.productos[0]!.categoria === c.id);
+      const enCat = visibles.filter((f) => f.productos[0]!.categoria === c.id);
+      // "Más para su cena" junta lo que se da de alta en el panel: va en orden alfabético.
+      const items = c.id === "otros" ? [...enCat].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")) : enCat;
       if (!items.length) return "";
       return `<div class="cat${c.id === "maquila" ? " cat-maquila" : ""}" id="cat-${c.id}"><h3>${escapar(c.nombre)}<small>${items.length} ${items.length === 1 ? "producto" : "productos"}</small></h3>
         <ul class="rows">${items.map((f) => pintarFila(v, f)).join("")}</ul></div>`;
