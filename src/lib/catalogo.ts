@@ -15,6 +15,8 @@ export interface ProductoPublico {
   imagen: string;
   grupo: string;
   unidad: string;
+  /** Oculto en el panel: no sale (ni sus versiones). */
+  oculto?: boolean;
   /**
    * Fotos de la galería subidas desde el panel. La principal es `imagen`. undefined: el producto
    * nunca ha tenido fotos en el panel (la galería usa las de la página); [] = se quitaron todas.
@@ -43,7 +45,7 @@ export function parsearCatalogo(doc: unknown): Map<string, ProductoPublico> {
   const salida = new Map<string, ProductoPublico>();
   for (const [id, v] of Object.entries(campos)) {
     const f = v.mapValue?.fields ?? {};
-    salida.set(id, { nombre: texto(f.nombre) || id, precio: numero(f.precio), imagen: texto(f.imagen), grupo: texto(f.grupo), unidad: texto(f.unidad), ...conFotos(leerFotos(f.fotos)) });
+    salida.set(id, { nombre: texto(f.nombre) || id, precio: numero(f.precio), imagen: texto(f.imagen), grupo: texto(f.grupo), unidad: texto(f.unidad), ...(f.oculto?.booleanValue ? { oculto: true } : {}), ...conFotos(leerFotos(f.fotos)) });
   }
   return salida;
 }
@@ -64,6 +66,7 @@ function leerFotos(v: Valor | undefined): FotoProducto[] | undefined {
         forma: texto(f.forma) === "v" ? "v" : "h",
         ...(f.ancha?.booleanValue ? { ancha: true } : {}),
         ...(f.carrusel?.booleanValue === false ? { carrusel: false } : {}),
+        ...(f.galeria?.booleanValue === false ? { galeria: false } : {}),
         ...(esFotoPropia(grande) ? { grande } : {}),
         ...(encuadre ? { encuadre } : {}),
       },
@@ -110,28 +113,44 @@ const CATEGORIA_DE_GRUPO: Record<string, CategoriaId> = {
   MAQUILAS: "maquila",
 };
 
+/** "Horneada, adobada o mechada." */
+const enLista = (xs: readonly string[]): string => {
+  const t = (xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} o ${xs[xs.length - 1]}`).toLowerCase();
+  return t ? `${t.charAt(0).toUpperCase()}${t.slice(1)}.` : "";
+};
+
 /**
- * Junta la lista de la web con Firestore:
+ * Junta Firestore con las reglas de la web. Firestore manda QUÉ productos hay:
+ * - Un renglón de la web sale solo si está en Firestore: por sus ids o, si no tiene, por el mismo
+ *   nombre (así se liga el Combo Pavo cuando se da de alta en el panel). Si no, no sale: un producto
+ *   eliminado en el panel, o que nunca se dio de alta, no aparece en la página.
  * - Precio (y foto, si es propia) de Firestore. Con versiones o familia se usa el primer id.
  * - Nombre de Firestore cuando el producto de la web es uno solo (sin versiones ni familia).
- * - Un producto de la web sin id se liga al de Firestore con el mismo nombre (así se da de alta
- *   desde el panel, como la costilla adobada).
+ * - Con `versionIds`, las versiones eliminadas u ocultas en el panel no salen y la descripción
+ *   se arma con las que quedan.
  * - Lo que está en Firestore y no en la web se agrega como producto sencillo.
- * - Un producto de la web ligado a ids que ya no están en Firestore (se eliminó en el panel) no sale.
- *   Los que no tienen id (combo, o los que aún no se dan de alta) se quedan.
  * Agotados y ocultos se resuelven aparte, con las listas de ids.
+ * Sin datos de Firestore (no respondió y no hay nada guardado) se usa la lista de la web tal cual.
  */
 export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<string, ProductoPublico>): Producto[] {
   if (!publico.size) return resolverCombos([...base]);
   const porNombre = new Map([...publico].map(([id, p]) => [normalizar(p.nombre.trim()), id]));
   const usados = new Set<string>();
+  const vivo = (id: string) => !!publico.get(id) && !publico.get(id)!.oculto;
 
-  const eliminado = (p: Producto) => p.firebaseIds.length > 0 && p.firebaseIds.every((id) => !publico.has(id));
-  const lista = base.filter((p) => !eliminado(p)).map((p): Producto => {
-    const ligado = p.firebaseIds.length ? p.firebaseIds : [porNombre.get(normalizar(p.nombre.trim()))].filter((x): x is string => !!x);
+  const lista = base.flatMap((p): Producto[] => {
+    const ligado = (p.firebaseIds.length ? p.firebaseIds : [porNombre.get(normalizar(p.nombre.trim()))]).filter((x): x is string => !!x && publico.has(x));
+    if (!ligado.length) return [];
     ligado.forEach((id) => usados.add(id));
-    const fs = ligado.length ? publico.get(ligado[0]!) : undefined;
-    if (!fs) return { ...p, firebaseIds: ligado };
+    const fs = publico.get(ligado[0]!)!;
+    // Versiones ligadas a su propio id: solo las que siguen en el panel y no están ocultas.
+    let conVersiones: Partial<Pick<Producto, "versiones" | "versionIds" | "descripcion">> = {};
+    if (p.versiones && p.versionIds) {
+      const i = p.versiones.map((_, k) => k).filter((k) => vivo(p.versionIds![k] ?? ""));
+      if (!i.length) return [];
+      const versiones = i.map((k) => p.versiones![k]!);
+      conVersiones = { versiones, versionIds: i.map((k) => p.versionIds![k]!), descripcion: enLista(versiones) };
+    }
     // Fotos de la galería: las de todos sus ids (la pechuga junta horneada, adobada y mechada).
     // Si ninguno las maneja desde el panel, se quedan las de la página.
     const delPanel = ligado.map((id) => publico.get(id)?.fotos).filter((x): x is FotoProducto[] => !!x);
@@ -140,6 +159,7 @@ export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<
     const r: Producto = {
       ...p,
       firebaseIds: ligado,
+      ...conVersiones,
       precio: fs.precio > 0 ? fs.precio : p.precio,
       nombre: sencillo && fs.nombre ? fs.nombre : p.nombre,
       ...fotoPrincipal(p, fs.imagen, fs.fotos),
@@ -150,7 +170,7 @@ export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<
       delete r.imagen;
       delete r.imagenMini;
     }
-    return r;
+    return [r];
   });
 
   const extra = [...publico]

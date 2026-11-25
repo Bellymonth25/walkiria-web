@@ -41,6 +41,12 @@ export interface Producto {
    */
   versiones?: readonly string[];
   /**
+   * Id de Firestore de cada versión, en el mismo orden que `versiones` (pechuga horneada = PROD_019…).
+   * Con él, una versión que se elimina u oculta en el panel deja de salir. Sin él, las versiones son
+   * solo estilos del mismo producto (pierna horneada o adobada) y salen siempre.
+   */
+  versionIds?: readonly string[];
+  /**
    * Productos con distinto precio que se eligen juntos (ej. los lomos). En la lista se ven
    * como un solo renglón con sus opciones; `opcion` es el nombre corto dentro del grupo.
    */
@@ -78,6 +84,8 @@ export interface FotoProducto {
   ancha?: boolean;
   /** false: solo en la página de galería, no en el carrusel del inicio. */
   carrusel?: boolean;
+  /** false: no sale en la galería ni en el carrusel (sigue sirviendo de principal en el pedido y en la app). */
+  galeria?: boolean;
   /** La misma foto en tamaño real (hasta 3000 px), para verla completa y acercarla en el visor. */
   grande?: string;
   /** Qué parte de la foto se ve en la miniatura del pedido (solo cuenta en la principal). */

@@ -167,7 +167,7 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-fotos-ayuda,.adm-fotos-nota,.adm-fotos-estado{margin:0;font-size:.84rem;color:var(--muted)}
 .adm-fotos-estado{color:var(--fg);background:var(--surface-2);border-left:4px solid var(--gold);padding:8px 10px;border-radius:8px}
 .adm-fotos-estado.oculto{border-left-color:var(--muted)}
-.adm-fotos-lista{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.adm-fotos-lista{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
 .adm-fotito{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--surface-3);border:2px solid transparent}
 .adm-fotito img{width:100%;height:100%;object-fit:cover;display:block}
 .adm-fotito.principal{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
@@ -177,6 +177,17 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-fotito .adm-hacer:hover{background:#fff;outline:2px solid var(--gold)}
 .adm-fotito .adm-x{position:absolute;top:4px;right:4px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.62);color:#fff;font-size:1rem;cursor:pointer;display:grid;place-items:center}
 .adm-fotito .adm-x:hover{background:#8E1B1B}
+/* Dónde sale la foto en la página: barra abajo de la foto, con color distinto por estado; oculta = foto apagada. */
+.adm-fotito .adm-vis{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:5px;min-height:32px;padding:6px 6px;border:0;font:700 .74rem/1.1 var(--font-body);cursor:pointer}
+.adm-fotito .adm-vis span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adm-fotito .adm-vis svg{flex:none}
+.adm-fotito .adm-vis.vis-todo{background:rgba(31,107,58,.92);color:#fff}
+.adm-fotito .adm-vis.vis-galeria{background:rgba(255,255,255,.94);color:#2B1D00}
+.adm-fotito .adm-vis.vis-nada{background:#8E1B1B;color:#fff}
+.adm-fotito .adm-vis:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+.adm-fotito.no-se-ve img{opacity:.35;filter:grayscale(1)}
+/* La etiqueta de principal sube a la esquina de arriba para dejar la barra abajo. */
+.adm-fotito .adm-es-principal,.adm-fotito .adm-hacer{top:6px;bottom:auto;max-width:calc(100% - 52px);white-space:normal;line-height:1.15;text-align:left}
 .adm-fotito.subiendo{display:grid;place-items:center;align-content:center;gap:8px;color:var(--muted);font-size:.8rem;border:2px dashed var(--line)}
 .adm-fotos-vacia{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;min-height:96px;border:2px dashed var(--line);border-radius:12px;color:var(--muted);cursor:pointer;font-weight:600;text-align:center;padding:12px}
 .adm-fotos-vacia:hover{border-color:var(--gold);color:var(--fg)}

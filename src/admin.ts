@@ -12,6 +12,7 @@ import {
   UNIDADES,
   aDocumento,
   agrupar,
+  cambiarVisibilidad,
   cambios,
   coincideNombre,
   cuantasFotos,
@@ -26,6 +27,8 @@ import {
   textoModificacion,
   urlVista,
   validar,
+  visibilidad,
+  TEXTO_VISIBILIDAD,
   type Categoria,
   type ProductoFirestore,
   type ResultadoRol,
@@ -400,10 +403,12 @@ function iniciar(): void {
     const lista = fotos.map((x, i) => {
       const esPrincipal = x.url === principal;
       const enc = esPrincipal ? estiloEncuadre(x.encuadre) : "";
-      return `<li class="adm-fotito${esPrincipal ? " principal" : ""}">
+      const vis = visibilidad(x);
+      return `<li class="adm-fotito${esPrincipal ? " principal" : ""}${vis === "nada" ? " no-se-ve" : ""}">
         ${esPrincipal ? `<button class="adm-enc-abrir" type="button" data-encuadre="${i}" aria-label="Elegir qué parte de la foto principal se ve">` : ""}<img src="${escapar(urlVista(x.url))}" alt="Foto ${i + 1}${esPrincipal ? " (principal)" : ""}" loading="lazy"${enc ? ` style="${enc}"` : ""}>${esPrincipal ? "</button>" : ""}
         ${esPrincipal ? `<span class="adm-es-principal">★ Principal</span>` : `<button class="adm-hacer" type="button" data-principal="${i}" aria-label="Hacer principal la foto ${i + 1}">Hacer principal</button>`}
         <button class="adm-x" type="button" data-quitar="${i}" aria-label="Quitar la foto ${i + 1}" title="Quitar">✕</button>
+        <button class="adm-vis vis-${vis}" type="button" data-vis="${i}" title="Dónde sale en la página. Toca para cambiar." aria-label="Foto ${i + 1}: ${TEXTO_VISIBILIDAD[vis]}. Toca para cambiar.">${ICONO_VIS[vis]}<span>${TEXTO_VISIBILIDAD[vis]}</span></button>
       </li>`;
     });
     const enCamino = Array.from({ length: subiendo }, () => `<li class="adm-fotito subiendo" role="status"><span class="adm-giro" aria-hidden="true"></span>Subiendo…</li>`);
@@ -437,6 +442,13 @@ function iniciar(): void {
     const hacer = el.closest<HTMLElement>("[data-principal]")?.dataset.principal;
     if (hacer !== undefined) {
       principal = fotos[Number(hacer)]?.url ?? principal;
+      f.fotosNota.hidden = true;
+      return pintarFotosFicha();
+    }
+    const vis = el.closest<HTMLElement>("[data-vis]")?.dataset.vis;
+    if (vis !== undefined) {
+      const i = Number(vis);
+      fotos = fotos.map((x, k) => (k === i ? cambiarVisibilidad(x) : x));
       f.fotosNota.hidden = true;
       return pintarFotosFicha();
     }
@@ -684,3 +696,11 @@ const ICONO_ENCUADRE = `<svg viewBox="0 0 24 24" width="18" height="18" fill="no
 function ocupado(btn: HTMLButtonElement, texto: string): void {
   btn.innerHTML = `<span class="adm-giro chico" aria-hidden="true"></span>${texto}`;
 }
+
+/** Ojo abierto (sale en inicio y galería), cuadrícula (solo galería) y ojo tachado (no se muestra). */
+const svg = (d: string) => `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICONO_VIS = {
+  todo: svg(`<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>`),
+  galeria: svg(`<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>`),
+  nada: svg(`<path d="M3 3l18 18M10.6 5.1A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a10 10 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/>`),
+} as const;

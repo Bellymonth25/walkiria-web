@@ -54,11 +54,9 @@ const catalogo: Producto[] = aplicarCatalogo(productos, guardada?.catalogo ?? ne
 let agotados: ReadonlySet<string> = new Set([...(guardada?.agotados ?? []), ...pruebaLista("agotados")]);
 let ocultos: ReadonlySet<string> = new Set([...(guardada?.ocultos ?? []), ...pruebaLista("ocultos")]);
 /** No se puede pedir: agotado u oculto en la web. */
-const noDisponible = (p: Producto): boolean =>
-  p.combo ? partesCombo().some((x) => !x || noDisponible(x)) : estaAgotado(p, agotados) || estaOculto(p, ocultos);
-/** El Combo Pavo se agota si falta cualquiera de sus partes (pechuga, relleno o pierna). */
-const agotadoMenu = (p: Producto): boolean =>
-  p.combo ? partesCombo().some((x) => !x || noDisponible(x)) : estaAgotado(p, agotados);
+const noDisponible = (p: Producto): boolean => estaAgotado(p, agotados) || estaOculto(p, ocultos) || (!!p.combo && partesCombo().some((x) => !x || noDisponible(x)));
+/** El Combo Pavo se agota si se agota en el panel o si falta cualquiera de sus partes (pechuga, relleno o pierna). */
+const agotadoMenu = (p: Producto): boolean => estaAgotado(p, agotados) || (!!p.combo && partesCombo().some((x) => !x || noDisponible(x)));
 const partesCombo = () => Object.values(COMPONENTES_COMBO).map((id) => catalogo.find((x) => x.id === id));
 const hoy = new Date();
 let mesVisto = { anio: hoy.getFullYear(), mes: hoy.getMonth() };
@@ -615,7 +613,14 @@ pintarMenu(vista());
 pintarDias();
 revisarDia();
 pintarPedido();
-const refrescarCalculadora = iniciarCalculadora($("#calc"), catalogo, noDisponible, agregarDeCalculadora);
+const calcularCena = iniciarCalculadora($("#calc"), catalogo, noDisponible, agregarDeCalculadora);
+/** El anuncio "Nuevo: Combo Pavo" solo se ve si el combo está en el panel y se puede pedir. */
+function refrescarCalculadora(): void {
+  calcularCena();
+  const combo = catalogo.find((p) => p.combo);
+  document.querySelectorAll<HTMLElement>(".calc-nuevo").forEach((el) => (el.hidden = !combo || noDisponible(combo)));
+}
+refrescarCalculadora();
 iniciarHoja($("#order"), $<HTMLButtonElement>("#bar"), $("#barBtn"));
 
 

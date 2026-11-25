@@ -106,6 +106,7 @@ export function leerFotos(v: unknown): FotoProducto[] {
         forma: f.forma === "v" ? "v" : "h",
         ...(f.ancha === true ? { ancha: true } : {}),
         ...(f.carrusel === false ? { carrusel: false } : {}),
+        ...(f.galeria === false ? { galeria: false } : {}),
         ...(grande ? { grande } : {}),
         ...(encuadre ? { encuadre } : {}),
       },
@@ -285,3 +286,22 @@ export function motivoDeError(codigo: string | undefined): string {
 }
 
 const quitarAcentos = (s: string): string => s.normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+/**
+ * Dónde sale una foto en la página: en el carrusel del inicio y la galería, solo en la galería,
+ * o en ningún lado (sigue sirviendo como principal del pedido y de la app).
+ */
+export type Visibilidad = "todo" | "galeria" | "nada";
+
+export const visibilidad = (f: FotoProducto): Visibilidad => (f.galeria === false ? "nada" : f.carrusel === false ? "galeria" : "todo");
+
+export const TEXTO_VISIBILIDAD: Record<Visibilidad, string> = { todo: "Visible", galeria: "Solo galería", nada: "Oculta" };
+
+/** Un toque pasa a la siguiente: visible (inicio y galería) → solo galería → oculta → visible. */
+export function cambiarVisibilidad(f: FotoProducto): FotoProducto {
+  const { carrusel: _c, galeria: _g, ...resto } = f;
+  const v = visibilidad(f);
+  if (v === "todo") return { ...resto, carrusel: false };
+  if (v === "galeria") return { ...resto, carrusel: false, galeria: false };
+  return resto;
+}

@@ -4,6 +4,8 @@ import { fotosPlatillos } from "../src/data/galeria";
 import { SITIO } from "../src/lib/galeria";
 import {
   aDocumento,
+  cambiarVisibilidad,
+  visibilidad,
   agrupar,
   cambios,
   fotosParaFicha,
@@ -151,5 +153,22 @@ describe("fotos en el súper panel", () => {
   it("las fotos de la página se ven desde el mismo sitio", () => {
     expect(urlVista(`${SITIO}/img/galeria/bacalao.jpg`)).toBe("img/galeria/bacalao.jpg");
     expect(urlVista(ST)).toBe(ST);
+  });
+});
+
+describe("dónde sale cada foto", () => {
+  const url = "https://firebasestorage.googleapis.com/v0/b/x/o/a.jpg";
+  it("un toque pasa de visible a solo galería, a oculta y de vuelta a visible", () => {
+    const a = { url, forma: "h" as const, ancha: true };
+    const b = cambiarVisibilidad(a);
+    const c = cambiarVisibilidad(b);
+    const d = cambiarVisibilidad(c);
+    expect([a, b, c, d].map(visibilidad)).toEqual(["todo", "galeria", "nada", "todo"]);
+    expect(c).toEqual({ url, forma: "h", ancha: true, carrusel: false, galeria: false });
+    expect(d).toEqual(a);
+  });
+
+  it("se guarda y se vuelve a leer igual", () => {
+    expect(leerProducto("PROD_009", { fotos: [{ url, forma: "h", galeria: false, carrusel: false }] }).fotos).toEqual([{ url, forma: "h", carrusel: false, galeria: false }]);
   });
 });
