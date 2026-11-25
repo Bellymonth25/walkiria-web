@@ -9,12 +9,14 @@
 .gal-rejilla .gal-foto::after{display:none}
 @media (max-width:600px){.gal-rejilla{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
 
-/* Cuadrícula de tarjetas escalonada (como las colecciones de tarjetas de Material 3):
-   tres columnas parejas; las fotos verticales miden dos filas, las horizontales una y las anchas dos columnas. */
-.gal-rejilla.mosaico{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:clamp(150px,17vw,240px);grid-auto-flow:dense;gap:12px}
+/* Cuadrícula de tarjetas escalonada (como las colecciones de tarjetas de Material 3).
+   El tamaño de cada tarjeta sigue un ritmo fijo de 8 (alta, ancha, chica, chica, ancha, alta, chica, chica)
+   que llena las tres columnas sin huecos, sin importar si las fotos son verticales u horizontales
+   (las del panel casi siempre son verticales y todas salían del mismo tamaño). La foto se recorta al centro. */
+.gal-rejilla.mosaico{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:clamp(160px,18vw,260px);grid-auto-flow:dense;gap:12px}
 .mosaico .gal-foto{aspect-ratio:auto;translate:none;border-radius:20px;outline:0;box-shadow:none;background-image:none!important}
-.mosaico .gal-foto[data-forma="v"]{grid-row:span 2}
-.mosaico .gal-foto[data-ancha]{grid-column:span 2}
+.mosaico .gal-foto:nth-child(8n+1),.mosaico .gal-foto:nth-child(8n+6){grid-row:span 2}
+.mosaico .gal-foto:nth-child(8n+2),.mosaico .gal-foto:nth-child(8n+5){grid-column:span 2}
 /* La foto va en una capa propia para acercarla poquito con el mouse, sin mover la tarjeta */
 .mosaico .gal-foto.con-foto::before{content:"";position:absolute;inset:0;background:var(--foto) center/cover no-repeat;transition:transform .6s cubic-bezier(.2,0,0,1),filter .6s}
 .mosaico .gal-foto .gal-nombre{position:relative;z-index:1;width:100%;font-size:.9rem;padding:30px 14px 12px}
@@ -24,6 +26,10 @@
 .gal-mas{display:none}
 @media (max-width:760px){
   .gal-rejilla.mosaico{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:clamp(110px,30vw,150px);gap:8px}
+  /* En dos columnas el ritmo es alta, chica, chica, ancha, chica, alta, chica, ancha. */
+  .mosaico .gal-foto:nth-child(n){grid-row:auto;grid-column:auto}
+  .mosaico .gal-foto:nth-child(8n+1),.mosaico .gal-foto:nth-child(8n+6){grid-row:span 2}
+  .mosaico .gal-foto:nth-child(8n+4),.mosaico .gal-foto:nth-child(8n+8){grid-column:span 2}
   /* En celular se ven solo las primeras fotos, con un degradado y el botón para ver las demás */
   .gal-plegable{position:relative}
   .gal-plegable.plegada .mosaico .gal-foto[data-resto]{display:none}
