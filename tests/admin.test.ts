@@ -340,11 +340,12 @@ describe("destacados", () => {
 });
 
 describe("id repetido dentro del documento", () => {
-  it("lo detecta y al guardar lo corrige aunque no haya otro cambio", () => {
+  it("lo detecta y no intenta reescribirlo (las reglas no lo dejan)", () => {
     const p = leerProducto("PROD_054", { id: "PROD_053", nombre: "Chapata", categoria: "Comida", menudeo: 25 });
     expect(p.id).toBe("PROD_054");
     expect(p.idGuardado).toBe("PROD_053");
-    expect(cambios(p, { ...p })).toEqual({ id: "PROD_054" });
+    expect(cambios(p, { ...p, nombre: "Chapata" })).toEqual({});
+    expect(cambios(p, { ...p, menudeo: 30 })).toEqual({ menudeo: 30 });
   });
 
   it("si coincide no marca nada", () => {

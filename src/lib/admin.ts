@@ -12,7 +12,9 @@ export interface ProductoFirestore {
   /**
    * El campo `id` guardado dentro del documento, solo cuando no coincide con el id del documento.
    * La app y la página usan ese campo: si se repite con otro producto, uno tapa al otro
-   * (pasó con la Chapata: PROD_054 traía id "PROD_053"). Al guardar se corrige.
+   * (pasó con la Chapata: PROD_054 traía id "PROD_053"). Las reglas de Firestore no dejan cambiarlo
+   * desde el panel: la función ya publica estos casos con el id del documento, y el campo se corrige
+   * en la consola de Firebase.
    */
   idGuardado?: string;
   nombre: string;
@@ -499,10 +501,7 @@ export function cuantasFotos(p: ProductoFirestore, web: readonly Producto[], cur
 export function cambios(antes: ProductoFirestore, despues: ProductoFirestore): Record<string, ValorDoc> {
   const a = aDocumento(antes);
   const d = aDocumento(despues);
-  const diff = Object.fromEntries(Object.entries(d).filter(([k, v]) => JSON.stringify(a[k]) !== JSON.stringify(v)));
-  // Si el id guardado adentro no es el del documento, se corrige aunque no haya otro cambio.
-  if (antes.idGuardado && antes.idGuardado !== despues.id) diff.id = despues.id;
-  return diff;
+  return Object.fromEntries(Object.entries(d).filter(([k, v]) => JSON.stringify(a[k]) !== JSON.stringify(v)));
 }
 
 /** Para eliminar hay que escribir el nombre exacto del producto (como en Firebase). */
