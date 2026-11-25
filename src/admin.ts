@@ -404,7 +404,7 @@ function iniciar(): void {
     f.titulo.textContent = nuevo ? "Nuevo producto" : p.nombre;
     f.id.textContent = nuevo
       ? `Se guardará como ${p.id}.`
-      : `Id: ${p.id}. ${textoModificacion(p, nombres)}${p.idGuardado ? ` Ojo: por dentro traía el id ${p.idGuardado}, que es de otro producto, y por eso no salía bien en la página ni en la app. Toca Guardar para corregirlo.` : ""}`;
+      : `Id: ${p.id}. ${textoModificacion(p, nombres)}${p.idGuardado ? ` Ojo: por dentro trae el id ${p.idGuardado}, que también usa otro producto. La página ya lo toma como ${p.id}; para la app hay que cambiar el campo "id" a ${p.id} en la consola de Firebase.` : ""}`;
     // Si el producto aún no tiene fotos en el panel, se muestran las que ya traía la página.
     const inicio = fotosParaFicha(p, productosWeb, fotosPlatillos);
     original = { ...p, fotos: inicio.fotos, imagen: inicio.imagen || p.imagen };
