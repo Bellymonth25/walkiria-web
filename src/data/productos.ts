@@ -17,7 +17,7 @@ export const categorias: readonly Categoria[] = [
   { id: "cerdo", nombre: "Cerdo" },
   { id: "trad", nombre: "Bacalao y romeritos" },
   { id: "guarn", nombre: "Guarniciones y pastas" },
-  { id: "pan", nombre: "Postres y pan" },
+  { id: "pan", nombre: "Postres" },
   // Lo que se da de alta en el panel y no cae en otra sección.
   { id: "otros", nombre: "Más para su cena" },
   { id: "maquila", nombre: "Maquila: le cocinamos su carne a su gusto" },
@@ -53,7 +53,7 @@ export const productos: readonly Producto[] = [
   { id: "ravioles", nombre: "Ravioles de Queso", categoria: "guarn", unidad: "kg", precio: 330, firebaseIds: ["PROD_022"], ...foto("ravioles-de-queso") },
 
   { id: "strudel", nombre: "Strudel de Manzana", categoria: "pan", unidad: "pza", precio: 520, descripcion: "Pasta hojaldrada rellena de manzana. Para 10 personas.", clasico: true, firebaseIds: ["PROD_025"], ...foto("strudel-de-manzana") },
-  { id: "chapata", nombre: "Chapata", categoria: "pan", unidad: "pza", precio: 25, descripcion: "Para acompañar la cena: una por persona.", firebaseIds: ["PROD_054"] },
+  { id: "chapata", nombre: "Chapata", categoria: "otros", unidad: "pza", precio: 25, descripcion: "Para acompañar la cena: una por persona.", firebaseIds: ["PROD_054"] },
   { id: "maquila", nombre: "Maquila", categoria: "maquila", unidad: "kg", precio: 170, descripcion: "Usted nos trae su pavo, lomo, costilla de cerdo, pechuga o pierna de pavo, o la carne que guste y nosotros la cocinamos. Se cobra por kilo de lo que pese. Tráigalo a la tienda al menos 2 días antes de la entrega (de preferencia descongelado). No se aceptan piernas de cerdo.", maquila: true, firebaseIds: ["PROD_013"] },
   { id: "strudel-individual", nombre: "Strudel Individual", categoria: "pan", unidad: "pza", precio: 40, descripcion: "Pasta hojaldrada rellena de manzana.", firebaseIds: ["PROD_035"] },
 ];
