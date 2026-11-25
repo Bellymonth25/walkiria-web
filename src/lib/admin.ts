@@ -28,6 +28,8 @@ export interface ProductoFirestore {
   disponible: boolean;
   /** No se muestra ni en la app ni en la web. */
   oculto: boolean;
+  /** Sale en grande arriba del menú de la página. Máximo [MAX_DESTACADOS] a la vez. */
+  destacado: boolean;
   /** Receta: el producto es un combo que se arma con otros productos. null = producto normal. */
   receta: RecetaAdmin | null;
   /** Última modificación hecha desde el panel (null si nunca se ha tocado desde ahí). */
@@ -196,6 +198,7 @@ export function leerProducto(id: string, d: Record<string, unknown>): ProductoFi
     // Igual que la app: sin el campo, cuenta como agotado.
     disponible: d.estaDisponible === true,
     oculto: d.oculto === true,
+    destacado: d.destacado === true,
     receta: leerReceta(d.receta),
     actualizadoEn: aFecha(d.actualizadoEn),
     actualizadoPor: texto(d.actualizadoPor),
@@ -328,9 +331,20 @@ export function fechaCorta(f: Date): string {
 }
 
 /** Texto de "última modificación" para la ficha. */
-export function textoModificacion(p: ProductoFirestore): string {
+/**
+ * Quién hizo el último cambio, por su nombre (el `name` de su usuario en `user/{uid}`).
+ * [nombres] liga correo → nombre; si no se conoce, la parte del correo antes de la @.
+ */
+export function quienModifico(p: Pick<ProductoFirestore, "actualizadoPor">, nombres: ReadonlyMap<string, string> = new Map()): string {
+  const correo = p.actualizadoPor.trim();
+  if (!correo) return "";
+  return nombres.get(correo.toLowerCase()) || correo.split("@")[0]!;
+}
+
+export function textoModificacion(p: ProductoFirestore, nombres: ReadonlyMap<string, string> = new Map()): string {
   if (!p.actualizadoEn) return "Sin cambios registrados desde el panel.";
-  return `Última modificación: ${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? ` por ${p.actualizadoPor}` : ""}.`;
+  const quien = quienModifico(p, nombres);
+  return `Última modificación: ${fechaCorta(p.actualizadoEn)}${quien ? ` por ${quien}` : ""}.`;
 }
 
 type ValorDoc = string | number | boolean | FotoProducto[] | RecetaAdmin | null;
@@ -352,6 +366,7 @@ export function aDocumento(p: ProductoFirestore): Record<string, ValorDoc> {
     isWeightAdjustable: p.pesoAjustable,
     estaDisponible: p.disponible,
     oculto: p.oculto,
+    destacado: p.destacado,
     // null deja al producto como uno normal (la app y la página la ignoran).
     receta: p.receta,
   };
@@ -404,15 +419,28 @@ export function productoNuevo(id: string): ProductoFirestore {
     pesoAjustable: true,
     disponible: true,
     oculto: false,
+    destacado: false,
     receta: null,
     actualizadoEn: null,
     actualizadoPor: "",
   };
 }
 
+/** Cuántos productos se pueden destacar a la vez en la página. */
+export const MAX_DESTACADOS = 2;
+
+/** Los otros productos que ya están destacados (sin contar a [p]). */
+export const otrosDestacados = (p: Pick<ProductoFirestore, "id">, todos: readonly ProductoFirestore[]): ProductoFirestore[] =>
+  todos.filter((o) => o.id !== p.id && o.destacado);
+
 /** Revisa la ficha antes de guardar. Regresa el mensaje para el usuario o null si está bien. */
 export function validar(p: ProductoFirestore, otros: readonly ProductoFirestore[]): string | null {
   if (!p.nombre.trim()) return "Escribe el nombre del producto.";
+  if (p.destacado) {
+    const ya = otrosDestacados(p, otros);
+    if (ya.length >= MAX_DESTACADOS) return `Solo se pueden destacar ${MAX_DESTACADOS} a la vez. Ya están ${ya.map((o) => `"${o.nombre}"`).join(" y ")}: quítale el destacado a uno primero.`;
+    if (p.categoria !== "Comida") return "Solo la comida se puede destacar en la página.";
+  }
   const repetido = otros.find((o) => o.id !== p.id && o.nombre.trim().toLowerCase() === p.nombre.trim().toLowerCase());
   if (repetido) return `Ya existe "${repetido.nombre}" (${repetido.id}).`;
   // Un combo no tiene precio propio: se cobra la suma de sus partes.

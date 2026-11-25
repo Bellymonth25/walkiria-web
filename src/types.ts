@@ -19,6 +19,8 @@ export interface Producto {
   descripcion?: string;
   /** Muestra la etiqueta "Clásico". */
   clasico?: boolean;
+  /** Destacado desde el panel (máximo 2): sale en grande arriba del menú. */
+  destacado?: boolean;
   /** Pavo entero: se pide completo o medio, no por kilo. */
   pavoEntero?: boolean;
   /** Mínimo de kilos de este pavo completo, si es distinto al general (ej. el relleno empieza en 6 kg). */

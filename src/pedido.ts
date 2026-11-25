@@ -424,6 +424,14 @@ document.addEventListener("click", (e) => {
     verFoto(d.verfoto);
   } else if (d.ir) {
     irAProducto(d.ir);
+  } else if (d.destacado) {
+    // Tarjeta de destacado: lo agrega (o abre sus versiones) y lleva a su renglón para ajustarlo.
+    const p = producto(d.destacado);
+    if (!p) return;
+    const fila = document.querySelector<HTMLElement>(`[data-row="${claveFila(p)}"]`);
+    const boton = fila?.querySelector<HTMLButtonElement>(".action button.add");
+    if (boton && !fila!.classList.contains("in")) boton.click();
+    irAProducto(p.id);
   } else if (d.cat) {
     filtro = d.cat as Filtro;
     pintarChips(vista());

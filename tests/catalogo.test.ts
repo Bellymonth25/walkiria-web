@@ -113,4 +113,16 @@ describe("productos eliminados en el panel", () => {
     const doc = { fields: { productos: { mapValue: { fields: { PROD_018: { mapValue: { fields: { nombre: { stringValue: "X" }, oculto: { booleanValue: true } } } } } } } } };
     expect(parsearCatalogo(doc).get("PROD_018")?.oculto).toBe(true);
   });
+
+  it("lee destacado del documento publicado y lo pasa al producto de la web", () => {
+    const doc = { fields: { productos: { mapValue: { fields: { PROD_019: { mapValue: { fields: { nombre: { stringValue: "Pechuga de Pavo Horneada" }, precio: { integerValue: "590" }, destacado: { booleanValue: true } } } } } } } } };
+    const c = parsearCatalogo(doc);
+    expect(c.get("PROD_019")?.destacado).toBe(true);
+    expect(buscar(aplicarCatalogo(productos, c), "pechuga-pavo")?.destacado).toBe(true);
+  });
+
+  it("sin destacado en el panel, el producto no sale destacado", () => {
+    const l = aplicarCatalogo(productos, new Map([["PROD_019", pub({ nombre: "Pechuga de Pavo Horneada", precio: 590 })]]));
+    expect(buscar(l, "pechuga-pavo")?.destacado).toBeUndefined();
+  });
 });
