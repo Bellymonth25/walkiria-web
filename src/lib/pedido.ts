@@ -7,7 +7,8 @@ import { dinero, enLista, kilos, normalizar } from "./formato";
 function textoParteCombo(x: ParteCombo): string {
   if (x.unidad !== "PIEZA") return `${x.nombre} ${kilos(x.cantidad)}`;
   const gramos = x.kgAprox && x.cantidad > 0 ? ` (aprox. ${Math.round((x.kgAprox / x.cantidad) * 1000)} g c/u)` : "";
-  return `${x.cantidad} ${x.nombre.toLowerCase()}${gramos}`;
+  // "Pierna de Pavo Horneada 2 pzas": igual que las partes por kilo, nombre y luego cuánto
+  return `${x.nombre} ${x.cantidad} ${x.cantidad === 1 ? "pza" : "pzas"}${gramos}`;
 }
 
 // ---------- Presentación ----------

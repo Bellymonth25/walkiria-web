@@ -49,7 +49,7 @@ describe("Combo Pavo (sin receta publicada)", () => {
     expect(m).toContain("• Combo Pavo, para 4 personas: $775");
     expect(m).toContain("- Pechuga de pavo horneada 0.5 kg: $295");
     expect(m).toContain("- Relleno tradicional 0.5 kg: $200");
-    expect(m).toContain("- 2 piernas de pavo horneadas (aprox. 700 g c/u): $280");
+    expect(m).toContain("- Piernas de pavo horneadas 2 pzas (aprox. 700 g c/u): $280");
     expect(m).toContain("charola de aluminio: 1 charola mediana (+$35)");
     expect(m).toContain("varía según el peso de las piernas");
   });

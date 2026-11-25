@@ -186,7 +186,7 @@ const prod = (id: string, nombre: string, menudeo: number, unidad = "kg"): Produ
   ...productoNuevo(id),
   nombre,
   menudeo,
-  mayoreo: menudeo - 40,
+  mayoreo: Math.max(0, menudeo - 40),
   unidad,
 });
 
@@ -262,6 +262,12 @@ describe("receta en el súper panel", () => {
     expect(validarReceta(sinCantidad, catalogoCombo)).toMatch(/cantidad/);
     const piezasAMedias = { ...base, componentes: [{ ...base.componentes[2]!, cantidad: 1.5 }] };
     expect(validarReceta(piezasAMedias, catalogoCombo)).toMatch(/número entero/);
+  });
+
+  it("un combo se puede guardar sin precio propio", () => {
+    const combo = { ...prod("PROD_060", "Combo Pavo", 0, "Pza"), receta: recetaCombo() };
+    expect(validar(combo, catalogoCombo)).toBeNull();
+    expect(validar({ ...combo, receta: null }, catalogoCombo)).toMatch(/mayor a 0/);
   });
 
   it("la vista previa dice qué lleva y cuánto cuesta", () => {

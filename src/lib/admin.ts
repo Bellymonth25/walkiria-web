@@ -393,7 +393,9 @@ export function validar(p: ProductoFirestore, otros: readonly ProductoFirestore[
   if (!p.nombre.trim()) return "Escribe el nombre del producto.";
   const repetido = otros.find((o) => o.id !== p.id && o.nombre.trim().toLowerCase() === p.nombre.trim().toLowerCase());
   if (repetido) return `Ya existe "${repetido.nombre}" (${repetido.id}).`;
-  if (!(p.menudeo > 0)) return "El precio de menudeo debe ser mayor a 0.";
+  // Un combo no tiene precio propio: se cobra la suma de sus partes.
+  if (!p.receta && !(p.menudeo > 0)) return "El precio de menudeo debe ser mayor a 0.";
+  if (p.menudeo < 0) return "El precio de menudeo no puede ser negativo.";
   if (p.mayoreo < 0) return "El precio de mayoreo no puede ser negativo.";
   if (p.imagen && !/^https:\/\//.test(p.imagen)) return "La foto debe ser un enlace que empiece con https://";
   if (p.fotos.length && !p.fotos.some((f) => f.url === p.imagen)) return "Marca con ★ cuál foto es la principal.";
