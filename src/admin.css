@@ -237,6 +237,28 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 /* Todos los campos de la ficha miden lo mismo y arrancan arriba, aunque uno traiga ayuda abajo */
 .adm-ficha input[type=text],.adm-ficha input[type=url],.adm-ficha input[type=number],.adm-ficha select{height:48px}
 .adm-ficha label{align-content:start}
+/* Listas desplegables con los colores de la página (el navegador las pintaba con los suyos).
+   Cerradas: flecha propia. Abiertas: en Chrome/Edge la lista se pinta completa (base-select);
+   en los demás navegadores al menos toma el fondo y el texto de la página. */
+.adm-ficha select{cursor:pointer;appearance:none;-webkit-appearance:none;padding-right:42px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23B08A3E' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center}
+.adm-ficha select:focus{outline:none;border-color:var(--primary)}
+.adm-ficha select option,.adm-ficha select optgroup{background:var(--surface);color:var(--fg)}
+.adm-ficha select optgroup{font-weight:700;color:var(--gold-ink)}
+@supports (appearance:base-select){
+  .adm-ficha select,.adm-ficha select::picker(select){appearance:base-select}
+  .adm-ficha select{display:flex;align-items:center;background-image:none;padding-right:14px}
+  .adm-ficha select::picker-icon{color:var(--gold-ink);transition:rotate .2s}
+  .adm-ficha select:open::picker-icon{rotate:180deg}
+  .adm-ficha select::picker(select){background:var(--surface);color:var(--fg);border:1.5px solid var(--line);border-radius:12px;padding:6px;margin-top:4px;box-shadow:0 14px 40px rgba(0,0,0,.3);max-height:min(360px,60vh)}
+  .adm-ficha select option{padding:9px 12px;border-radius:8px;font-weight:500;gap:8px}
+  .adm-ficha select option:hover,.adm-ficha select option:focus-visible{background:var(--gold-soft);outline:none}
+  .adm-ficha select option:checked{background:var(--primary-soft);font-weight:700}
+  .adm-ficha select option::checkmark{color:var(--gold-ink)}
+  .adm-ficha select optgroup{padding-top:4px}
+  /* "+ Agregar producto" es solo el texto del botón: en la lista abierta no se repite */
+  .adm-agrega-op option[value=""]{display:none}
+  .adm-ficha select optgroup legend{padding:8px 12px 4px;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-ink)}
+}
 .adm-campo-ayuda{font-weight:500;font-size:.8rem;color:var(--muted)}
 .adm-partes-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .adm-partes{list-style:none;margin:0;padding:0;display:grid;gap:12px}
