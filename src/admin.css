@@ -247,6 +247,10 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-parte-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
 .adm-parte-nums label{display:grid;gap:6px;font-weight:600;font-size:.92rem}
 .adm-parte-opc{min-height:48px}
+.adm-ayuda{font-weight:500;font-size:.8rem;color:var(--muted)}
+.adm-parte-explica{margin:0;padding:10px 12px;border-radius:10px;background:var(--bg);color:var(--muted);font-size:.88rem;line-height:1.4}
+/* En escritorio la ficha usa el ancho del contenido de la página; en celular sigue a pantalla completa */
+@media (min-width:561px){#ficha.adm-ficha{width:min(1040px,calc(100vw - 48px))}}
 .adm-receta-previa{margin:0;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .adm-receta-previa.mal{color:var(--alerta);border-color:var(--alerta)}
 @media (max-width:560px){
