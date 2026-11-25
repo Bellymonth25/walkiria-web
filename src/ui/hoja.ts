@@ -2,7 +2,8 @@
  * "Tu pedido" en celular como bottom sheet: se abre o cierra tocando la barra,
  * o arrastrándola (o la rayita de arriba) hacia arriba o abajo.
  */
-const VISIBLE = 106;
+/** Aire entre la barra y la orilla de abajo (igual al espacio entre bloques de la hoja). */
+const AIRE = 14;
 
 export function iniciarHoja(hoja: HTMLElement, barra: HTMLButtonElement, textoBoton: HTMLElement): void {
   const movil = window.matchMedia("(max-width: 980px)");
@@ -15,8 +16,16 @@ export function iniciarHoja(hoja: HTMLElement, barra: HTMLButtonElement, textoBo
     if (!abierta) hoja.scrollTop = 0;
   };
 
-  // Cuánto baja la hoja cuando está cerrada: solo asoman la rayita y la barra.
-  const cerradaY = () => hoja.offsetHeight - VISIBLE;
+  // Alto real de la rayita + barra: el CSS lo usa en --asoma para que la hoja cerrada enseñe
+  // la barra completa con aire abajo (y nada del contenido de atrás), con o sin zona segura.
+  const finBarra = () => barra.offsetTop + barra.offsetHeight;
+  const medir = () => document.documentElement.style.setProperty("--barra", `${Math.ceil(finBarra())}px`);
+  medir();
+  new ResizeObserver(medir).observe(barra);
+
+  // Cuánto baja la hoja cuando está cerrada: solo asoman la rayita y la barra (misma cuenta que --asoma).
+  const zonaSegura = () => Math.max(0, parseFloat(getComputedStyle(hoja).paddingBottom) - 16);
+  const cerradaY = () => hoja.offsetHeight - (finBarra() + AIRE + zonaSegura());
   const desplazado = () => new DOMMatrixReadOnly(getComputedStyle(hoja).transform).m42;
 
   let inicioY = 0;
