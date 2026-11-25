@@ -33,6 +33,11 @@ export interface Producto {
    * (se toman de la lista al cargar, ver `resolverCombos`).
    */
   combo?: PreciosCombo;
+  /**
+   * Receta publicada por la app. Cuando existe, el combo se arma con ella (cantidades, versiones,
+   * precios y partes opcionales); si no llega, se usa la configuración de `data/temporada`.
+   */
+  receta?: RecetaResuelta;
   /** Maquila: el cliente trae su carne y se cobra por kilo cocinado. Se puede agregar varias veces. */
   maquila?: boolean;
   /**
@@ -102,6 +107,61 @@ export interface Encuadre {
   zoom: number;
 }
 
+/**
+ * Receta publicada por la app en `publicWeb/disponibilidad.productos[id].receta`: un producto que
+ * en realidad es la suma de otros (el Combo Pavo). La página la usa para armar el combo con las
+ * mismas cantidades y precios que la app, sin tener nada escrito a mano.
+ */
+export interface RecetaPublica {
+  personas: { minimo: number; alAgregar: number; maximo: number };
+  /** Lo que se calcula por persona se redondea hacia arriba en pasos de este tamaño. */
+  redondeoKg: number;
+  empaque: { alAgregar?: string; permitidos: readonly string[] };
+  /** Indicaciones para producción (van en el mensaje de WhatsApp). */
+  instrucciones?: string;
+  componentes: readonly ComponenteReceta[];
+}
+
+export interface ComponenteReceta {
+  clave: string;
+  nombre: string;
+  /** Ids de Firestore que pueden ocupar ese lugar (las 4 versiones de pechuga). */
+  opciones: readonly string[];
+  /** El que entra por defecto. */
+  alAgregar: string;
+  modo: "POR_PERSONA" | "FIJA";
+  /** Kg por persona (POR_PERSONA) o cantidad fija (FIJA). */
+  cantidad: number;
+  unidad: "GRANEL" | "PIEZA";
+  /** Nunca se vende menos de esto. */
+  minimo: number;
+  /** Peso aproximado de cada pieza (2 piernas ≈ 700 g c/u). */
+  kgPorPieza?: number;
+  /** Va incluida, pero el cliente la puede quitar. */
+  opcional?: boolean;
+}
+
+/** La receta ya ligada con los productos de Firestore (nombre, precio y si está agotado). */
+export interface RecetaResuelta extends Omit<RecetaPublica, "componentes"> {
+  partes: readonly ParteReceta[];
+}
+
+export interface ParteReceta extends Omit<ComponenteReceta, "opciones" | "alAgregar"> {
+  opciones: readonly OpcionParte[];
+  alAgregar: string;
+}
+
+export interface OpcionParte {
+  id: string;
+  nombre: string;
+  /** Precio por kilo o por pieza, de Firestore. */
+  precio: number;
+  /** Cómo se vende ese producto. Una pierna se cuenta por pieza pero se cobra por kilo. */
+  unidad: Unidad;
+  /** Agotado u oculto en el panel: se ve tachada y no se puede elegir. */
+  agotado?: boolean;
+}
+
 /** Precio por kilo de cada parte del Combo Pavo. */
 export interface PreciosCombo {
   pechuga: number;
@@ -145,6 +205,10 @@ export interface Linea {
   nota: string;
   /** Versión elegida en productos con `versiones` ("" si no aplica). */
   version: string;
+  /** Combo con receta: qué versión eligió el cliente en cada parte (clave → id del producto). */
+  comboVersiones?: Record<string, string>;
+  /** Combo con receta: partes opcionales que el cliente quitó (van incluidas por default). */
+  comboQuitados?: readonly string[];
 }
 
 export interface ZonaEnvio {

@@ -1,7 +1,14 @@
 import type { Linea, Pedido, Presentacion, Producto, TamanoEmpaque, ZonaEnvio } from "../types";
 import { combo, empaques, maquila, pavo } from "../data/temporada";
-import { desgloseCombo, importeCombo, personasCombo, textoDesglose } from "./combo";
+import { desgloseCombo, importeCombo, minPersonasCombo, type ParteCombo, personasCombo, recetaDe } from "./combo";
 import { dinero, enLista, kilos, normalizar } from "./formato";
+
+/** "Pechuga de pavo horneada 0.5 kg" / "2 piernas de pavo (aprox. 700 g c/u)". */
+function textoParteCombo(x: ParteCombo): string {
+  if (x.unidad !== "PIEZA") return `${x.nombre} ${kilos(x.cantidad)}`;
+  const gramos = x.kgAprox && x.cantidad > 0 ? ` (aprox. ${Math.round((x.kgAprox / x.cantidad) * 1000)} g c/u)` : "";
+  return `${x.cantidad} ${x.nombre.toLowerCase()}${gramos}`;
+}
 
 // ---------- Presentación ----------
 
@@ -137,7 +144,7 @@ export function kgDe(p: Producto, l: Linea): number {
 }
 
 export function importeProducto(p: Producto, l: Linea): number {
-  if (p.combo) return importeCombo(p, l.cantidad);
+  if (p.combo) return importeCombo(p, l);
   if (p.unidad === "pza") return p.precio * l.cantidad;
   const relleno = p.maquila && llevaRelleno(l) ? maquila.precioRellenoKg * l.kgRelleno : 0;
   return redondear2(p.precio * kgDe(p, l) + relleno);
@@ -151,7 +158,7 @@ export const importeLinea = (p: Producto, l: Linea): number => importeProducto(p
 
 /** Lo que se escribe en el pedido: "6 kg", "2 pzas", "1 pavo completo (aprox. 5 kg)". */
 export function textoCantidad(p: Producto, l: Linea): string {
-  if (p.combo) return `para ${desgloseCombo(l.cantidad).personas} personas`;
+  if (p.combo) return `para ${desgloseCombo(p, l).personas} personas`;
   if (p.pavoEntero) {
     const n = l.cantidad;
     const cu = n === 1 ? "" : " c/u";
@@ -178,7 +185,7 @@ export const paso = (p: Producto): number => (porKilo(p) ? 0.5 : 1);
 
 /** Limpia lo que el cliente escribe. Regresa null si no es un número válido. */
 export function normalizarCantidad(p: Producto, valor: number): number | null {
-  if (p.combo) return Number.isFinite(valor) && valor > 0 ? personasCombo(valor) : null;
+  if (p.combo) return Number.isFinite(valor) && valor > 0 ? personasCombo(p, valor) : null;
   if (p.maquila) return Number.isFinite(valor) && valor >= 0 ? Math.round(valor * 100) / 100 : null;
   if (!Number.isFinite(valor) || valor <= 0) return null;
   if (!porKilo(p)) return Math.max(1, Math.round(valor));
@@ -198,7 +205,7 @@ export function normalizarKgRelleno(valor: number): number {
 }
 
 export function aumentar(p: Producto, actual: number): number {
-  if (p.combo) return personasCombo(actual + 1);
+  if (p.combo) return personasCombo(p, actual + 1);
   return redondear1(actual + paso(p));
 }
 
@@ -206,7 +213,7 @@ export function aumentar(p: Producto, actual: number): number {
 export function disminuir(p: Producto, actual: number): number {
   const n = redondear1(actual - paso(p));
   if (p.maquila) return Math.max(0, n);
-  if (p.combo) return n < combo.minPersonas ? 0 : n;
+  if (p.combo) return n < minPersonasCombo(p) ? 0 : n;
   return n < (porKilo(p) ? 0.25 : 1) ? 0 : n;
 }
 
@@ -337,11 +344,23 @@ export function mensaje(pedido: Pedido, ctx: ContextoMensaje): string {
     const { producto: p, linea: l } = r;
     lineas.push(`• ${nombreLinea(p, l)}, ${textoCantidad(p, l)}: ${dinero(importeProducto(p, l))}`);
     if (p.maquila && llevaRelleno(l)) lineas.push(`   Con ${kilos(l.kgRelleno)} de relleno`);
-    // Producción necesita el desglose del combo para armarlo.
+    // Producción necesita el desglose del combo para armarlo, con el precio de cada parte.
     if (p.combo) {
-      lineas.push(`   Lleva: ${textoDesglose(l.cantidad)}`);
+      const d = desgloseCombo(p, l);
+      lineas.push("   Lleva:");
+      for (const parte of d.partes.filter((x) => x.incluida)) {
+        lineas.push(`   - ${textoParteCombo(parte)}: ${dinero(parte.importe)}`);
+      }
+      // Las partes que el cliente quitó se dicen, para que en mostrador no las agreguen.
+      for (const parte of d.partes.filter((x) => !x.incluida && x.opcional)) {
+        lineas.push(`   - Sin ${parte.nombre.toLowerCase()}`);
+      }
       lineas.push(`   Va en una misma charola de aluminio: ${textoEmpaques("charola", empaquesDe(p, l))}`);
-      lineas.push("   Precio estimado: varía según el peso de las piernas");
+      const instrucciones = recetaDe(p)?.instrucciones;
+      if (instrucciones) lineas.push(`   ${instrucciones}`);
+      if (d.partes.some((x) => x.incluida && x.unidad === "PIEZA")) {
+        lineas.push("   Precio estimado: varía según el peso de las piernas");
+      }
     }
     if (presentaciones(p).length) {
       const es = empaquesDe(p, l);

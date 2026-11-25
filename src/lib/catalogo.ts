@@ -1,4 +1,4 @@
-import type { CategoriaId, FotoProducto, Producto } from "../types";
+import type { CategoriaId, ComponenteReceta, FotoProducto, OpcionParte, ParteReceta, Producto, RecetaPublica, RecetaResuelta } from "../types";
 import { SITIO, urlLocal } from "./galeria";
 import { normalizarEncuadre } from "./encuadre";
 import { normalizar } from "./formato";
@@ -22,6 +22,8 @@ export interface ProductoPublico {
    * nunca ha tenido fotos en el panel (la galería usa las de la página); [] = se quitaron todas.
    */
   fotos?: FotoProducto[];
+  /** Receta del producto (combos): con ella la página arma el combo igual que la app. */
+  receta?: RecetaPublica;
 }
 
 type Valor = {
@@ -45,9 +47,82 @@ export function parsearCatalogo(doc: unknown): Map<string, ProductoPublico> {
   const salida = new Map<string, ProductoPublico>();
   for (const [id, v] of Object.entries(campos)) {
     const f = v.mapValue?.fields ?? {};
-    salida.set(id, { nombre: texto(f.nombre) || id, precio: numero(f.precio), imagen: texto(f.imagen), grupo: texto(f.grupo), unidad: texto(f.unidad), ...(f.oculto?.booleanValue ? { oculto: true } : {}), ...conFotos(leerFotos(f.fotos)) });
+    const receta = leerReceta(f.receta);
+    salida.set(id, { nombre: texto(f.nombre) || id, precio: numero(f.precio), imagen: texto(f.imagen), grupo: texto(f.grupo), unidad: texto(f.unidad), ...(f.oculto?.booleanValue ? { oculto: true } : {}), ...(receta ? { receta } : {}), ...conFotos(leerFotos(f.fotos)) });
   }
   return salida;
+}
+
+/**
+ * Receta en formato REST. Devuelve undefined si está incompleta: el producto se comporta
+ * como uno normal y el combo sigue usando la configuración de la página.
+ */
+function leerReceta(v: Valor | undefined): RecetaPublica | undefined {
+  const f = v?.mapValue?.fields;
+  if (!f) return undefined;
+
+  const componentes = (f.componentes?.arrayValue?.values ?? []).flatMap((x): ComponenteReceta[] => {
+    const c = x.mapValue?.fields ?? {};
+    const clave = texto(c.clave);
+    const opciones = (c.opciones?.arrayValue?.values ?? []).map(texto).filter((o) => !!o);
+    if (!clave || !opciones.length) return [];
+    const alAgregar = texto(c.alAgregar);
+    const kgPorPieza = numero(c.kgPorPieza);
+    return [
+      {
+        clave,
+        nombre: texto(c.nombre) || clave,
+        opciones,
+        alAgregar: opciones.includes(alAgregar) ? alAgregar : opciones[0]!,
+        modo: texto(c.modo) === "FIJA" ? "FIJA" : "POR_PERSONA",
+        cantidad: numero(c.cantidad),
+        unidad: texto(c.unidad) === "PIEZA" ? "PIEZA" : "GRANEL",
+        minimo: numero(c.minimo),
+        ...(kgPorPieza > 0 ? { kgPorPieza } : {}),
+        ...(c.opcional?.booleanValue ? { opcional: true } : {}),
+      },
+    ];
+  });
+  if (!componentes.length) return undefined;
+
+  const per = f.personas?.mapValue?.fields ?? {};
+  const emp = f.empaque?.mapValue?.fields ?? {};
+  const minimo = Math.max(1, numero(per.minimo) || 1);
+  const alAgregar = numero(per.alAgregar) || minimo;
+  const instrucciones = texto(f.instrucciones);
+  const empaqueDefault = texto(emp.alAgregar);
+
+  return {
+    personas: { minimo, alAgregar, maximo: Math.max(alAgregar, numero(per.maximo) || alAgregar) },
+    redondeoKg: numero(f.redondeoKg) || 0.125,
+    empaque: {
+      ...(empaqueDefault ? { alAgregar: empaqueDefault } : {}),
+      permitidos: (emp.permitidos?.arrayValue?.values ?? []).map(texto).filter((e) => !!e),
+    },
+    ...(instrucciones ? { instrucciones } : {}),
+    componentes,
+  };
+}
+
+/**
+ * Liga la receta con los productos del panel: nombre y precio de cada opción salen de Firestore
+ * y las que ya no existen se caen. [noDisponibles] son los ids agotados u ocultos: sus opciones
+ * se marcan para que la página las muestre tachadas y no las pueda elegir.
+ */
+function resolverReceta(receta: RecetaPublica, publico: ReadonlyMap<string, ProductoPublico>, noDisponibles: ReadonlySet<string>): RecetaResuelta | undefined {
+  const partes = receta.componentes.flatMap((c): ParteReceta[] => {
+    const opciones = c.opciones.flatMap((id): OpcionParte[] => {
+      const fs = publico.get(id);
+      if (!fs || fs.oculto) return [];
+      return [{ id, nombre: fs.nombre, precio: fs.precio, unidad: fs.unidad.toLowerCase() === "pza" ? "pza" : "kg", ...(noDisponibles.has(id) ? { agotado: true } : {}) }];
+    });
+    if (!opciones.length) return [];
+    const { opciones: _ids, alAgregar, ...resto } = c;
+    return [{ ...resto, opciones, alAgregar: opciones.some((o) => o.id === alAgregar) ? alAgregar : opciones[0]!.id }];
+  });
+  if (!partes.length) return undefined;
+  const { componentes: _c, ...resto } = receta;
+  return { ...resto, partes };
 }
 
 /** Lista `fotos` en formato REST. Solo pasan las fotos propias (Storage o la página). */
@@ -132,7 +207,7 @@ const enLista = (xs: readonly string[]): string => {
  * Agotados y ocultos se resuelven aparte, con las listas de ids.
  * Sin datos de Firestore (no respondió y no hay nada guardado) se usa la lista de la web tal cual.
  */
-export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<string, ProductoPublico>): Producto[] {
+export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<string, ProductoPublico>, noDisponibles: ReadonlySet<string> = new Set()): Producto[] {
   if (!publico.size) return resolverCombos([...base]);
   const porNombre = new Map([...publico].map(([id, p]) => [normalizar(p.nombre.trim()), id]));
   const usados = new Set<string>();
@@ -156,10 +231,13 @@ export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<
     const delPanel = ligado.map((id) => publico.get(id)?.fotos).filter((x): x is FotoProducto[] => !!x);
     const fotos = delPanel.length ? delPanel.flat() : undefined;
     const sencillo = ligado.length === 1 && !p.versiones && !p.familia;
+    // Receta (combos): con ella el combo se arma con las cantidades, versiones y precios del panel.
+    const receta = fs.receta ? resolverReceta(fs.receta, publico, noDisponibles) : undefined;
     const r: Producto = {
       ...p,
       firebaseIds: ligado,
       ...conVersiones,
+      ...(receta ? { receta } : {}),
       precio: fs.precio > 0 ? fs.precio : p.precio,
       nombre: sencillo && fs.nombre ? fs.nombre : p.nombre,
       ...fotoPrincipal(p, fs.imagen, fs.fotos),

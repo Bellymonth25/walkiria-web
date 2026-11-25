@@ -3,7 +3,12 @@ import { calculadora as cfg, combo as cfgCombo, tiposCena, type ExtraCena, type 
 import { calcularCena, pavoPermitido, pavosCena, repartirCarne, type Cena } from "../lib/calculadora";
 import { dinero, escapar, kilos } from "../lib/formato";
 import { importeProducto, kgMinimoPavo, nuevaLinea, presentaciones, resumenEmpaques } from "../lib/pedido";
-import { desgloseCombo, importeCombo } from "../lib/combo";
+import { desgloseCombo, type ParteCombo } from "../lib/combo";
+import { textoDesglose } from "../lib/combo";
+
+/** "Pechuga 0.5 kg" / "2 piernas": lo que cabe en el renglón del plan de la calculadora. */
+const textoParteCorto = (x: ParteCombo): string =>
+  x.unidad === "PIEZA" ? `${x.cantidad} ${x.nombre.toLowerCase()}` : `${x.nombre} ${kilos(x.cantidad)}`;
 
 /** Lo que la calculadora agrega al pedido: un producto y cómo queda su línea. */
 export interface Agregado {
@@ -140,12 +145,12 @@ export function iniciarCalculadora(
     const filas: Fila[] = [];
     const partes = repartirCarne(c.carne, elegidas.length);
     if (usaCombo()) {
-      const d = desgloseCombo(c.personas);
+      const d = desgloseCombo(prodCombo!, { cantidad: c.personas });
       filas.push({
-        nombre: "Combo Pavo",
-        detalle: `Pechuga ${kilos(d.kgPechuga)} · relleno ${kilos(d.kgRelleno)} · ${d.piernas} piernas`,
+        nombre: prodCombo!.nombre,
+        detalle: d.partes.filter((x) => x.incluida).map((x) => textoParteCorto(x)).join(" · "),
         cantidad: `para ${d.personas}`,
-        importe: importeCombo(prodCombo!, d.personas),
+        importe: d.importe,
         agregado: [{ productoId: prodCombo!.id, cambios: { cantidad: d.personas, presentacion: "charola" } }],
       });
     }
@@ -261,13 +266,13 @@ export function iniciarCalculadora(
       return;
     }
     caja.hidden = false;
-    const d = desgloseCombo(total());
-    const precio = dinero(Math.round(importeCombo(prodCombo!, d.personas)));
+    const d = desgloseCombo(prodCombo!, { cantidad: total() });
+    const precio = dinero(Math.round(d.importe));
     caja.classList.toggle("on", usaCombo());
     caja.innerHTML = `<div class="calc-combo-txt">
         <span class="calc-combo-tag">${usaCombo() ? "✓ En tu cena" : `Para ${cfgCombo.hastaPersonas} personas o menos`}</span>
         <b>Combo Pavo</b>
-        <span>Pechuga de pavo (${kilos(d.kgPechuga)}), relleno (${kilos(d.kgRelleno)}) y ${d.piernas} piernas de pavo, todo en una misma charola. Aprox. <b class="num">${precio}</b> para ${d.personas}.</span>
+        <span>${escapar(textoDesglose(prodCombo!, { cantidad: d.personas }))}, todo en una misma charola. Aprox. <b class="num">${precio}</b> para ${d.personas}.</span>
       </div>
       <button type="button" class="btn ${usaCombo() ? "btn-ghost" : "btn-wa"} btn-sm" id="calcComboBtn" aria-pressed="${usaCombo()}">${usaCombo() ? "Mejor otra carne" : "Usar combo"}</button>`;
   };

@@ -20,7 +20,7 @@ import { iniciarCalculadora, type Agregado } from "./ui/calculadora";
 import { iniciarComun } from "./comun";
 import { evento } from "./lib/analitica";
 import { iniciarVisor } from "./ui/visor";
-import { COMPONENTES_COMBO } from "./lib/combo";
+import { COMPONENTES_COMBO, comboSeVende } from "./lib/combo";
 
 // ---------- Estado ----------
 const pedido: Pedido = {
@@ -50,13 +50,18 @@ function pintarMenu(v: VistaMenu): void {
  * Productos de la web con nombre, precio y foto de Firestore. Se cambia en su lugar (no se
  * reasigna) para que el contexto del pedido y la calculadora vean siempre lo último.
  */
-const catalogo: Producto[] = aplicarCatalogo(productos, guardada?.catalogo ?? new Map());
 let agotados: ReadonlySet<string> = new Set([...(guardada?.agotados ?? []), ...pruebaLista("agotados")]);
 let ocultos: ReadonlySet<string> = new Set([...(guardada?.ocultos ?? []), ...pruebaLista("ocultos")]);
+const catalogo: Producto[] = aplicarCatalogo(productos, guardada?.catalogo ?? new Map(), new Set([...agotados, ...ocultos]));
 /** No se puede pedir: agotado u oculto en la web. */
-const noDisponible = (p: Producto): boolean => estaAgotado(p, agotados) || estaOculto(p, ocultos) || (!!p.combo && partesCombo().some((x) => !x || noDisponible(x)));
-/** El Combo Pavo se agota si se agota en el panel o si falta cualquiera de sus partes (pechuga, relleno o pierna). */
-const agotadoMenu = (p: Producto): boolean => estaAgotado(p, agotados) || (!!p.combo && partesCombo().some((x) => !x || noDisponible(x)));
+const noDisponible = (p: Producto): boolean => estaAgotado(p, agotados) || estaOculto(p, ocultos) || (!!p.combo && !comboCompleto(p));
+/**
+ * El combo se agota si se agota en el panel o si le falta una parte obligatoria. Con receta,
+ * cada parte necesita al menos una versión disponible (si solo una pechuga se agota, el combo
+ * sigue). Sin receta todavía publicada, se revisan las partes de la lista de la web.
+ */
+const agotadoMenu = (p: Producto): boolean => estaAgotado(p, agotados) || (!!p.combo && !comboCompleto(p));
+const comboCompleto = (p: Producto): boolean => (p.receta ? comboSeVende(p) : partesCombo().every((x) => !!x && !noDisponible(x)));
 const partesCombo = () => Object.values(COMPONENTES_COMBO).map((id) => catalogo.find((x) => x.id === id));
 const hoy = new Date();
 let mesVisto = { anio: hoy.getFullYear(), mes: hoy.getMonth() };
@@ -242,9 +247,9 @@ async function cargarDisponibilidad(): Promise<void> {
   }
   // Nombres de antes: si un producto se eliminó en el panel, ya no estará en el catálogo nuevo.
   const nombreAntes = new Map(catalogo.map((p) => [p.id, p.nombre]));
-  catalogo.splice(0, catalogo.length, ...aplicarCatalogo(productos, leidos.catalogo));
   agotados = new Set([...leidos.agotados, ...pruebaLista("agotados")]);
   ocultos = new Set([...leidos.ocultos, ...pruebaLista("ocultos")]);
+  catalogo.splice(0, catalogo.length, ...aplicarCatalogo(productos, leidos.catalogo, new Set([...agotados, ...ocultos])));
   const quitados = Object.entries(pedido.lineas).filter(([, l]) => {
     const p = producto(l.productoId);
     return !p || noDisponible(p);
@@ -459,6 +464,22 @@ document.addEventListener("click", (e) => {
     const x = deLinea(d.del);
     ponerLinea(d.del, null);
     if (x) repintar(x.p.id);
+  } else if (d.combover) {
+    // Otra versión de una parte del combo (p. ej. la pechuga adobada en lugar de la horneada).
+    const [id, clave, opcion] = d.combover.split(":") as [string, string, string];
+    const x = deLinea(id);
+    if (!x) return;
+    ponerLinea(id, { ...x.l, comboVersiones: { ...(x.l.comboVersiones ?? {}), [clave]: opcion } });
+    repintar(x.p.id);
+  } else if (d.comboopt) {
+    // Parte opcional del combo: va incluida, pero se puede quitar (y regresar).
+    const [id, clave] = d.comboopt.split(":") as [string, string];
+    const x = deLinea(id);
+    if (!x) return;
+    const quitados = x.l.comboQuitados ?? [];
+    const nuevos = quitados.includes(clave) ? quitados.filter((k) => k !== clave) : [...quitados, clave];
+    ponerLinea(id, { ...x.l, comboQuitados: nuevos });
+    repintar(x.p.id);
   } else if (d.size || d.pres) {
     const [id, valor] = (d.size ?? d.pres)!.split(":") as [string, string];
     const x = deLinea(id);
