@@ -7,18 +7,18 @@ import { galeriaViva } from "./ui/galeria-viva";
 import type { FotoVista } from "./lib/galeria";
 
 /**
- * Cuántas fotos se ven con la galería plegada (celular, 2 columnas). Al ocultarse un producto cambia
- * la cuadrícula; se busca el número más cercano a 8 que no deje huecos (verticales miden 2 de alto,
- * anchas 2 de ancho), acomodando como lo hace el navegador (grid-auto-flow: dense).
+ * Cuántas fotos se ven con la galería plegada (celular, 2 columnas). Se busca el número más cercano
+ * a 8 que no deje huecos, con el mismo ritmo de tamaños que pone galeria.css en dos columnas
+ * (alta, chica, chica, ancha, chica, alta, chica, ancha), acomodando como el navegador (grid-auto-flow: dense).
  */
 function cuantasPlegada(fotos: readonly FotoVista[]): number {
   const sinHuecos = (k: number): boolean => {
     const ocupado: boolean[][] = [];
     const libre = (r: number, c: number) => !ocupado[r]?.[c];
     let celdas = 0;
-    for (const f of fotos.slice(0, k)) {
-      const w = f.ancha ? 2 : 1;
-      const h = f.forma === "v" ? 2 : 1;
+    for (let i = 0; i < Math.min(k, fotos.length); i++) {
+      const w = i % 8 === 3 || i % 8 === 7 ? 2 : 1;
+      const h = i % 8 === 0 || i % 8 === 5 ? 2 : 1;
       for (let r = 0; ; r++) {
         const c = [0, 1].find((c0) => c0 + w <= 2 && [...Array(h).keys()].every((dr) => [...Array(w).keys()].every((dc) => libre(r + dr, c0 + dc))));
         if (c === undefined) continue;
