@@ -142,7 +142,7 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-ficha input:focus,.adm-ficha select:focus{outline:none;border-color:var(--primary)}
 .adm-dos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .adm-checks{display:grid;gap:4px}
-.adm-check{display:flex;align-items:center;gap:12px;min-height:56px;cursor:pointer}
+.adm-check{position:relative;display:flex;align-items:center;gap:12px;min-height:56px;cursor:pointer}
 .adm-check > span:last-child{display:grid}
 .adm-check small{color:var(--muted);font-size:.84rem}
 .adm-id{margin:0;color:var(--muted);font-size:.84rem}
@@ -259,6 +259,10 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
   .adm-agrega-op option[value=""]{display:none}
   .adm-ficha select optgroup legend{padding:8px 12px 4px;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-ink)}
 }
+/* El texto de ejemplo se ve como ejemplo, no como algo ya escrito */
+.adm-ficha input::placeholder,.adm-ficha textarea::placeholder{color:var(--muted);opacity:.6;font-style:italic}
+.adm-estrella{color:var(--gold-ink);font-size:.95em}
+.adm-check:has(input:disabled){cursor:not-allowed;opacity:.65}
 .adm-campo-ayuda{font-weight:500;font-size:.8rem;color:var(--muted)}
 .adm-partes-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .adm-partes{list-style:none;margin:0;padding:0;display:grid;gap:12px}

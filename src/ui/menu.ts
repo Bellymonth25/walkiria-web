@@ -241,7 +241,7 @@ export function renglon(p: Producto, lineas: readonly [string, Linea][], agotado
   const conFoto = p.imagen ? p : undefined;
   return `<li class="row${enPedido ? " in" : ""}${agotado ? " agotado" : ""}" data-row="${p.id}">
     ${miniatura(conFoto, p.nombre)}
-    <div class="name">${n}${p.clasico ? '<span class="tag">Clásico</span>' : ""}${p.combo ? '<span class="tag tag-nuevo">Nuevo</span>' : ""}${p.descripcion ? `<span class="meta">${escapar(p.descripcion)}</span>` : ""}</div>
+    <div class="name">${n}${p.destacado ? '<span class="tag tag-destacado">★ Destacado</span>' : ""}${p.clasico ? '<span class="tag">Clásico</span>' : ""}${p.combo ? '<span class="tag tag-nuevo">Nuevo</span>' : ""}${p.descripcion ? `<span class="meta">${escapar(p.descripcion)}</span>` : ""}</div>
     ${p.combo
       ? `<div class="price num"><small>aprox.</small> <b>${dinero(Math.round(importeCombo(p, { cantidad: personasDefaultCombo(p) })))}</b><span>para ${personasDefaultCombo(p)}</span></div>`
       : `<div class="price num"><b>${dinero(p.precio)}</b><span>/${p.unidad}</span></div>`}
@@ -289,7 +289,7 @@ function renglonGrupo(v: VistaMenu, f: Fila): string {
   const conFoto = f.productos.find((p) => p.imagen);
   return `<li class="row grupo${enPedido ? " in" : ""}${todoAgotado ? " agotado" : ""}" data-row="${f.clave}">
     ${miniatura(conFoto, f.nombre)}
-    <div class="name">${escapar(f.nombre)}${f.productos.some((p) => p.clasico) ? '<span class="tag">Clásico</span>' : ""}${desc ? `<span class="meta">${escapar(desc)}</span>` : ""}</div>
+    <div class="name">${escapar(f.nombre)}${f.productos.some((p) => p.destacado) ? '<span class="tag tag-destacado">★ Destacado</span>' : ""}${f.productos.some((p) => p.clasico) ? '<span class="tag">Clásico</span>' : ""}${desc ? `<span class="meta">${escapar(desc)}</span>` : ""}</div>
     <div class="price num">${precios.length > 1 ? "<small>desde</small> " : ""}<b>${dinero(Math.min(...precios))}</b><span>/${unidad}</span></div>
     <div class="action">${accion}</div>
     ${abierto ? `<div class="versiones"><span class="dlabel">${enPedido ? "¿Quieres otra?" : "¿Cuál quieres? Puedes elegir varias"}</span><div class="vchips">${chips}</div></div>` : ""}
@@ -314,6 +314,37 @@ export function pintarFilaPorClave(v: VistaMenu, clave: string): void {
   if (f && el) el.outerHTML = pintarFila(v, f);
 }
 
+/**
+ * Lo destacado en el panel (máximo 2): tarjetas grandes arriba del menú, solo en "Todo" y sin
+ * búsqueda. Lo agotado no se destaca. "Agregar" lo pone en el pedido y lleva a su renglón.
+ */
+function pintarDestacados(v: VistaMenu, todas: readonly Fila[]): string {
+  const elegidas = todas.filter((f) => f.productos.some((p) => p.destacado) && !f.productos.every((p) => v.agotados(p))).slice(0, 2);
+  if (!elegidas.length) return "";
+  const tarjeta = (f: Fila): string => {
+    const p = f.productos.find((x) => x.destacado) ?? f.productos[0]!;
+    const conFoto = f.productos.find((x) => x.imagen);
+    const enPedido = f.productos.some((x) => lineasDe(v, x).length > 0);
+    const precio = p.combo
+      ? `<small>aprox.</small> <b>${dinero(Math.round(importeCombo(p, { cantidad: personasDefaultCombo(p) })))}</b><span>para ${personasDefaultCombo(p)}</span>`
+      : `${f.productos.length > 1 && new Set(f.productos.map((x) => x.precio)).size > 1 ? "<small>desde</small> " : ""}<b>${dinero(Math.min(...f.productos.map((x) => x.precio)))}</b><span>/${p.unidad}</span>`;
+    const desc = p.descripcion ?? "";
+    const foto = conFoto?.imagen
+      ? `<img src="${urlImagen(conFoto.imagenMini ?? conFoto.imagen)}" alt="" loading="lazy" decoding="async"${estiloEncuadre(conFoto.encuadre) ? ` style="${estiloEncuadre(conFoto.encuadre)}"` : ""}>`
+      : `<span class="dest-sinfoto">${CLOCHE}</span>`;
+    return `<article class="dest-card">
+      <div class="dest-foto">${foto}<span class="dest-sello">★ Destacado</span></div>
+      <div class="dest-cuerpo">
+        <h4>${escapar(f.nombre)}</h4>
+        ${desc ? `<p>${escapar(desc)}</p>` : ""}
+        <div class="dest-pie"><div class="price num">${precio}</div>
+          <button type="button" class="add" data-destacado="${p.id}">${enPedido ? "Ver en mi pedido" : "Agregar"}</button></div>
+      </div>
+    </article>`;
+  };
+  return `<section class="destacados" aria-label="Destacados"><div class="dest-lista${elegidas.length === 1 ? " uno" : ""}">${elegidas.map(tarjeta).join("")}</div></section>`;
+}
+
 export function pintarMenu(v: VistaMenu): void {
   const q = normalizar(v.busqueda.trim());
   const coincide = (f: Fila) =>
@@ -324,7 +355,8 @@ export function pintarMenu(v: VistaMenu): void {
     menu.innerHTML = `<div class="empty">No encontramos "${escapar(v.busqueda)}". Prueba con otra palabra o pregúntanos por WhatsApp.</div>`;
     return;
   }
-  menu.innerHTML = v.categorias
+  const destacados = v.filtro === "todo" && !q ? pintarDestacados(v, visibles) : "";
+  menu.innerHTML = destacados + v.categorias
     .map((c) => {
       const items = visibles.filter((f) => f.productos[0]!.categoria === c.id);
       if (!items.length) return "";

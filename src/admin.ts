@@ -2,7 +2,7 @@ import "./styles.css";
 import "./admin.css";
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { collection, deleteDoc, doc, getDoc, getFirestore, onSnapshot, runTransaction, serverTimestamp, updateDoc, type Unsubscribe } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, getFirestore, onSnapshot, runTransaction, serverTimestamp, updateDoc, type Unsubscribe } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { firebaseWeb } from "./data/temporada";
 import {
@@ -22,9 +22,12 @@ import {
   leerProducto,
   motivoDeError,
   nombreGrupo,
+  MAX_DESTACADOS,
+  otrosDestacados,
   productoNuevo,
   siguienteId,
   textoModificacion,
+  quienModifico,
   urlVista,
   validar,
   EMPAQUES_RECETA,
@@ -96,6 +99,8 @@ function iniciar(): void {
   const db = getFirestore(app);
 
   let lista: ProductoFirestore[] = [];
+  /** Correo → nombre de quien modifica (ver cargarNombres). */
+  const nombres = new Map<string, string>();
   /** id del producto → campo que se está guardando (muestra el circulito en esa celda). */
   const pendientes = new Map<string, Campo>();
   let dejarDeEscuchar: Unsubscribe | null = null;
@@ -141,8 +146,29 @@ function iniciar(): void {
       error(rol.motivo);
       return;
     }
+    await cargarNombres(usuario);
     escuchar();
   });
+
+  /**
+   * Correo → nombre de los usuarios de la app (colección `user`, campo `name`), para mostrar quién
+   * modificó cada producto por su nombre. Si no se puede leer toda la colección, al menos el propio.
+   */
+  async function cargarNombres(u: User): Promise<void> {
+    const poner = (correo: unknown, nombre: unknown) => {
+      if (typeof correo === "string" && correo && typeof nombre === "string" && nombre.trim()) nombres.set(correo.toLowerCase(), nombre.trim());
+    };
+    try {
+      (await getDocs(collection(db, "user"))).forEach((d) => poner(d.get("email"), d.get("name")));
+    } catch {
+      try {
+        const yo = await getDoc(doc(db, "user", u.uid));
+        poner(yo.get("email") || u.email, yo.get("name"));
+      } catch (e) {
+        console.warn("admin: no se pudo leer el nombre del usuario", e);
+      }
+    }
+  }
 
   async function esSuperadmin(u: User): Promise<ResultadoRol> {
     try {
@@ -252,9 +278,9 @@ function iniciar(): void {
     // Con el mismo encuadre que ve el cliente al pedir.
     const enc = estiloEncuadre(todas.find((x) => x.url === principal)?.encuadre);
     const foto = `<span class="adm-mini-caja">${principal ? `<span class="adm-mini adm-recorte"><img src="${escapar(urlVista(principal))}" alt="" loading="lazy" onerror="this.remove()"${enc ? ` style="${enc}"` : ""}></span>` : `<span class="adm-mini" aria-hidden="true"></span>`}${n > 1 ? `<span class="adm-mini-n" title="${n} fotos">${n}</span>` : ""}</span>`;
-    const mod = p.actualizadoEn ? `${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? `<small>${escapar(p.actualizadoPor.split("@")[0]!)}</small>` : ""}` : `<span class="adm-vacio">—</span>`;
+    const mod = p.actualizadoEn ? `${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? `<small>${escapar(quienModifico(p, nombres))}</small>` : ""}` : `<span class="adm-vacio">—</span>`;
     return `<tr class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}">
-      <td class="c-prod"><div class="adm-abrir">${foto}<span class="adm-nombre">${escapar(p.nombre)}</span></div></td>
+      <td class="c-prod"><div class="adm-abrir">${foto}<span class="adm-nombre">${escapar(p.nombre)}${p.destacado ? ` <span class="adm-estrella" title="Destacado en la página">★</span>` : ""}</span></div></td>
       <td class="c-precio" data-label="Precio">${p.receta ? `<small>Combo · por sus partes</small>` : `${dinero(p.menudeo)}${unidad}`}</td>
       ${celdaSwitch(p, "estaDisponible", "Disponible")}
       ${celdaSwitch(p, "oculto", "Mostrar")}
@@ -329,6 +355,8 @@ function iniciar(): void {
     mostrar: $<HTMLInputElement>("#fMostrar"),
     peso: $<HTMLInputElement>("#fPeso"),
     maquila: $<HTMLInputElement>("#fMaquila"),
+    destacado: $<HTMLInputElement>("#fDestacado"),
+    destacadoNota: $("#fDestacadoNota"),
     error: $("#errorFicha"),
     guardar: $<HTMLButtonElement>("#guardarFicha"),
     esCombo: $<HTMLInputElement>("#fEsCombo"),
@@ -373,7 +401,7 @@ function iniciar(): void {
     original = p;
     esNuevo = nuevo;
     f.titulo.textContent = nuevo ? "Nuevo producto" : p.nombre;
-    f.id.textContent = nuevo ? `Se guardará como ${p.id}.` : `Id: ${p.id}. ${textoModificacion(p)}`;
+    f.id.textContent = nuevo ? `Se guardará como ${p.id}.` : `Id: ${p.id}. ${textoModificacion(p, nombres)}`;
     // Si el producto aún no tiene fotos en el panel, se muestran las que ya traía la página.
     const inicio = fotosParaFicha(p, productosWeb, fotosPlatillos);
     original = { ...p, fotos: inicio.fotos, imagen: inicio.imagen || p.imagen };
@@ -392,6 +420,8 @@ function iniciar(): void {
     f.mostrar.checked = !p.oculto;
     f.peso.checked = p.pesoAjustable;
     f.maquila.checked = p.maquila;
+    f.destacado.checked = p.destacado;
+    notaDestacado(p);
     receta = p.receta ? { ...p.receta, personas: { ...p.receta.personas }, empaque: { ...p.receta.empaque }, componentes: p.receta.componentes.map((c) => ({ ...c, opciones: [...c.opciones] })) } : null;
     f.esCombo.checked = !!p.receta;
     mostrarReceta();
@@ -400,6 +430,17 @@ function iniciar(): void {
     f.guardar.textContent = nuevo ? "Crear producto" : "Guardar";
     ficha.showModal();
     if (nuevo) f.nombre.focus();
+  }
+
+  /** Qué dice el interruptor de destacado: cuáles ya lo están y si ya no cabe otro. */
+  function notaDestacado(p: ProductoFirestore): void {
+    const otros = otrosDestacados(p, lista);
+    const nombres = otros.map((o) => `"${o.nombre}"`).join(" y ");
+    const lleno = !p.destacado && otros.length >= MAX_DESTACADOS;
+    f.destacado.disabled = lleno;
+    f.destacadoNota.textContent = lleno
+      ? `Ya hay ${MAX_DESTACADOS} destacados: ${nombres}. Quítale el destacado a uno para poder destacar este.`
+      : `Sale en grande arriba del menú de la página. Máximo ${MAX_DESTACADOS} a la vez.${otros.length ? ` Ahora: ${nombres}.` : ""}`;
   }
 
   function leerFicha(): ProductoFirestore {
@@ -424,6 +465,7 @@ function iniciar(): void {
       oculto: !f.mostrar.checked,
       pesoAjustable: f.peso.checked,
       maquila: f.maquila.checked,
+      destacado: f.destacado.checked,
       receta: f.esCombo.checked && receta ? asignarClaves(receta) : null,
     };
   }
@@ -490,7 +532,7 @@ function iniciar(): void {
         const faltantes = libres.filter((p) => !c.opciones.includes(p.id));
         return `<li class="adm-parte">
         <div class="adm-parte-top">
-          <label>Qué parte es<input type="text" data-parte="${i}" data-campo="nombre" value="${escapar(c.nombre)}" autocomplete="off" placeholder="Pechuga de pavo"><span class="adm-sub">Solo agrupa las versiones (p. ej. "Pechuga"). Al cliente y a cocina les sale el nombre del producto elegido.</span></label>
+          <label>Qué parte es<input type="text" data-parte="${i}" data-campo="nombre" value="${escapar(c.nombre)}" autocomplete="off" placeholder="Escríbelo aquí, p. ej. Pechuga"><span class="adm-sub">Solo agrupa las versiones (p. ej. "Pechuga"). Al cliente y a cocina les sale el nombre del producto elegido.</span></label>
           <button class="adm-quitar-parte" type="button" data-quitaparte="${i}" aria-label="Quitar esta parte">✕</button>
         </div>
         <div class="adm-parte-ops">

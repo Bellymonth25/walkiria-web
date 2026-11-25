@@ -17,6 +17,9 @@ import {
   productoNuevo,
   siguienteId,
   textoModificacion,
+  quienModifico,
+  otrosDestacados,
+  MAX_DESTACADOS,
   urlVista,
   validar,
   componenteNuevo,
@@ -104,7 +107,13 @@ describe("última modificación", () => {
     const f = new Date("2026-11-14T16:41:00Z");
     const p = leerProducto("PROD_001", { nombre: "Pavo", actualizadoEn: { toDate: () => f }, actualizadoPor: "carlos.belmont@lawalkiria.com.mx" });
     expect(p.actualizadoEn).toEqual(f);
-    expect(textoModificacion(p)).toBe("Última modificación: 14 nov 2026, 10:41 por carlos.belmont@lawalkiria.com.mx.");
+    // Sin saber su nombre, sale lo de antes de la @ (nunca el correo completo).
+    expect(textoModificacion(p)).toBe("Última modificación: 14 nov 2026, 10:41 por carlos.belmont.");
+    // Con el nombre de su usuario de la app, sale el nombre.
+    const nombres = new Map([["carlos.belmont@lawalkiria.com.mx", "Carlos Belmont"]]);
+    expect(textoModificacion(p, nombres)).toBe("Última modificación: 14 nov 2026, 10:41 por Carlos Belmont.");
+    expect(quienModifico({ actualizadoPor: "Carlos.Belmont@lawalkiria.com.mx" }, nombres)).toBe("Carlos Belmont");
+    expect(quienModifico({ actualizadoPor: "" }, nombres)).toBe("");
     expect(textoModificacion(leerProducto("X", {}))).toContain("Sin cambios");
     expect(leerProducto("X", { actualizadoEn: "ayer" }).actualizadoEn).toBeNull();
   });
@@ -303,5 +312,29 @@ describe("asignarClaves", () => {
       ],
     });
     expect(r.componentes.map((c) => c.clave)).toEqual(["relleno", "relleno2"]);
+  });
+});
+
+describe("destacados", () => {
+  const prod = (id: string, nombre: string, destacado = false): ProductoFirestore => ({ ...productoNuevo(id), nombre, menudeo: 100, destacado });
+
+  it("se pueden destacar hasta 2 a la vez", () => {
+    const a = prod("PROD_001", "Combo Pavo", true);
+    const b = prod("PROD_002", "Pavo Relleno", true);
+    const c = prod("PROD_003", "Lomo", true);
+    expect(MAX_DESTACADOS).toBe(2);
+    expect(validar(b, [a])).toBeNull();
+    expect(validar(c, [a, b])).toContain("Solo se pueden destacar 2");
+    expect(validar(c, [a, b])).toContain('"Combo Pavo" y "Pavo Relleno"');
+    // Uno que ya estaba destacado se puede seguir guardando aunque haya otro.
+    expect(validar(a, [a, b])).toBeNull();
+    expect(otrosDestacados(a, [a, b, c]).map((x) => x.id)).toEqual(["PROD_002", "PROD_003"]);
+  });
+
+  it("solo la comida se destaca y el campo se guarda en Firestore", () => {
+    expect(validar({ ...prod("PROD_009", "Charola", true), categoria: "Empaque" }, [])).toContain("Solo la comida");
+    expect(aDocumento(prod("PROD_001", "Combo Pavo", true)).destacado).toBe(true);
+    expect(leerProducto("PROD_001", { nombre: "X", destacado: true }).destacado).toBe(true);
+    expect(leerProducto("PROD_001", { nombre: "X" }).destacado).toBe(false);
   });
 });
