@@ -215,3 +215,42 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-enc-zoom{display:flex;align-items:center;gap:12px;font-weight:600}
 .adm-enc-zoom input{flex:1;accent-color:var(--gold);min-height:44px}
 @media (max-width:560px){.adm-enc-vistas{grid-template-columns:1fr 96px}}
+
+/* ---------- Receta del combo ---------- */
+.adm-receta{display:grid;gap:14px;padding:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface-3)}
+.adm-receta h3{margin:0;font:700 .8rem/1 var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--gold-ink)}
+.adm-receta h4{margin:0;font-size:1rem}
+.adm-receta > label,.adm-tres label{display:grid;gap:6px;font-weight:600;font-size:.92rem}
+.adm-receta .adm-sub{margin:-8px 0 0}
+.adm-tres{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.adm-ficha textarea{font:500 1rem var(--font-body);color:var(--fg);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;width:100%;resize:vertical}
+.adm-ficha textarea:focus{outline:none;border-color:var(--primary)}
+.adm-permitidos{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0}
+.adm-permitidos legend{font-weight:600;font-size:.84rem;color:var(--muted);padding:0 6px}
+.adm-permitidos-lista{display:flex;flex-wrap:wrap;gap:4px 16px}
+.adm-permitido{display:flex;align-items:center;gap:8px;min-height:40px;font-size:.92rem;cursor:pointer}
+.adm-permitido input{accent-color:var(--gold);width:20px;height:20px}
+.adm-partes-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.adm-partes{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.adm-parte{display:grid;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.adm-parte-top{display:grid;grid-template-columns:1fr 1.4fr 44px;gap:10px;align-items:end}
+.adm-parte-top label{display:grid;gap:6px;font-weight:600;font-size:.92rem}
+.adm-quitar-parte{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--line);background:transparent;color:var(--alerta);font-size:1rem;cursor:pointer}
+.adm-quitar-parte:hover{background:color-mix(in srgb,var(--alerta) 12%,transparent)}
+.adm-parte-ops{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.adm-chip{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:999px;overflow:hidden;background:var(--bg)}
+.adm-chip.entra{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 16%,var(--bg))}
+.adm-chip > button{all:unset;padding:8px 12px;font:600 .9rem var(--font-body);color:var(--fg);cursor:pointer;min-height:36px;display:flex;align-items:center}
+.adm-chip-x{color:var(--alerta) !important;padding:8px 10px !important;border-left:1px solid var(--line)}
+.adm-chip > button:focus-visible{outline:3px solid var(--primary);outline-offset:-3px}
+.adm-agrega-op{max-width:220px}
+.adm-parte-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.adm-parte-nums label{display:grid;gap:6px;font-weight:600;font-size:.92rem}
+.adm-parte-opc{min-height:48px}
+.adm-receta-previa{margin:0;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.adm-receta-previa.mal{color:var(--alerta);border-color:var(--alerta)}
+@media (max-width:560px){
+  .adm-tres,.adm-parte-top{grid-template-columns:1fr}
+  .adm-parte-top{align-items:stretch}
+  .adm-quitar-parte{justify-self:end}
+}

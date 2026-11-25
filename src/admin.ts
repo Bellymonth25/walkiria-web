@@ -27,6 +27,13 @@ import {
   textoModificacion,
   urlVista,
   validar,
+  EMPAQUES_RECETA,
+  NOMBRE_EMPAQUE,
+  componenteNuevo,
+  recetaNueva,
+  validarReceta,
+  vistaPreviaReceta,
+  type RecetaAdmin,
   visibilidad,
   TEXTO_VISIBILIDAD,
   type Categoria,
@@ -321,6 +328,18 @@ function iniciar(): void {
     maquila: $<HTMLInputElement>("#fMaquila"),
     error: $("#errorFicha"),
     guardar: $<HTMLButtonElement>("#guardarFicha"),
+    esCombo: $<HTMLInputElement>("#fEsCombo"),
+    receta: $("#fReceta"),
+    recMin: $<HTMLInputElement>("#fRecMin"),
+    recDef: $<HTMLInputElement>("#fRecDef"),
+    recMax: $<HTMLInputElement>("#fRecMax"),
+    recRedondeo: $<HTMLInputElement>("#fRecRedondeo"),
+    recEmpaque: $<HTMLSelectElement>("#fRecEmpaque"),
+    recPermitidos: $("#fRecPermitidos"),
+    recInstrucciones: $<HTMLTextAreaElement>("#fRecInstrucciones"),
+    recPartes: $<HTMLUListElement>("#fRecPartes"),
+    recPrevia: $("#fRecPrevia"),
+    recAgregarParte: $<HTMLButtonElement>("#fRecAgregarParte"),
   };
   const opciones = (sel: HTMLSelectElement, valores: readonly string[], etiqueta: (v: string) => string = (v) => v): void => {
     sel.innerHTML = valores.map((v) => `<option value="${escapar(v)}">${escapar(etiqueta(v) || "Sin definir")}</option>`).join("");
@@ -329,6 +348,7 @@ function iniciar(): void {
   opciones(f.grupo, GRUPOS, nombreGrupo);
   opciones(f.unidad, UNIDADES);
   opciones(f.presentacion, PRESENTACIONES);
+  opciones(f.recEmpaque, EMPAQUES_RECETA, (v) => NOMBRE_EMPAQUE[v] ?? v);
 
   let original: ProductoFirestore | null = null;
   let esNuevo = false;
@@ -337,6 +357,8 @@ function iniciar(): void {
   /** Fotos de la ficha abierta y cuál es la principal (su url). Se guardan al tocar Guardar. */
   let fotos: FotoProducto[] = [];
   let principal = "";
+  /** Receta de la ficha abierta. null mientras el producto no sea un combo. */
+  let receta: RecetaAdmin | null = null;
 
   /** Si el valor guardado no está en la lista (dato viejo), se agrega para no perderlo al guardar. */
   function elegir(sel: HTMLSelectElement, valor: string): void {
@@ -367,6 +389,9 @@ function iniciar(): void {
     f.mostrar.checked = !p.oculto;
     f.peso.checked = p.pesoAjustable;
     f.maquila.checked = p.maquila;
+    receta = p.receta ? { ...p.receta, personas: { ...p.receta.personas }, empaque: { ...p.receta.empaque }, componentes: p.receta.componentes.map((c) => ({ ...c, opciones: [...c.opciones] })) } : null;
+    f.esCombo.checked = !!p.receta;
+    mostrarReceta();
     estadoFotos();
     f.error.hidden = true;
     f.guardar.textContent = nuevo ? "Crear producto" : "Guardar";
@@ -393,8 +418,180 @@ function iniciar(): void {
       oculto: !f.mostrar.checked,
       pesoAjustable: f.peso.checked,
       maquila: f.maquila.checked,
+      receta: f.esCombo.checked ? receta : null,
     };
   }
+
+  // ---------- Receta del combo ----------
+
+  /** Productos que pueden ir dentro de un combo: comida, visibles y que no sean el combo mismo. */
+  function candidatos(): ProductoFirestore[] {
+    return lista
+      .filter((p) => p.id !== original?.id && !p.oculto && !p.receta)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  }
+
+  const nombreDe = (id: string): string => lista.find((p) => p.id === id)?.nombre ?? id;
+
+  /** Prende o apaga la sección de receta. Al prenderla por primera vez se arranca con lo de siempre. */
+  function mostrarReceta(): void {
+    f.receta.hidden = !f.esCombo.checked;
+    if (f.esCombo.checked && !receta) receta = recetaNueva();
+    if (f.esCombo.checked) pintarReceta();
+  }
+
+  function pintarReceta(): void {
+    if (!receta) return;
+    f.recMin.value = String(receta.personas.minimo);
+    f.recDef.value = String(receta.personas.alAgregar);
+    f.recMax.value = String(receta.personas.maximo);
+    f.recRedondeo.value = String(receta.redondeoKg);
+    elegir(f.recEmpaque, receta.empaque.alAgregar);
+    f.recInstrucciones.value = receta.instrucciones;
+    f.recPermitidos.innerHTML = EMPAQUES_RECETA.map(
+      (e) => `<label class="adm-permitido"><input type="checkbox" data-empaque="${escapar(e)}"${receta!.empaque.permitidos.includes(e) ? " checked" : ""}><span>${escapar(NOMBRE_EMPAQUE[e] ?? e)}</span></label>`,
+    ).join("");
+    pintarPartes();
+  }
+
+  function pintarPartes(): void {
+    if (!receta) return;
+    const libres = candidatos();
+    f.recPartes.innerHTML = receta.componentes
+      .map((c, i) => {
+        const chips = c.opciones.length
+          ? c.opciones
+              .map(
+                (id) =>
+                  `<span class="adm-chip${id === c.alAgregar ? " entra" : ""}"><button type="button" data-entra="${i}:${escapar(id)}" title="Con esta versión entra el combo">${escapar(nombreDe(id))}</button><button class="adm-chip-x" type="button" data-quitaop="${i}:${escapar(id)}" aria-label="Quitar ${escapar(nombreDe(id))}">✕</button></span>`,
+              )
+              .join("")
+          : `<span class="adm-sub">Elige al menos un producto.</span>`;
+        const faltantes = libres.filter((p) => !c.opciones.includes(p.id));
+        return `<li class="adm-parte">
+        <div class="adm-parte-top">
+          <label>Clave<input type="text" data-parte="${i}" data-campo="clave" value="${escapar(c.clave)}" autocomplete="off" placeholder="pechuga"></label>
+          <label>Nombre<input type="text" data-parte="${i}" data-campo="nombre" value="${escapar(c.nombre)}" autocomplete="off" placeholder="Pechuga de pavo"></label>
+          <button class="adm-quitar-parte" type="button" data-quitaparte="${i}" aria-label="Quitar esta parte">✕</button>
+        </div>
+        <div class="adm-parte-ops">
+          ${chips}
+          ${faltantes.length ? `<select class="adm-agrega-op" data-agregaop="${i}"><option value="">+ Agregar producto</option>${faltantes.map((p) => `<option value="${escapar(p.id)}">${escapar(p.nombre)}</option>`).join("")}</select>` : ""}
+        </div>
+        <div class="adm-parte-nums">
+          <label>Cómo se calcula<select data-parte="${i}" data-campo="modo"><option value="POR_PERSONA"${c.modo === "POR_PERSONA" ? " selected" : ""}>Por persona</option><option value="FIJA"${c.modo === "FIJA" ? " selected" : ""}>Fija</option></select></label>
+          <label>Cantidad<input type="number" inputmode="decimal" min="0" step="0.005" data-parte="${i}" data-campo="cantidad" value="${c.cantidad}"></label>
+          <label>Se cuenta por<select data-parte="${i}" data-campo="unidad"><option value="GRANEL"${c.unidad === "GRANEL" ? " selected" : ""}>Kilos</option><option value="PIEZA"${c.unidad === "PIEZA" ? " selected" : ""}>Piezas</option></select></label>
+          <label>Mínimo<input type="number" inputmode="decimal" min="0" step="0.005" data-parte="${i}" data-campo="minimo" value="${c.minimo}"></label>
+          ${c.unidad === "PIEZA" ? `<label>Kg por pieza<input type="number" inputmode="decimal" min="0" step="0.05" data-parte="${i}" data-campo="kgPorPieza" value="${c.kgPorPieza}"></label>` : ""}
+        </div>
+        <label class="adm-check adm-parte-opc"><input type="checkbox" role="switch" data-parte="${i}" data-campo="opcional"${c.opcional ? " checked" : ""}><span class="adm-switch" aria-hidden="true"></span><span><b>Se puede quitar</b><small>Va incluida, pero el cliente o la caja la pueden quitar.</small></span></label>
+      </li>`;
+      })
+      .join("");
+    pintarPrevia();
+  }
+
+  function pintarPrevia(): void {
+    if (!receta) return;
+    const problema = validarReceta(receta, lista);
+    if (problema) {
+      f.recPrevia.textContent = problema;
+      f.recPrevia.classList.add("mal");
+      return;
+    }
+    const v = vistaPreviaReceta(receta, receta.personas.alAgregar, lista);
+    f.recPrevia.textContent = `${v.texto} · ${dinero(v.total)}`;
+    f.recPrevia.classList.remove("mal");
+  }
+
+  f.esCombo.addEventListener("change", mostrarReceta);
+  f.recAgregarParte.addEventListener("click", () => {
+    if (!receta) return;
+    receta.componentes = [...receta.componentes, componenteNuevo()];
+    pintarPartes();
+  });
+
+  // Los datos generales de la receta se guardan en cuanto se escriben.
+  const generales = (): void => {
+    if (!receta) return;
+    const n = (i: HTMLInputElement, pordefecto: number): number => (i.value.trim() === "" ? pordefecto : Number(i.value));
+    receta.personas = {
+      minimo: Math.round(n(f.recMin, 1)),
+      alAgregar: Math.round(n(f.recDef, 1)),
+      maximo: Math.round(n(f.recMax, 1)),
+    };
+    receta.redondeoKg = n(f.recRedondeo, 0.125);
+    receta.empaque = { ...receta.empaque, alAgregar: f.recEmpaque.value };
+    receta.instrucciones = f.recInstrucciones.value;
+    pintarPrevia();
+  };
+  for (const el of [f.recMin, f.recDef, f.recMax, f.recRedondeo, f.recInstrucciones]) el.addEventListener("input", generales);
+  f.recEmpaque.addEventListener("change", generales);
+
+  f.recPermitidos.addEventListener("change", (e) => {
+    const el = e.target as HTMLInputElement;
+    const empaque = el.dataset.empaque;
+    if (!receta || !empaque) return;
+    const permitidos = el.checked
+      ? [...receta.empaque.permitidos, empaque]
+      : receta.empaque.permitidos.filter((x) => x !== empaque);
+    receta.empaque = { ...receta.empaque, permitidos: EMPAQUES_RECETA.filter((x) => permitidos.includes(x)) };
+    pintarPrevia();
+  });
+
+  /** Lo que se escribe en una parte se guarda sin repintar, para no perder el cursor. */
+  f.recPartes.addEventListener("input", (e) => {
+    const el = e.target as HTMLInputElement;
+    const i = Number(el.dataset.parte);
+    const campo = el.dataset.campo;
+    const c = receta?.componentes[i];
+    if (!c || !campo) return;
+    if (campo === "clave") c.clave = el.value.trim();
+    else if (campo === "nombre") c.nombre = el.value;
+    else if (campo === "cantidad" || campo === "minimo" || campo === "kgPorPieza") c[campo] = el.value.trim() === "" ? 0 : Number(el.value);
+    pintarPrevia();
+  });
+
+  f.recPartes.addEventListener("change", (e) => {
+    const el = e.target as HTMLInputElement | HTMLSelectElement;
+    const i = Number(el.dataset.parte ?? el.dataset.agregaop);
+    const c = receta?.componentes[i];
+    if (!c) return;
+    const campo = el.dataset.campo;
+    if (campo === "modo") c.modo = el.value === "FIJA" ? "FIJA" : "POR_PERSONA";
+    else if (campo === "unidad") {
+      c.unidad = el.value === "PIEZA" ? "PIEZA" : "GRANEL";
+      if (c.unidad === "GRANEL") c.kgPorPieza = 0;
+      return pintarPartes(); // aparece o desaparece "Kg por pieza"
+    } else if (campo === "opcional") c.opcional = (el as HTMLInputElement).checked;
+    else if (el.dataset.agregaop && el.value) {
+      c.opciones = [...c.opciones, el.value];
+      if (!c.alAgregar) c.alAgregar = el.value;
+      if (!c.nombre.trim()) c.nombre = nombreDe(el.value);
+      return pintarPartes();
+    }
+    pintarPrevia();
+  });
+
+  f.recPartes.addEventListener("click", (e) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-entra],[data-quitaop],[data-quitaparte]");
+    if (!el || !receta) return;
+    const quitaParte = el.dataset.quitaparte;
+    if (quitaParte !== undefined) {
+      receta.componentes = receta.componentes.filter((_, j) => j !== Number(quitaParte));
+      return pintarPartes();
+    }
+    const [idx, id] = (el.dataset.entra ?? el.dataset.quitaop ?? "").split(":");
+    const c = receta.componentes[Number(idx)];
+    if (!c || !id) return;
+    if (el.dataset.entra) c.alAgregar = id;
+    else {
+      c.opciones = c.opciones.filter((x) => x !== id);
+      if (c.alAgregar === id) c.alAgregar = c.opciones[0] ?? "";
+    }
+    pintarPartes();
+  });
 
   // ---------- Fotos de la ficha ----------
   function pintarFotosFicha(): void {
@@ -625,7 +822,7 @@ function iniciar(): void {
     e.preventDefault();
     if (!original || subiendo > 0) return;
     const p = leerFicha();
-    const problema = validar(p, lista);
+    const problema = validar(p, lista) ?? (p.receta ? validarReceta(p.receta, lista) : null);
     if (problema) {
       f.error.textContent = problema;
       f.error.hidden = false;

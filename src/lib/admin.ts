@@ -28,10 +28,93 @@ export interface ProductoFirestore {
   disponible: boolean;
   /** No se muestra ni en la app ni en la web. */
   oculto: boolean;
+  /** Receta: el producto es un combo que se arma con otros productos. null = producto normal. */
+  receta: RecetaAdmin | null;
   /** Última modificación hecha desde el panel (null si nunca se ha tocado desde ahí). */
   actualizadoEn: Date | null;
   actualizadoPor: string;
 }
+
+/**
+ * Receta de un combo tal como la edita el panel. Se guarda en `products/{id}.receta` y de ahí la
+ * leen la app y la página: las cantidades, los precios y las versiones salen de los productos.
+ */
+export interface RecetaAdmin {
+  personas: { minimo: number; alAgregar: number; maximo: number };
+  /** Lo que se calcula por persona se redondea hacia arriba en pasos de este tamaño. */
+  redondeoKg: number;
+  empaque: { alAgregar: string; permitidos: string[] };
+  /** Indicaciones para producción (salen en cocina y en el mensaje de WhatsApp). */
+  instrucciones: string;
+  componentes: ComponenteAdmin[];
+}
+
+export interface ComponenteAdmin {
+  /** Nombre corto sin espacios con el que se identifica la parte (pechuga, relleno, piernas). */
+  clave: string;
+  nombre: string;
+  /** Ids de los productos que pueden ocupar ese lugar (las 4 versiones de pechuga). */
+  opciones: string[];
+  /** El que entra por defecto al agregar el combo. */
+  alAgregar: string;
+  modo: "POR_PERSONA" | "FIJA";
+  /** Cantidad por persona (POR_PERSONA) o cantidad fija (FIJA). */
+  cantidad: number;
+  unidad: "GRANEL" | "PIEZA";
+  /** Nunca se vende menos de esto. */
+  minimo: number;
+  /** Peso aproximado de cada pieza (una pierna ≈ 0.7 kg). 0 = no aplica. */
+  kgPorPieza: number;
+  /** Va incluida, pero se puede quitar al levantar el pedido. */
+  opcional: boolean;
+}
+
+/** Presentaciones (de la app) que puede llevar un combo. */
+export const EMPAQUES_RECETA = [
+  "SIN_PRESENTACION",
+  "CHAROLA_CHICA",
+  "CHAROLA_MEDIANA",
+  "CHAROLA_GRANDE",
+  "VACIO_CHICO",
+  "VACIO_MEDIANO",
+  "VACIO_GRANDE",
+  "ACRILICO",
+  "BOLSA",
+] as const;
+
+export const NOMBRE_EMPAQUE: Record<string, string> = {
+  SIN_PRESENTACION: "Sin presentación",
+  CHAROLA_CHICA: "Charola chica",
+  CHAROLA_MEDIANA: "Charola mediana",
+  CHAROLA_GRANDE: "Charola grande",
+  VACIO_CHICO: "Vacío chico",
+  VACIO_MEDIANO: "Vacío mediano",
+  VACIO_GRANDE: "Vacío grande",
+  ACRILICO: "Acrílico",
+  BOLSA: "Bolsa",
+};
+
+/** Receta nueva, con lo que casi siempre aplica (el Combo Pavo de 2 a 5 personas). */
+export const recetaNueva = (): RecetaAdmin => ({
+  personas: { minimo: 2, alAgregar: 4, maximo: 5 },
+  redondeoKg: 0.125,
+  empaque: { alAgregar: "CHAROLA_MEDIANA", permitidos: ["CHAROLA_CHICA", "CHAROLA_MEDIANA"] },
+  instrucciones: "",
+  componentes: [],
+});
+
+export const componenteNuevo = (): ComponenteAdmin => ({
+  clave: "",
+  nombre: "",
+  opciones: [],
+  alAgregar: "",
+  modo: "POR_PERSONA",
+  cantidad: 0.125,
+  unidad: "GRANEL",
+  minimo: 0.25,
+  kgPorPieza: 0,
+  opcional: false,
+});
 
 /** Mismos valores que los enums de la app (CategoryType, GroupType, SaleType, PresentationType). */
 export const CATEGORIAS = ["Comida", "Envio", "Empaque"] as const;
@@ -86,9 +169,103 @@ export function leerProducto(id: string, d: Record<string, unknown>): ProductoFi
     // Igual que la app: sin el campo, cuenta como agotado.
     disponible: d.estaDisponible === true,
     oculto: d.oculto === true,
+    receta: leerReceta(d.receta),
     actualizadoEn: aFecha(d.actualizadoEn),
     actualizadoPor: texto(d.actualizadoPor),
   };
+}
+
+/** Receta de Firestore sin confiar en sus tipos. null cuando el producto no es un combo. */
+export function leerReceta(v: unknown): RecetaAdmin | null {
+  if (!v || typeof v !== "object") return null;
+  const d = v as Record<string, unknown>;
+  const per = (d.personas ?? {}) as Record<string, unknown>;
+  const emp = (d.empaque ?? {}) as Record<string, unknown>;
+  const base = recetaNueva();
+  const minimo = Math.max(1, Math.round(numero(per.minimo)) || base.personas.minimo);
+  const alAgregar = Math.max(minimo, Math.round(numero(per.alAgregar)) || minimo);
+
+  const componentes = (Array.isArray(d.componentes) ? d.componentes : []).map((x): ComponenteAdmin => {
+    const c = (x ?? {}) as Record<string, unknown>;
+    const opciones = (Array.isArray(c.opciones) ? c.opciones : []).filter((o): o is string => typeof o === "string" && !!o);
+    const alAgregarC = texto(c.alAgregar);
+    return {
+      clave: texto(c.clave),
+      nombre: texto(c.nombre),
+      opciones,
+      alAgregar: opciones.includes(alAgregarC) ? alAgregarC : (opciones[0] ?? ""),
+      modo: c.modo === "FIJA" ? "FIJA" : "POR_PERSONA",
+      cantidad: numero(c.cantidad),
+      unidad: c.unidad === "PIEZA" ? "PIEZA" : "GRANEL",
+      minimo: numero(c.minimo),
+      kgPorPieza: numero(c.kgPorPieza),
+      opcional: c.opcional === true,
+    };
+  });
+
+  return {
+    personas: { minimo, alAgregar, maximo: Math.max(alAgregar, Math.round(numero(per.maximo))) },
+    redondeoKg: numero(d.redondeoKg) || base.redondeoKg,
+    empaque: {
+      alAgregar: texto(emp.alAgregar, base.empaque.alAgregar),
+      permitidos: (Array.isArray(emp.permitidos) ? emp.permitidos : []).filter((e): e is string => typeof e === "string" && !!e),
+    },
+    instrucciones: texto(d.instrucciones),
+    componentes,
+  };
+}
+
+/**
+ * Lo que falta para que la receta sirva. Si algo está mal, la app y la página la ignoran y el
+ * producto se comporta como uno normal, así que es mejor avisarlo al guardar.
+ */
+export function validarReceta(r: RecetaAdmin, productos: readonly ProductoFirestore[]): string | null {
+  const { minimo, alAgregar, maximo } = r.personas;
+  if (!(minimo >= 1)) return "Las personas mínimas de la receta deben ser 1 o más.";
+  if (maximo < minimo) return "El máximo de personas no puede ser menor al mínimo.";
+  if (alAgregar < minimo || alAgregar > maximo) return "Las personas con las que entra el combo tienen que estar entre el mínimo y el máximo.";
+  if (!(r.redondeoKg > 0)) return "El redondeo tiene que ser mayor a 0 (por ejemplo 0.125 kg).";
+  if (!r.componentes.length) return "Agrega al menos una parte a la receta.";
+  if (!r.empaque.permitidos.length) return "Elige al menos un empaque para el combo.";
+  if (!r.empaque.permitidos.includes(r.empaque.alAgregar)) return "El empaque con el que entra el combo tiene que estar entre los permitidos.";
+
+  const claves = new Set<string>();
+  for (const c of r.componentes) {
+    const quien = c.nombre.trim() || c.clave.trim() || "una parte";
+    if (!c.clave.trim()) return `Ponle una clave corta a ${quien} (por ejemplo "pechuga").`;
+    if (/\s/.test(c.clave)) return `La clave de ${quien} no puede llevar espacios.`;
+    if (claves.has(c.clave)) return `Hay dos partes con la clave "${c.clave}".`;
+    claves.add(c.clave);
+    if (!c.nombre.trim()) return `Ponle nombre a la parte "${c.clave}".`;
+    if (!c.opciones.length) return `Elige los productos que pueden ir en ${quien}.`;
+    const fuera = c.opciones.filter((id) => !productos.some((p) => p.id === id));
+    if (fuera.length) return `${quien}: ${fuera.join(", ")} ya no existe${fuera.length > 1 ? "n" : ""} en el panel.`;
+    if (!(c.cantidad > 0)) return `La cantidad de ${quien} tiene que ser mayor a 0.`;
+    if (c.minimo < 0) return `El mínimo de ${quien} no puede ser negativo.`;
+    if (c.unidad === "PIEZA" && c.modo === "FIJA" && !Number.isInteger(c.cantidad)) return `${quien} se cuenta por pieza: la cantidad tiene que ser un número entero.`;
+  }
+  return null;
+}
+
+/** Qué lleva el combo para cierto número de personas, para la vista previa del panel. */
+export function vistaPreviaReceta(r: RecetaAdmin, personas: number, productos: readonly ProductoFirestore[]): { texto: string; total: number } {
+  const n = Math.min(r.personas.maximo, Math.max(r.personas.minimo, personas));
+  const partes: string[] = [];
+  let total = 0;
+  for (const c of r.componentes) {
+    const prod = productos.find((p) => p.id === (c.alAgregar || c.opciones[0]));
+    if (!prod) continue;
+    const paso = c.unidad === "PIEZA" ? 1 : r.redondeoKg;
+    const cantidad = c.modo === "FIJA" ? c.cantidad : Math.max(c.minimo, Math.ceil((c.cantidad * n) / paso - 1e-9) * paso);
+    // Una parte que se cuenta por pieza pero se vende por kilo se cobra por su peso aproximado.
+    const porKilo = prod.unidad.toLowerCase() === "kg";
+    const kg = c.unidad === "PIEZA" && c.kgPorPieza > 0 ? Math.round(cantidad * c.kgPorPieza * 1e6) / 1e6 : null;
+    const importe = prod.menudeo * (porKilo && kg !== null ? kg : cantidad);
+    total += importe;
+    const medida = c.unidad === "PIEZA" ? `${cantidad} ${cantidad === 1 ? "pza" : "pzas"}${kg !== null ? ` (aprox. ${kg} kg)` : ""}` : `${Math.round(cantidad * 1000) / 1000} kg`;
+    partes.push(`${prod.nombre} ${medida}${c.opcional ? " (opcional)" : ""}`);
+  }
+  return { texto: partes.length ? `Para ${n}: ${partes.join(" · ")}` : "Agrega partes para ver qué lleva el combo.", total: Math.round(total * 100) / 100 };
 }
 
 /** Lista `fotos` de Firestore sin confiar en sus tipos: solo pasan las que traen url. */
@@ -134,7 +311,7 @@ export function textoModificacion(p: ProductoFirestore): string {
   return `Última modificación: ${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? ` por ${p.actualizadoPor}` : ""}.`;
 }
 
-type ValorDoc = string | number | boolean | FotoProducto[];
+type ValorDoc = string | number | boolean | FotoProducto[] | RecetaAdmin | null;
 
 /** Lo que se guarda en Firestore, con los nombres de campo de la app. */
 export function aDocumento(p: ProductoFirestore): Record<string, ValorDoc> {
@@ -153,6 +330,8 @@ export function aDocumento(p: ProductoFirestore): Record<string, ValorDoc> {
     isWeightAdjustable: p.pesoAjustable,
     estaDisponible: p.disponible,
     oculto: p.oculto,
+    // null deja al producto como uno normal (la app y la página la ignoran).
+    receta: p.receta,
   };
 }
 
@@ -203,6 +382,7 @@ export function productoNuevo(id: string): ProductoFirestore {
     pesoAjustable: true,
     disponible: true,
     oculto: false,
+    receta: null,
     actualizadoEn: null,
     actualizadoPor: "",
   };

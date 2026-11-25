@@ -19,6 +19,13 @@ import {
   textoModificacion,
   urlVista,
   validar,
+  componenteNuevo,
+  leerReceta,
+  recetaNueva,
+  validarReceta,
+  vistaPreviaReceta,
+  type ProductoFirestore,
+  type RecetaAdmin,
 } from "../src/lib/admin";
 
 describe("súper panel", () => {
@@ -170,5 +177,100 @@ describe("dónde sale cada foto", () => {
 
   it("se guarda y se vuelve a leer igual", () => {
     expect(leerProducto("PROD_009", { fotos: [{ url, forma: "h", galeria: false, carrusel: false }] }).fotos).toEqual([{ url, forma: "h", carrusel: false, galeria: false }]);
+  });
+});
+
+// ---------- Recetas (combos) ----------
+
+const prod = (id: string, nombre: string, menudeo: number, unidad = "kg"): ProductoFirestore => ({
+  ...productoNuevo(id),
+  nombre,
+  menudeo,
+  mayoreo: menudeo - 40,
+  unidad,
+});
+
+const catalogoCombo: ProductoFirestore[] = [
+  prod("PROD_019", "Pechuga de Pavo Horneada", 590),
+  prod("PROD_018", "Pechuga de Pavo Adobada", 620),
+  prod("PROD_012", "Relleno de Pavo", 400),
+  prod("PROD_032", "Pierna de Pavo Horneada", 200),
+];
+
+const recetaCombo = (): RecetaAdmin => ({
+  ...recetaNueva(),
+  instrucciones: "Todo el combo va en una sola charola.",
+  componentes: [
+    { ...componenteNuevo(), clave: "pechuga", nombre: "Pechuga de pavo", opciones: ["PROD_019", "PROD_018"], alAgregar: "PROD_019" },
+    { ...componenteNuevo(), clave: "relleno", nombre: "Relleno", opciones: ["PROD_012"], alAgregar: "PROD_012", cantidad: 0.1 },
+    { ...componenteNuevo(), clave: "piernas", nombre: "Piernas de pavo", opciones: ["PROD_032"], alAgregar: "PROD_032", modo: "FIJA", cantidad: 2, unidad: "PIEZA", minimo: 0, kgPorPieza: 0.7, opcional: true },
+  ],
+});
+
+describe("receta en el súper panel", () => {
+  it("lee la receta de Firestore y descarta lo que no sirve", () => {
+    const r = leerReceta({
+      personas: { minimo: 2, alAgregar: 4, maximo: 5 },
+      redondeoKg: 0.125,
+      empaque: { alAgregar: "CHAROLA_MEDIANA", permitidos: ["CHAROLA_CHICA", "CHAROLA_MEDIANA", 7] },
+      instrucciones: "Una sola charola.",
+      componentes: [{ clave: "pechuga", nombre: "Pechuga", opciones: ["PROD_019", 5], alAgregar: "PROD_999", modo: "RARO", cantidad: 0.125, unidad: "KILOS", minimo: 0.25 }],
+    });
+    expect(r!.empaque.permitidos).toEqual(["CHAROLA_CHICA", "CHAROLA_MEDIANA"]);
+    expect(r!.componentes[0]!.opciones).toEqual(["PROD_019"]);
+    // Si el que entra ya no está entre las opciones, se usa la primera
+    expect(r!.componentes[0]!.alAgregar).toBe("PROD_019");
+    expect(r!.componentes[0]!.modo).toBe("POR_PERSONA");
+    expect(r!.componentes[0]!.unidad).toBe("GRANEL");
+    expect(leerReceta(null)).toBeNull();
+    expect(leerReceta("combo")).toBeNull();
+  });
+
+  it("un producto normal no tiene receta y se guarda como null", () => {
+    const p = productoNuevo("PROD_061");
+    expect(p.receta).toBeNull();
+    expect(aDocumento(p).receta).toBeNull();
+  });
+
+  it("la receta se guarda y el diff la detecta", () => {
+    const antes = { ...prod("PROD_060", "Combo Pavo", 0, "Pza") };
+    const despues = { ...antes, receta: recetaCombo() };
+    expect(Object.keys(cambios(antes, despues))).toEqual(["receta"]);
+    expect((aDocumento(despues).receta as RecetaAdmin).componentes).toHaveLength(3);
+    // Y al dejar de ser combo se limpia
+    expect(cambios(despues, antes).receta).toBeNull();
+  });
+
+  it("avisa lo que falta antes de guardar", () => {
+    const base = recetaCombo();
+    expect(validarReceta(base, catalogoCombo)).toBeNull();
+    expect(validarReceta({ ...base, componentes: [] }, catalogoCombo)).toMatch(/al menos una parte/);
+    expect(validarReceta({ ...base, personas: { minimo: 4, alAgregar: 4, maximo: 2 } }, catalogoCombo)).toMatch(/máximo/);
+    expect(validarReceta({ ...base, personas: { minimo: 2, alAgregar: 9, maximo: 5 } }, catalogoCombo)).toMatch(/entre el mínimo y el máximo/);
+    expect(validarReceta({ ...base, redondeoKg: 0 }, catalogoCombo)).toMatch(/redondeo/);
+    expect(validarReceta({ ...base, empaque: { alAgregar: "ACRILICO", permitidos: ["CHAROLA_CHICA"] } }, catalogoCombo)).toMatch(/empaque con el que entra/);
+    expect(validarReceta({ ...base, empaque: { alAgregar: "ACRILICO", permitidos: [] } }, catalogoCombo)).toMatch(/al menos un empaque/);
+    const conClaveRepetida = { ...base, componentes: [base.componentes[0]!, { ...base.componentes[1]!, clave: "pechuga" }] };
+    expect(validarReceta(conClaveRepetida, catalogoCombo)).toMatch(/dos partes con la clave/);
+    const conEspacio = { ...base, componentes: [{ ...base.componentes[0]!, clave: "de pechuga" }] };
+    expect(validarReceta(conEspacio, catalogoCombo)).toMatch(/espacios/);
+    const sinOpciones = { ...base, componentes: [{ ...base.componentes[0]!, opciones: [], alAgregar: "" }] };
+    expect(validarReceta(sinOpciones, catalogoCombo)).toMatch(/Elige los productos/);
+    const productoBorrado = { ...base, componentes: [{ ...base.componentes[0]!, opciones: ["PROD_777"] }] };
+    expect(validarReceta(productoBorrado, catalogoCombo)).toMatch(/PROD_777 ya no existe/);
+    const sinCantidad = { ...base, componentes: [{ ...base.componentes[0]!, cantidad: 0 }] };
+    expect(validarReceta(sinCantidad, catalogoCombo)).toMatch(/cantidad/);
+    const piezasAMedias = { ...base, componentes: [{ ...base.componentes[2]!, cantidad: 1.5 }] };
+    expect(validarReceta(piezasAMedias, catalogoCombo)).toMatch(/número entero/);
+  });
+
+  it("la vista previa dice qué lleva y cuánto cuesta", () => {
+    const v = vistaPreviaReceta(recetaCombo(), 4, catalogoCombo);
+    // 0.5 kg de pechuga + 0.5 kg de relleno (mínimo 250 g, de 125 en 125) + 2 piernas de 700 g
+    expect(v.texto).toBe("Para 4: Pechuga de Pavo Horneada 0.5 kg · Relleno de Pavo 0.5 kg · Pierna de Pavo Horneada 2 pzas (aprox. 1.4 kg) (opcional)");
+    // 295 + 200 + 1.4 × 200
+    expect(v.total).toBe(775);
+    // Nunca pasa del máximo de personas de la receta
+    expect(vistaPreviaReceta(recetaCombo(), 9, catalogoCombo).texto).toContain("Para 5:");
   });
 });
