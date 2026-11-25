@@ -19,6 +19,8 @@ export interface ProductoPublico {
   oculto?: boolean;
   /** Destacado en el panel: sale en grande arriba del menú (máximo 2). */
   destacado?: boolean;
+  /** Marcado como nuevo en el panel: lleva la etiqueta "Nuevo". */
+  nuevo?: boolean;
   /**
    * Fotos de la galería subidas desde el panel. La principal es `imagen`. undefined: el producto
    * nunca ha tenido fotos en el panel (la galería usa las de la página); [] = se quitaron todas.
@@ -50,7 +52,7 @@ export function parsearCatalogo(doc: unknown): Map<string, ProductoPublico> {
   for (const [id, v] of Object.entries(campos)) {
     const f = v.mapValue?.fields ?? {};
     const receta = leerReceta(f.receta);
-    salida.set(id, { nombre: texto(f.nombre) || id, precio: numero(f.precio), imagen: texto(f.imagen), grupo: texto(f.grupo), unidad: texto(f.unidad), ...(f.oculto?.booleanValue ? { oculto: true } : {}), ...(f.destacado?.booleanValue ? { destacado: true } : {}), ...(receta ? { receta } : {}), ...conFotos(leerFotos(f.fotos)) });
+    salida.set(id, { nombre: texto(f.nombre) || id, precio: numero(f.precio), imagen: texto(f.imagen), grupo: texto(f.grupo), unidad: texto(f.unidad), ...(f.oculto?.booleanValue ? { oculto: true } : {}), ...(f.destacado?.booleanValue ? { destacado: true } : {}), ...(f.nuevo?.booleanValue ? { nuevo: true } : {}), ...(receta ? { receta } : {}), ...conFotos(leerFotos(f.fotos)) });
   }
   return salida;
 }
@@ -245,6 +247,7 @@ export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<
       ...fotoPrincipal(p, fs.imagen, fs.fotos),
       ...conFotos(fotos),
       ...(ligado.some((id) => publico.get(id)?.destacado) ? { destacado: true } : {}),
+      ...(ligado.some((id) => publico.get(id)?.nuevo) ? { nuevo: true } : {}),
     };
     // Si en el panel se quitaron todas sus fotos, en el pedido sale "Foto pronto".
     if (fs.fotos && !esFotoPropia(fs.imagen)) {
@@ -268,6 +271,7 @@ export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<
         ...fotoPrincipal({ id, nombre: p.nombre, categoria: "otros", unidad: "kg", precio: 0, firebaseIds: [] }, p.imagen, p.fotos),
         ...conFotos(p.fotos),
         ...(p.destacado ? { destacado: true } : {}),
+        ...(p.nuevo ? { nuevo: true } : {}),
       }),
     );
   return resolverCombos([...lista, ...extra]);

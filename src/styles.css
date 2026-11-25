@@ -127,7 +127,7 @@ section{scroll-margin-top:72px}
 .row:first-child{border-top:0}
 .row.in{background:color-mix(in srgb,var(--gold-soft) 45%,var(--surface))}
 .name{font-weight:600;font-size:1.05rem;min-width:0}
-.tag{display:inline-block;margin-left:8px;font:700 .68rem/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold-soft);padding:4px 7px;border-radius:4px;vertical-align:2px}
+.tag{display:inline-block;margin-left:8px;font:700 .68rem/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold-soft);padding:5px 7px 3px;border-radius:4px;vertical-align:3px}
 /* En una fila ya agregada (fondo dorado) el pill se invierte para no perderse */
 .row.in .tag{background:var(--gold-ink);color:var(--surface)}
 .meta{display:block;color:var(--muted);font-size:.88rem;font-weight:500;margin-top:2px}
@@ -984,6 +984,8 @@ button.thumb:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 .dest-sello{position:absolute;top:12px;left:12px;font:700 .72rem/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--brand-ink);background:var(--gold);padding:7px 10px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .dest-cuerpo{display:flex;flex-direction:column;gap:8px;padding:16px 18px 18px;flex:1}
 .dest-cuerpo h4{margin:0;font-family:var(--font-display);font-weight:400;font-size:1.6rem;line-height:1.1}
+.dest-cuerpo h4{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px}
+.dest-cuerpo h4 .tag{margin:0;vertical-align:0;transform:translateY(-1px)}
 .dest-cuerpo p{margin:0;color:var(--muted);font-size:.95rem}
 .dest-pie{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:6px}
 .dest-pie .price{text-align:left}

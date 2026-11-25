@@ -30,6 +30,8 @@ export interface ProductoFirestore {
   oculto: boolean;
   /** Sale en grande arriba del menú de la página. Máximo [MAX_DESTACADOS] a la vez. */
   destacado: boolean;
+  /** Lleva la etiqueta "Nuevo" en la página. */
+  nuevo: boolean;
   /** Receta: el producto es un combo que se arma con otros productos. null = producto normal. */
   receta: RecetaAdmin | null;
   /** Última modificación hecha desde el panel (null si nunca se ha tocado desde ahí). */
@@ -199,6 +201,7 @@ export function leerProducto(id: string, d: Record<string, unknown>): ProductoFi
     disponible: d.estaDisponible === true,
     oculto: d.oculto === true,
     destacado: d.destacado === true,
+    nuevo: d.nuevo === true,
     receta: leerReceta(d.receta),
     actualizadoEn: aFecha(d.actualizadoEn),
     actualizadoPor: texto(d.actualizadoPor),
@@ -367,6 +370,7 @@ export function aDocumento(p: ProductoFirestore): Record<string, ValorDoc> {
     estaDisponible: p.disponible,
     oculto: p.oculto,
     destacado: p.destacado,
+    nuevo: p.nuevo,
     // null deja al producto como uno normal (la app y la página la ignoran).
     receta: p.receta,
   };
@@ -420,6 +424,7 @@ export function productoNuevo(id: string): ProductoFirestore {
     disponible: true,
     oculto: false,
     destacado: false,
+    nuevo: false,
     receta: null,
     actualizadoEn: null,
     actualizadoPor: "",

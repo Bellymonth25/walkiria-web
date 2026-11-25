@@ -262,6 +262,7 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 /* El texto de ejemplo se ve como ejemplo, no como algo ya escrito */
 .adm-ficha input::placeholder,.adm-ficha textarea::placeholder{color:var(--muted);opacity:.6;font-style:italic}
 .adm-estrella{color:var(--gold-ink);font-size:.95em}
+.adm-nuevo{display:inline-block;margin-left:4px;font:700 .62rem/1 var(--font-body,inherit);letter-spacing:.08em;text-transform:uppercase;color:var(--ok-ink,#0F2E11);background:var(--ok,#9BD49F);padding:3px 6px;border-radius:4px;vertical-align:2px}
 .adm-check:has(input:disabled){cursor:not-allowed;opacity:.65}
 .adm-campo-ayuda{font-weight:500;font-size:.8rem;color:var(--muted)}
 .adm-partes-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
