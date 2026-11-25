@@ -280,7 +280,7 @@ function iniciar(): void {
     const foto = `<span class="adm-mini-caja">${principal ? `<span class="adm-mini adm-recorte"><img src="${escapar(urlVista(principal))}" alt="" loading="lazy" onerror="this.remove()"${enc ? ` style="${enc}"` : ""}></span>` : `<span class="adm-mini" aria-hidden="true"></span>`}${n > 1 ? `<span class="adm-mini-n" title="${n} fotos">${n}</span>` : ""}</span>`;
     const mod = p.actualizadoEn ? `${fechaCorta(p.actualizadoEn)}${p.actualizadoPor ? `<small>${escapar(quienModifico(p, nombres))}</small>` : ""}` : `<span class="adm-vacio">—</span>`;
     return `<tr class="adm-fila${p.disponible ? "" : " apagado"}${p.oculto ? " oculto" : ""}">
-      <td class="c-prod"><div class="adm-abrir">${foto}<span class="adm-nombre">${escapar(p.nombre)}${p.destacado ? ` <span class="adm-estrella" title="Destacado en la página">★</span>` : ""}</span></div></td>
+      <td class="c-prod"><div class="adm-abrir">${foto}<span class="adm-nombre">${escapar(p.nombre)}${p.destacado ? ` <span class="adm-estrella" title="Destacado en la página">★</span>` : ""}${p.nuevo ? ` <span class="adm-nuevo">Nuevo</span>` : ""}</span></div></td>
       <td class="c-precio" data-label="Precio">${p.receta ? `<small>Combo · por sus partes</small>` : `${dinero(p.menudeo)}${unidad}`}</td>
       ${celdaSwitch(p, "estaDisponible", "Disponible")}
       ${celdaSwitch(p, "oculto", "Mostrar")}
@@ -357,6 +357,7 @@ function iniciar(): void {
     maquila: $<HTMLInputElement>("#fMaquila"),
     destacado: $<HTMLInputElement>("#fDestacado"),
     destacadoNota: $("#fDestacadoNota"),
+    nuevo: $<HTMLInputElement>("#fNuevo"),
     error: $("#errorFicha"),
     guardar: $<HTMLButtonElement>("#guardarFicha"),
     esCombo: $<HTMLInputElement>("#fEsCombo"),
@@ -422,6 +423,7 @@ function iniciar(): void {
     f.maquila.checked = p.maquila;
     f.destacado.checked = p.destacado;
     notaDestacado(p);
+    f.nuevo.checked = p.nuevo;
     receta = p.receta ? { ...p.receta, personas: { ...p.receta.personas }, empaque: { ...p.receta.empaque }, componentes: p.receta.componentes.map((c) => ({ ...c, opciones: [...c.opciones] })) } : null;
     f.esCombo.checked = !!p.receta;
     mostrarReceta();
@@ -466,6 +468,7 @@ function iniciar(): void {
       pesoAjustable: f.peso.checked,
       maquila: f.maquila.checked,
       destacado: f.destacado.checked,
+      nuevo: f.nuevo.checked,
       receta: f.esCombo.checked && receta ? asignarClaves(receta) : null,
     };
   }

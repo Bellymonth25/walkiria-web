@@ -241,7 +241,7 @@ export function renglon(p: Producto, lineas: readonly [string, Linea][], agotado
   const conFoto = p.imagen ? p : undefined;
   return `<li class="row${enPedido ? " in" : ""}${agotado ? " agotado" : ""}" data-row="${p.id}">
     ${miniatura(conFoto, p.nombre)}
-    <div class="name">${n}${p.destacado ? '<span class="tag tag-destacado">★ Destacado</span>' : ""}${p.clasico ? '<span class="tag">Clásico</span>' : ""}${p.combo ? '<span class="tag tag-nuevo">Nuevo</span>' : ""}${p.descripcion ? `<span class="meta">${escapar(p.descripcion)}</span>` : ""}</div>
+    <div class="name">${n}${p.destacado ? '<span class="tag tag-destacado">★ Destacado</span>' : ""}${p.clasico ? '<span class="tag">Clásico</span>' : ""}${p.nuevo ? '<span class="tag tag-nuevo">Nuevo</span>' : ""}${p.descripcion ? `<span class="meta">${escapar(p.descripcion)}</span>` : ""}</div>
     ${p.combo
       ? `<div class="price num"><small>aprox.</small> <b>${dinero(Math.round(importeCombo(p, { cantidad: personasDefaultCombo(p) })))}</b><span>para ${personasDefaultCombo(p)}</span></div>`
       : `<div class="price num"><b>${dinero(p.precio)}</b><span>/${p.unidad}</span></div>`}
@@ -289,7 +289,7 @@ function renglonGrupo(v: VistaMenu, f: Fila): string {
   const conFoto = f.productos.find((p) => p.imagen);
   return `<li class="row grupo${enPedido ? " in" : ""}${todoAgotado ? " agotado" : ""}" data-row="${f.clave}">
     ${miniatura(conFoto, f.nombre)}
-    <div class="name">${escapar(f.nombre)}${f.productos.some((p) => p.destacado) ? '<span class="tag tag-destacado">★ Destacado</span>' : ""}${f.productos.some((p) => p.clasico) ? '<span class="tag">Clásico</span>' : ""}${desc ? `<span class="meta">${escapar(desc)}</span>` : ""}</div>
+    <div class="name">${escapar(f.nombre)}${f.productos.some((p) => p.destacado) ? '<span class="tag tag-destacado">★ Destacado</span>' : ""}${f.productos.some((p) => p.clasico) ? '<span class="tag">Clásico</span>' : ""}${f.productos.some((p) => p.nuevo) ? '<span class="tag tag-nuevo">Nuevo</span>' : ""}${desc ? `<span class="meta">${escapar(desc)}</span>` : ""}</div>
     <div class="price num">${precios.length > 1 ? "<small>desde</small> " : ""}<b>${dinero(Math.min(...precios))}</b><span>/${unidad}</span></div>
     <div class="action">${accion}</div>
     ${abierto ? `<div class="versiones"><span class="dlabel">${enPedido ? "¿Quieres otra?" : "¿Cuál quieres? Puedes elegir varias"}</span><div class="vchips">${chips}</div></div>` : ""}
@@ -335,7 +335,7 @@ function pintarDestacados(v: VistaMenu, todas: readonly Fila[]): string {
     return `<article class="dest-card">
       <div class="dest-foto">${foto}<span class="dest-sello">★ Destacado</span></div>
       <div class="dest-cuerpo">
-        <h4>${escapar(f.nombre)}</h4>
+        <h4>${escapar(f.nombre)}${f.productos.some((x) => x.nuevo) ? ' <span class="tag tag-nuevo">Nuevo</span>' : ""}</h4>
         ${desc ? `<p>${escapar(desc)}</p>` : ""}
         <div class="dest-pie"><div class="price num">${precio}</div>
           <button type="button" class="add" data-destacado="${p.id}">${enPedido ? "Ver en mi pedido" : "Agregar"}</button></div>
