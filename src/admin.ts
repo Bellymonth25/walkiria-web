@@ -430,10 +430,10 @@ function iniciar(): void {
 
   // ---------- Receta del combo ----------
 
-  /** Productos que pueden ir dentro de un combo: comida, visibles y que no sean el combo mismo. */
+  /** Productos que pueden ir dentro de un combo: solo comida (sin empaques ni envíos), visibles y que no sean el combo mismo. */
   function candidatos(): ProductoFirestore[] {
     return lista
-      .filter((p) => p.id !== original?.id && !p.oculto && !p.receta)
+      .filter((p) => p.categoria === "Comida" && p.id !== original?.id && !p.oculto && !p.receta)
       .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
   }
 
@@ -495,7 +495,7 @@ function iniciar(): void {
         </div>
         <div class="adm-parte-ops">
           ${chips}
-          ${faltantes.length ? `<select class="adm-agrega-op" data-agregaop="${i}"><option value="">+ Agregar producto</option>${faltantes.map((p) => `<option value="${escapar(p.id)}">${escapar(p.nombre)}</option>`).join("")}</select>` : ""}
+          ${faltantes.length ? `<select class="adm-agrega-op" data-agregaop="${i}"><option value="">+ Agregar producto</option>${opcionesPorGrupo(faltantes)}</select>` : ""}
         </div>
         <div class="adm-parte-nums">
           <label>Cómo se calcula<select data-parte="${i}" data-campo="modo"><option value="POR_PERSONA"${c.modo === "POR_PERSONA" ? " selected" : ""}>Según las personas</option><option value="FIJA"${c.modo === "FIJA" ? " selected" : ""}>Siempre lo mismo</option></select></label>
@@ -510,6 +510,17 @@ function iniciar(): void {
       })
       .join("");
     pintarPrevia();
+  }
+
+  /** Opciones del "+ Agregar producto" agrupadas como en la lista (Aves, Carnes…), para encontrarlas rápido. */
+  function opcionesPorGrupo(productos: readonly ProductoFirestore[]): string {
+    return GRUPOS.concat([...new Set(productos.map((p) => p.grupo))].filter((g) => !GRUPOS.includes(g)))
+      .map((g) => {
+        const delGrupo = productos.filter((p) => p.grupo === g);
+        if (!delGrupo.length) return "";
+        return `<optgroup label="${escapar(nombreGrupo(g) || "Otros")}">${delGrupo.map((p) => `<option value="${escapar(p.id)}">${escapar(p.nombre)}</option>`).join("")}</optgroup>`;
+      })
+      .join("");
   }
 
   /** Nombre del campo de cantidad según cómo se calcula la parte y en qué se cuenta. */
