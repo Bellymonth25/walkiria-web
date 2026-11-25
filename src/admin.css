@@ -142,7 +142,7 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-ficha input:focus,.adm-ficha select:focus{outline:none;border-color:var(--primary)}
 .adm-dos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .adm-checks{display:grid;gap:4px}
-.adm-check{display:flex;align-items:center;gap:12px;min-height:56px;cursor:pointer}
+.adm-check{position:relative;display:flex;align-items:center;gap:12px;min-height:56px;cursor:pointer}
 .adm-check > span:last-child{display:grid}
 .adm-check small{color:var(--muted);font-size:.84rem}
 .adm-id{margin:0;color:var(--muted);font-size:.84rem}
