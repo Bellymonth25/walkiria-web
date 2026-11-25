@@ -254,3 +254,4 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
   .adm-parte-top{align-items:end}
   .adm-quitar-parte{justify-self:end}
 }
+.adm-parte-top .adm-sub{margin:0;font-weight:500;font-size:.8rem}
