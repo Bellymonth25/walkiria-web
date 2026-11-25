@@ -9,12 +9,34 @@ export function iniciarHoja(hoja: HTMLElement, barra: HTMLButtonElement, textoBo
   const movil = window.matchMedia("(max-width: 980px)");
   const agarre = hoja.querySelector<HTMLElement>(".grip");
 
-  const poner = (abierta: boolean) => {
+  // En celular, abrir la hoja agrega un paso al historial: así el botón (o gesto) Atrás de Android
+  // cierra la hoja en lugar de sacarte de la página. Cerrarla con la barra quita ese paso.
+  let enHistorial = false;
+  if ((history.state as { hoja?: boolean } | null)?.hoja) history.replaceState(null, ""); // p. ej. al recargar con la hoja abierta
+
+  const aplicar = (abierta: boolean) => {
     hoja.classList.toggle("open", abierta);
     barra.setAttribute("aria-expanded", String(abierta));
     textoBoton.textContent = abierta ? "Ocultar" : "Ver pedido";
     if (!abierta) hoja.scrollTop = 0;
   };
+
+  const poner = (abierta: boolean) => {
+    aplicar(abierta);
+    if (abierta && movil.matches && !enHistorial) {
+      history.pushState({ hoja: true }, "");
+      enHistorial = true;
+    } else if (!abierta && enHistorial) {
+      enHistorial = false;
+      history.back();
+    }
+  };
+
+  window.addEventListener("popstate", () => {
+    if (!enHistorial) return;
+    enHistorial = false;
+    if (hoja.classList.contains("open")) aplicar(false);
+  });
 
   // Alto real de la rayita + barra: el CSS lo usa en --asoma para que la hoja cerrada enseñe
   // la barra completa con aire abajo (y nada del contenido de atrás), con o sin zona segura.
