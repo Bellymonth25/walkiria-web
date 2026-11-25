@@ -145,6 +145,11 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-check{position:relative;display:flex;align-items:center;gap:12px;min-height:56px;cursor:pointer}
 .adm-check > span:last-child{display:grid}
 .adm-check small{color:var(--muted);font-size:.84rem}
+/* Se pide por pieza (Pierna de Pavo): el switch y, prendido, el peso de cada pieza con un ejemplo */
+.adm-pieza{display:grid;gap:8px;padding:4px 14px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface-3)}
+.adm-pieza-peso{display:grid;gap:6px}
+.adm-pieza-peso label{display:grid;gap:6px;font-weight:600;font-size:.92rem;max-width:260px}
+.adm-pieza-ej{margin:0;color:var(--gold-ink);font-weight:600;font-size:.9rem}
 .adm-id{margin:0;color:var(--muted);font-size:.84rem}
 .adm-ficha-pie{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--line);background:var(--surface);color:var(--fg);margin:0}
 @media (max-width:560px){

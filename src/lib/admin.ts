@@ -33,6 +33,11 @@ export interface ProductoFirestore {
   conFotos: boolean;
   maquila: boolean;
   pesoAjustable: boolean;
+  /**
+   * Peso aprox. de cada pieza (una pierna ≈ 0.7 kg). Mayor a 0 en un producto por kilo = se pide
+   * por pieza (1, 2, 3) y se cobra el peso real que pone cocina. 0 = se pide en su unidad.
+   */
+  kgPorPieza: number;
   disponible: boolean;
   /** No se muestra ni en la app ni en la web. */
   oculto: boolean;
@@ -207,6 +212,7 @@ export function leerProducto(id: string, d: Record<string, unknown>): ProductoFi
     conFotos: Array.isArray(d.fotos),
     maquila: d.isMaquila === true,
     pesoAjustable: d.isWeightAdjustable === true,
+    kgPorPieza: Math.max(0, numero(d.kgPorPieza)),
     // Igual que la app: sin el campo, cuenta como agotado.
     disponible: d.estaDisponible === true,
     oculto: d.oculto === true,
@@ -297,7 +303,9 @@ export function vistaPreviaReceta(r: RecetaAdmin, personas: number, productos: r
     const cantidad = c.modo === "FIJA" ? c.cantidad : Math.max(c.minimo, Math.ceil((c.cantidad * n) / paso - 1e-9) * paso);
     // Una parte que se cuenta por pieza pero se vende por kilo se cobra por su peso aproximado.
     const porKilo = prod.unidad.toLowerCase() === "kg";
-    const kg = c.unidad === "PIEZA" && c.kgPorPieza > 0 ? Math.round(cantidad * c.kgPorPieza * 1e6) / 1e6 : null;
+    // El peso por pieza de la parte manda; si no trae, se usa el del producto (igual que la app).
+    const kgPieza = c.kgPorPieza > 0 ? c.kgPorPieza : prod.kgPorPieza;
+    const kg = c.unidad === "PIEZA" && kgPieza > 0 ? Math.round(cantidad * kgPieza * 1e6) / 1e6 : null;
     const importe = prod.menudeo * (porKilo && kg !== null ? kg : cantidad);
     total += importe;
     const medida = c.unidad === "PIEZA" ? `${cantidad} ${cantidad === 1 ? "pza" : "pzas"}${kg !== null ? ` (aprox. ${kg} kg)` : ""}` : `${Math.round(cantidad * 1000) / 1000} kg`;
@@ -376,7 +384,10 @@ export function aDocumento(p: ProductoFirestore): Record<string, ValorDoc> {
     imagen: p.imagen,
     fotos: p.fotos,
     isMaquila: p.maquila,
-    isWeightAdjustable: p.pesoAjustable,
+    // Lo que se pide por pieza se pesa siempre en cocina: así se cobra el peso real.
+    isWeightAdjustable: p.pesoAjustable || sePidePorPieza(p),
+    // null = se pide en su unidad (la app lo ignora).
+    kgPorPieza: sePidePorPieza(p) ? p.kgPorPieza : null,
     estaDisponible: p.disponible,
     oculto: p.oculto,
     destacado: p.destacado,
@@ -384,6 +395,17 @@ export function aDocumento(p: ProductoFirestore): Record<string, ValorDoc> {
     // null deja al producto como uno normal (la app y la página la ignoran).
     receta: p.receta,
   };
+}
+
+/** Se pide por pieza y se cobra por kilo (Pierna de Pavo). Un combo nunca. */
+export const sePidePorPieza = (p: Pick<ProductoFirestore, "unidad" | "kgPorPieza" | "receta">): boolean =>
+  !p.receta && p.unidad.toLowerCase() === "kg" && p.kgPorPieza > 0;
+
+/** "2 piezas ≈ 1.4 kg ≈ $280": el ejemplo que se ve en la ficha. */
+export function ejemploPorPieza(kgPorPieza: number, precioKg: number, piezas = 2): string {
+  const kg = Math.round(piezas * kgPorPieza * 1000) / 1000;
+  const importe = Math.round(kg * precioKg * 100) / 100;
+  return `${piezas} piezas ≈ ${kg} kg${precioKg > 0 ? ` ≈ $${importe.toLocaleString("es-MX", { maximumFractionDigits: 2 })}` : ""}`;
 }
 
 /** Sección donde se lista: el grupo si es comida, si no la categoría. */
@@ -431,6 +453,7 @@ export function productoNuevo(id: string): ProductoFirestore {
     conFotos: false,
     maquila: false,
     pesoAjustable: true,
+    kgPorPieza: 0,
     disponible: true,
     oculto: false,
     destacado: false,
