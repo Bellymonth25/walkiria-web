@@ -28,6 +28,11 @@ export interface ProductoPublico {
   fotos?: FotoProducto[];
   /** Receta del producto (combos): con ella la página arma el combo igual que la app. */
   receta?: RecetaPublica;
+  /**
+   * Peso aprox. de cada pieza (súper panel, "Se pide por pieza"). En lo que se vende por kilo, el
+   * cliente pide piezas (2 piernas, 3 patos) y se cobra el peso real.
+   */
+  kgPorPieza?: number;
 }
 
 type Valor = {
@@ -52,7 +57,7 @@ export function parsearCatalogo(doc: unknown): Map<string, ProductoPublico> {
   for (const [id, v] of Object.entries(campos)) {
     const f = v.mapValue?.fields ?? {};
     const receta = leerReceta(f.receta);
-    salida.set(id, { nombre: texto(f.nombre) || id, precio: numero(f.precio), imagen: texto(f.imagen), grupo: texto(f.grupo), unidad: texto(f.unidad), ...(f.oculto?.booleanValue ? { oculto: true } : {}), ...(f.destacado?.booleanValue ? { destacado: true } : {}), ...(f.nuevo?.booleanValue ? { nuevo: true } : {}), ...(receta ? { receta } : {}), ...conFotos(leerFotos(f.fotos)) });
+    salida.set(id, { nombre: texto(f.nombre) || id, precio: numero(f.precio), imagen: texto(f.imagen), grupo: texto(f.grupo), unidad: texto(f.unidad), ...(f.oculto?.booleanValue ? { oculto: true } : {}), ...(f.destacado?.booleanValue ? { destacado: true } : {}), ...(f.nuevo?.booleanValue ? { nuevo: true } : {}), ...(receta ? { receta } : {}), ...(numero(f.kgPorPieza) > 0 ? { kgPorPieza: numero(f.kgPorPieza) } : {}), ...conFotos(leerFotos(f.fotos)) });
   }
   return salida;
 }
@@ -182,6 +187,26 @@ function fotoPrincipal(p: Producto, imagen: string, fotos: readonly FotoProducto
 /** Agrega `fotos` solo si existe (con exactOptionalPropertyTypes no se puede poner undefined). */
 const conFotos = (fotos: FotoProducto[] | undefined): { fotos?: FotoProducto[] } => (fotos ? { fotos } : {});
 
+/** "Pierna de Pavo" -> pierna / piernas; "Pato a la Naranja" -> pato / patos. */
+function nombrePieza(nombre: string): { nombre: string; plural: string } {
+  const primera = nombre.trim().split(/\s+/)[0]?.toLowerCase() || "pieza";
+  return { nombre: primera, plural: /[aeiouáéó]$/.test(primera) ? `${primera}s` : `${primera}es` };
+}
+
+/**
+ * "Se pide por pieza" del súper panel. Con peso por pieza, el producto por kilo se pide en piezas
+ * (igual que en la app). Se conserva cómo lo llama la página (pato/patos) y su rango de peso si el
+ * peso del panel cae dentro; si no, el rango es solo ese peso. Sin el campo se queda lo de la página.
+ */
+export function piezaDelPanel(p: Pick<Producto, "nombre" | "pieza" | "pavoEntero" | "combo" | "maquila" | "unidad">, fs: Pick<ProductoPublico, "kgPorPieza" | "unidad">): Pick<Producto, "pieza"> {
+  const kg = fs.kgPorPieza ?? 0;
+  if (!(kg > 0) || fs.unidad.toLowerCase() !== "kg" || p.pavoEntero || p.combo || p.maquila) return p.pieza ? { pieza: p.pieza } : {};
+  const base = p.pieza;
+  const nombres = base ? { nombre: base.nombre, plural: base.plural } : nombrePieza(p.nombre);
+  const dentro = base && kg >= base.kgMin && kg <= base.kgMax;
+  return { pieza: { ...nombres, kgMin: dentro ? base!.kgMin : kg, kgMax: dentro ? base!.kgMax : kg, kgEstimado: kg } };
+}
+
 /** Sección de la web según el grupo de la app. */
 const CATEGORIA_DE_GRUPO: Record<string, CategoriaId> = {
   AVES: "pavo",
@@ -248,6 +273,7 @@ export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<
       ...conFotos(fotos),
       ...(ligado.some((id) => publico.get(id)?.destacado) ? { destacado: true } : {}),
       ...(ligado.some((id) => publico.get(id)?.nuevo) ? { nuevo: true } : {}),
+      ...piezaDelPanel(p, fs),
     };
     // Si en el panel se quitaron todas sus fotos, en el pedido sale "Foto pronto".
     if (fs.fotos && !esFotoPropia(fs.imagen)) {
@@ -272,6 +298,7 @@ export function aplicarCatalogo(base: readonly Producto[], publico: ReadonlyMap<
         ...conFotos(p.fotos),
         ...(p.destacado ? { destacado: true } : {}),
         ...(p.nuevo ? { nuevo: true } : {}),
+        ...piezaDelPanel({ nombre: p.nombre, unidad: "kg" }, p),
       }),
     );
   return resolverCombos([...lista, ...extra]);
