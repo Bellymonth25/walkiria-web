@@ -9,6 +9,12 @@ import { fotosDeLaPagina, SITIO } from "./galeria";
  */
 export interface ProductoFirestore {
   id: string;
+  /**
+   * El campo `id` guardado dentro del documento, solo cuando no coincide con el id del documento.
+   * La app y la página usan ese campo: si se repite con otro producto, uno tapa al otro
+   * (pasó con la Chapata: PROD_054 traía id "PROD_053"). Al guardar se corrige.
+   */
+  idGuardado?: string;
   nombre: string;
   categoria: Categoria;
   grupo: string;
@@ -183,8 +189,10 @@ const numero = (v: unknown): number => (typeof v === "number" && Number.isFinite
 export function leerProducto(id: string, d: Record<string, unknown>): ProductoFirestore {
   const cat = CATEGORIAS.find((c) => c.toLowerCase() === texto(d.categoria).toLowerCase()) ?? "Comida";
   const g = texto(d.group).toUpperCase();
+  const idCampo = texto(d.id);
   return {
     id,
+    ...(idCampo && idCampo !== id ? { idGuardado: idCampo } : {}),
     nombre: texto(d.nombre, id) || id,
     categoria: cat,
     grupo: GRUPOS.includes(g) ? g : "OTROS",
@@ -491,7 +499,10 @@ export function cuantasFotos(p: ProductoFirestore, web: readonly Producto[], cur
 export function cambios(antes: ProductoFirestore, despues: ProductoFirestore): Record<string, ValorDoc> {
   const a = aDocumento(antes);
   const d = aDocumento(despues);
-  return Object.fromEntries(Object.entries(d).filter(([k, v]) => JSON.stringify(a[k]) !== JSON.stringify(v)));
+  const diff = Object.fromEntries(Object.entries(d).filter(([k, v]) => JSON.stringify(a[k]) !== JSON.stringify(v)));
+  // Si el id guardado adentro no es el del documento, se corrige aunque no haya otro cambio.
+  if (antes.idGuardado && antes.idGuardado !== despues.id) diff.id = despues.id;
+  return diff;
 }
 
 /** Para eliminar hay que escribir el nombre exacto del producto (como en Firebase). */

@@ -402,7 +402,9 @@ function iniciar(): void {
     original = p;
     esNuevo = nuevo;
     f.titulo.textContent = nuevo ? "Nuevo producto" : p.nombre;
-    f.id.textContent = nuevo ? `Se guardará como ${p.id}.` : `Id: ${p.id}. ${textoModificacion(p, nombres)}`;
+    f.id.textContent = nuevo
+      ? `Se guardará como ${p.id}.`
+      : `Id: ${p.id}. ${textoModificacion(p, nombres)}${p.idGuardado ? ` Ojo: por dentro traía el id ${p.idGuardado}, que es de otro producto, y por eso no salía bien en la página ni en la app. Toca Guardar para corregirlo.` : ""}`;
     // Si el producto aún no tiene fotos en el panel, se muestran las que ya traía la página.
     const inicio = fotosParaFicha(p, productosWeb, fotosPlatillos);
     original = { ...p, fotos: inicio.fotos, imagen: inicio.imagen || p.imagen };

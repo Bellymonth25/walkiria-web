@@ -338,3 +338,22 @@ describe("destacados", () => {
     expect(leerProducto("PROD_001", { nombre: "X" }).destacado).toBe(false);
   });
 });
+
+describe("id repetido dentro del documento", () => {
+  it("lo detecta y al guardar lo corrige aunque no haya otro cambio", () => {
+    const p = leerProducto("PROD_054", { id: "PROD_053", nombre: "Chapata", categoria: "Comida", menudeo: 25 });
+    expect(p.id).toBe("PROD_054");
+    expect(p.idGuardado).toBe("PROD_053");
+    expect(cambios(p, { ...p })).toEqual({ id: "PROD_054" });
+  });
+
+  it("si coincide no marca nada", () => {
+    const p = leerProducto("PROD_025", { id: "PROD_025", nombre: "Strudel", categoria: "Comida" });
+    expect(p.idGuardado).toBeUndefined();
+    expect(cambios(p, { ...p })).toEqual({});
+  });
+
+  it("la chapata de la página es PROD_054", () => {
+    expect(productos.find((x) => x.id === "chapata")?.firebaseIds).toEqual(["PROD_054"]);
+  });
+});
