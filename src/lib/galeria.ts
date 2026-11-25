@@ -43,6 +43,7 @@ export interface EstadoProductos {
  * - Si al producto se le subieron fotos en el panel (`fotos`), esas reemplazan a las de la página
  *   y salen todas juntas donde estaba su primera foto. Las de productos que no tenían foto en la
  *   página van al final.
+ * - Las que en el panel se marcaron "No mostrar" (`galeria: false`) no salen.
  * - Las fotos sin producto se muestran siempre.
  */
 export function armarGaleria(curadas: readonly FotoGaleria[], catalogo: readonly Producto[], estado: EstadoProductos): FotoVista[] {
@@ -60,8 +61,9 @@ export function armarGaleria(curadas: readonly FotoGaleria[], catalogo: readonly
   const salida: FotoVista[] = [];
   const yaPuestos = new Set<string>();
 
+  // Las que en el panel se marcaron "No mostrar" no salen (conservan su número para no mover las claves).
   const delPanel = (p: Producto): FotoVista[] =>
-    (p.fotos ?? []).map((f, i) => ({
+    (p.fotos ?? []).flatMap((f, i) => (f.galeria === false ? [] : [{
       clave: `${p.id}-${i + 1}`,
       nombre: p.nombre,
       url: urlLocal(f.url),
@@ -70,7 +72,7 @@ export function armarGaleria(curadas: readonly FotoGaleria[], catalogo: readonly
       ...(f.carrusel === false ? { carrusel: false } : {}),
       ...(f.grande ? { grande: urlLocal(f.grande) } : {}),
       agotado: estado.agotado(p),
-    }));
+    }]));
 
   for (const f of curadas) {
     if (f.disponible === false) continue;

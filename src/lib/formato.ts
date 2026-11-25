@@ -1,7 +1,10 @@
 const pesos = new Intl.NumberFormat("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const decimales = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 3 });
 
-export const dinero = (n: number): string => "$" + pesos.format(n);
+const centavos = new Intl.NumberFormat("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** "$775" cuando es entero; con centavos siempre dos decimales: "$587.50", no "$587.5". */
+export const dinero = (n: number): string => "$" + (Number.isInteger(Math.round(n * 100) / 100) ? pesos : centavos).format(n);
 
 /** "1.5 kg" con formato mexicano. */
 export const kilos = (n: number): string => `${decimales.format(n)} kg`;

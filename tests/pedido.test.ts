@@ -147,7 +147,7 @@ describe("agotados", () => {
   it("un producto con varios ids solo se agota si todos lo están", () => {
     const pechuga = prod("pechuga-pavo");
     expect(estaAgotado(pechuga, new Set(["PROD_017"]))).toBe(false);
-    expect(estaAgotado(pechuga, new Set(["PROD_017", "PROD_018", "PROD_019"]))).toBe(true);
+    expect(estaAgotado(pechuga, new Set(["PROD_017", "PROD_018", "PROD_019", "PROD_020"]))).toBe(true);
     expect(estaAgotado(pavoR, new Set(["PROD_001"]))).toBe(true);
   });
 });

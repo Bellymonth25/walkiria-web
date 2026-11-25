@@ -167,7 +167,7 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-fotos-ayuda,.adm-fotos-nota,.adm-fotos-estado{margin:0;font-size:.84rem;color:var(--muted)}
 .adm-fotos-estado{color:var(--fg);background:var(--surface-2);border-left:4px solid var(--gold);padding:8px 10px;border-radius:8px}
 .adm-fotos-estado.oculto{border-left-color:var(--muted)}
-.adm-fotos-lista{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.adm-fotos-lista{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
 .adm-fotito{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--surface-3);border:2px solid transparent}
 .adm-fotito img{width:100%;height:100%;object-fit:cover;display:block}
 .adm-fotito.principal{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
@@ -177,6 +177,17 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-fotito .adm-hacer:hover{background:#fff;outline:2px solid var(--gold)}
 .adm-fotito .adm-x{position:absolute;top:4px;right:4px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.62);color:#fff;font-size:1rem;cursor:pointer;display:grid;place-items:center}
 .adm-fotito .adm-x:hover{background:#8E1B1B}
+/* Dónde sale la foto en la página: barra abajo de la foto, con color distinto por estado; oculta = foto apagada. */
+.adm-fotito .adm-vis{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:5px;min-height:32px;padding:6px 6px;border:0;font:700 .74rem/1.1 var(--font-body);cursor:pointer}
+.adm-fotito .adm-vis span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adm-fotito .adm-vis svg{flex:none}
+.adm-fotito .adm-vis.vis-todo{background:rgba(31,107,58,.92);color:#fff}
+.adm-fotito .adm-vis.vis-galeria{background:rgba(255,255,255,.94);color:#2B1D00}
+.adm-fotito .adm-vis.vis-nada{background:#8E1B1B;color:#fff}
+.adm-fotito .adm-vis:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+.adm-fotito.no-se-ve img{opacity:.35;filter:grayscale(1)}
+/* La etiqueta de principal sube a la esquina de arriba para dejar la barra abajo. */
+.adm-fotito .adm-es-principal,.adm-fotito .adm-hacer{top:6px;bottom:auto;max-width:calc(100% - 52px);white-space:normal;line-height:1.15;text-align:left}
 .adm-fotito.subiendo{display:grid;place-items:center;align-content:center;gap:8px;color:var(--muted);font-size:.8rem;border:2px dashed var(--line)}
 .adm-fotos-vacia{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;min-height:96px;border:2px dashed var(--line);border-radius:12px;color:var(--muted);cursor:pointer;font-weight:600;text-align:center;padding:12px}
 .adm-fotos-vacia:hover{border-color:var(--gold);color:var(--fg)}
@@ -204,3 +215,43 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-enc-zoom{display:flex;align-items:center;gap:12px;font-weight:600}
 .adm-enc-zoom input{flex:1;accent-color:var(--gold);min-height:44px}
 @media (max-width:560px){.adm-enc-vistas{grid-template-columns:1fr 96px}}
+
+/* ---------- Receta del combo ---------- */
+.adm-receta{display:grid;gap:14px;padding:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface-3)}
+.adm-receta h3{margin:0;font:700 .8rem/1 var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--gold-ink)}
+.adm-receta h4{margin:0;font-size:1rem}
+.adm-receta > label,.adm-tres label{display:grid;gap:6px;font-weight:600;font-size:.92rem}
+.adm-receta .adm-sub{margin:-8px 0 0}
+.adm-tres{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.adm-ficha textarea{font:500 1rem var(--font-body);color:var(--fg);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;width:100%;resize:vertical}
+.adm-ficha textarea:focus{outline:none;border-color:var(--primary)}
+.adm-permitidos{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0}
+.adm-permitidos legend{font-weight:600;font-size:.84rem;color:var(--muted);padding:0 6px}
+.adm-permitidos-lista{display:flex;flex-wrap:wrap;gap:4px 16px}
+.adm-permitido{display:flex;align-items:center;gap:8px;min-height:40px;font-size:.92rem;cursor:pointer}
+.adm-permitido input{accent-color:var(--gold);width:20px;height:20px}
+.adm-partes-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.adm-partes{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.adm-parte{display:grid;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.adm-parte-top{display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:end}
+.adm-parte-top label{display:grid;gap:6px;font-weight:600;font-size:.92rem}
+.adm-quitar-parte{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--line);background:transparent;color:var(--alerta);font-size:1rem;cursor:pointer}
+.adm-quitar-parte:hover{background:color-mix(in srgb,var(--alerta) 12%,transparent)}
+.adm-parte-ops{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.adm-chip{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:999px;overflow:hidden;background:var(--bg)}
+.adm-chip.entra{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 16%,var(--bg))}
+.adm-chip > button{all:unset;padding:8px 12px;font:600 .9rem var(--font-body);color:var(--fg);cursor:pointer;min-height:36px;display:flex;align-items:center}
+.adm-chip-x{color:var(--alerta) !important;padding:8px 10px !important;border-left:1px solid var(--line)}
+.adm-chip > button:focus-visible{outline:3px solid var(--primary);outline-offset:-3px}
+.adm-agrega-op{max-width:220px}
+.adm-parte-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.adm-parte-nums label{display:grid;gap:6px;font-weight:600;font-size:.92rem}
+.adm-parte-opc{min-height:48px}
+.adm-receta-previa{margin:0;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.adm-receta-previa.mal{color:var(--alerta);border-color:var(--alerta)}
+@media (max-width:560px){
+  .adm-tres{grid-template-columns:1fr}
+  .adm-parte-top{align-items:end}
+  .adm-quitar-parte{justify-self:end}
+}
+.adm-parte-top .adm-sub{margin:0;font-weight:500;font-size:.8rem}

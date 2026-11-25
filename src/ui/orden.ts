@@ -102,7 +102,7 @@ const BASURA = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 function textoExtra(r: Renglon): string {
   const { producto: p, linea: l } = r;
   const extra: string[] = [];
-  if (p.combo) extra.push(textoDesglose(l.cantidad));
+  if (p.combo) extra.push(textoDesglose(p, l));
   if (llevaEmpaque(p)) extra.push(textoEmpaques(l.presentacion, empaquesDe(p, l)));
   return extra.join(" · ");
 }

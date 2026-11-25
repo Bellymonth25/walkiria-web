@@ -3,8 +3,8 @@ import { dinero, escapar, kilos, normalizar } from "../lib/formato";
 import {
   empaquesDe, importeLinea, kgMinimoPavo, tieneCosto, variasLineas, llevaRelleno, nombrePresentacion, presentaciones, textoEmpaques,
 } from "../lib/pedido";
-import { combo, maquila, pavo } from "../data/temporada";
-import { importeCombo, textoDesglose } from "../lib/combo";
+import { maquila, pavo } from "../data/temporada";
+import { desgloseCombo, importeCombo, maxPersonasCombo, personasDefaultCombo, textoDesglose } from "../lib/combo";
 import { $ } from "./dom";
 import { estiloEncuadre } from "../lib/encuadre";
 
@@ -90,7 +90,7 @@ export function pintarChips(v: VistaMenu): void {
 /** Texto bajo la cantidad: empaques y subtotal. Se actualiza mientras el cliente escribe. */
 export function textoDetalle(p: Producto, l: Linea): string {
   const partes: string[] = [];
-  if (p.combo) partes.push(textoDesglose(l.cantidad), `en ${textoEmpaques("charola", empaquesDe(p, l))}`);
+  if (p.combo) partes.push(textoDesglose(p, l), `en ${textoEmpaques("charola", empaquesDe(p, l))}`);
   if (presentaciones(p).length) partes.push(textoEmpaques(l.presentacion, empaquesDe(p, l)));
   if (p.maquila && llevaRelleno(l)) partes.push(`relleno ${kilos(l.kgRelleno)} (+${dinero(l.kgRelleno * maquila.precioRellenoKg)})`);
   partes.push(`Subtotal ${p.combo ? "aprox. " : ""}${dinero(importeLinea(p, l))}`);
@@ -127,7 +127,7 @@ function campoNumero(id: string, attr: string, valor: number, min: string, step:
 function detalle(p: Producto, id: string, l: Linea, numero: number, titulo = ""): string {
   const n = escapar(p.nombre);
   const porKilo = p.unidad === "kg" && !p.pavoEntero && !p.pieza;
-  const unidad = p.combo ? `personas (máx. ${combo.hastaPersonas})` : p.pieza ? (l.cantidad === 1 ? p.pieza.nombre : p.pieza.plural) : p.unidad === "pza" ? "pzas" : "kg";
+  const unidad = p.combo ? `personas (máx. ${maxPersonasCombo(p)})` : p.pieza ? (l.cantidad === 1 ? p.pieza.nombre : p.pieza.plural) : p.unidad === "pza" ? "pzas" : "kg";
   const partes: string[] = [];
   // Con varios pavos o maquilas, cada uno lleva su número para no confundirlos.
   if (numero > 0) partes.push(`<div class="dnum dwide">${p.maquila ? "Maquila" : "Pavo"} ${numero}</div>`);
@@ -161,6 +161,10 @@ function detalle(p: Producto, id: string, l: Linea, numero: number, titulo = "")
       <span class="unit">${unidad}</span>
     </div></div>`);
 
+  // Qué lleva el combo: cada parte con su cantidad y su precio. Las que tienen varias
+  // versiones se pueden cambiar y las opcionales se pueden quitar.
+  if (p.combo) partes.push(partesCombo(p, id, l));
+
   if (p.pavoEntero && (p.soloCompleto || l.tamano === "completo")) {
     partes.push(`<div class="dfield"><label class="dlabel" for="kgpavo-${id}">Kilos aprox. por pavo</label>
       <div class="qty">${campoNumero(id, "kgpavo", Math.max(kgMinimoPavo(p), l.kgPorPavo), String(kgMinimoPavo(p)), "0.5", "decimal", "Kilos por pavo")}<span class="unit">kg (mín. ${kgMinimoPavo(p)})</span></div></div>`);
@@ -192,6 +196,38 @@ function detalle(p: Producto, id: string, l: Linea, numero: number, titulo = "")
     <button type="button" class="del" data-del="${id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>Quitar</button></div></div>`;
 }
 
+/** Lo que lleva el combo, con las versiones que se pueden elegir y las partes opcionales. */
+function partesCombo(p: Producto, id: string, l: Linea): string {
+  const d = desgloseCombo(p, l);
+  // Lo que el cliente quitó no se enseña: solo se le ofrece volver a agregarlo abajo.
+  const filas = d.partes.filter((x) => x.incluida).map((x) => {
+    const cantidad = x.unidad === "PIEZA" ? `${x.cantidad} ${x.cantidad === 1 ? "pza" : "pzas"}` : kilos(x.cantidad);
+    const aprox = x.kgAprox && x.cantidad > 0 ? ` <small>aprox. ${Math.round((x.kgAprox / x.cantidad) * 1000)} g c/u</small>` : "";
+    // Solo se ofrecen versiones cuando de verdad hay de dónde escoger.
+    const versiones = x.opciones.length > 1
+      ? `<div class="seg combo-ver" role="group" aria-label="Versión de ${escapar(x.clave)}">${x.opciones
+          .map((o) => {
+            const corto = o.nombre.split(" ").slice(-1)[0] ?? o.nombre;
+            return `<button type="button" data-combover="${id}:${x.clave}:${o.id}" aria-pressed="${o.id === x.elegida?.id}"${o.agotado ? ' class="agotada" disabled' : ""}>${escapar(corto)}${o.agotado ? ' <small class="sello-agotado">Agotada</small>' : ""}</button>`;
+          })
+          .join("")}</div>`
+      : "";
+    const quitar = x.opcional
+      ? `<button type="button" class="combo-opt" data-comboopt="${id}:${x.clave}" aria-pressed="false">Quitar</button>`
+      : "";
+    return `<div class="combo-parte">
+      <span class="combo-nom">${escapar(x.nombre)}${aprox}</span>
+      <span class="combo-cant num">${cantidad}</span>
+      <span class="combo-precio num">${dinero(x.importe)}</span>
+      ${quitar}${versiones}</div>`;
+  });
+  const quitadas = d.partes
+    .filter((x) => !x.incluida)
+    .map((x) => `<button type="button" class="combo-regresa" data-comboopt="${id}:${x.clave}" aria-pressed="true">+ Agregar ${escapar(x.nombre.toLowerCase())}</button>`);
+  return `<div class="dfield dwide"><span class="dlabel">Qué lleva</span>
+    <div class="combo-partes">${filas.join("")}</div>${quitadas.length ? `<div class="combo-quitadas">${quitadas.join("")}</div>` : ""}</div>`;
+}
+
 export function renglon(p: Producto, lineas: readonly [string, Linea][], agotado: boolean): string {
   const n = escapar(p.nombre);
   const enPedido = lineas.length > 0;
@@ -207,7 +243,7 @@ export function renglon(p: Producto, lineas: readonly [string, Linea][], agotado
     ${miniatura(conFoto, p.nombre)}
     <div class="name">${n}${p.clasico ? '<span class="tag">Clásico</span>' : ""}${p.combo ? '<span class="tag tag-nuevo">Nuevo</span>' : ""}${p.descripcion ? `<span class="meta">${escapar(p.descripcion)}</span>` : ""}</div>
     ${p.combo
-      ? `<div class="price num"><small>aprox.</small> <b>${dinero(Math.round(importeCombo(p, combo.personasDefault)))}</b><span>para ${combo.personasDefault}</span></div>`
+      ? `<div class="price num"><small>aprox.</small> <b>${dinero(Math.round(importeCombo(p, { cantidad: personasDefaultCombo(p) })))}</b><span>para ${personasDefaultCombo(p)}</span></div>`
       : `<div class="price num"><b>${dinero(p.precio)}</b><span>/${p.unidad}</span></div>`}
     <div class="action">${accion}</div>
     ${agotado ? "" : lineas.map(([id, l], i) => detalle(p, id, l, lineas.length > 1 ? i + 1 : 0)).join("")}</li>`;
@@ -241,7 +277,7 @@ function renglonGrupo(v: VistaMenu, f: Fila): string {
       const ya = Boolean(lineaDe(o));
       const no = v.agotados(o.producto);
       const precio = precios.length > 1 ? `<small>${dinero(o.producto.precio)}/${unidad}</small>` : "";
-      return `<button type="button" class="vchip" data-addv="${o.producto.id}|${escapar(o.version)}" aria-pressed="${ya}"${no ? " disabled" : ""}>${ya ? "✓ " : "+ "}${escapar(o.etiqueta)}${no ? " <small>agotado</small>" : precio}</button>`;
+      return `<button type="button" class="vchip${no ? " agotada" : ""}" data-addv="${o.producto.id}|${escapar(o.version)}" aria-pressed="${ya}"${no ? " disabled" : ""}>${no ? "" : ya ? "✓ " : "+ "}${escapar(o.etiqueta)}${no ? ' <small class="sello-agotado">Agotado</small>' : precio}</button>`;
     })
     .join("");
   const detalles = opciones

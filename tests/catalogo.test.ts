@@ -48,14 +48,18 @@ describe("catálogo desde Firestore", () => {
 
   it("liga por nombre un producto de la web sin id y agrega lo que la web no tiene", () => {
     const c = new Map([
-      ["PROD_052", pub({ nombre: "Costilla de Cerdo adobada", precio: 380, grupo: "CARNES" })],
+      ["PROD_058", pub({ nombre: "Costilla de Cerdo Adobada", precio: 380, grupo: "CARNES" })],
+      ["PROD_060", pub({ nombre: "combo pavo", precio: 1, grupo: "AVES", unidad: "Pza" })],
       ["PROD_026", pub({ nombre: "Gravy", precio: 75, grupo: "GUARNICIONES", unidad: "Lt" })],
       ["PROD_044", pub({ nombre: "Baguette", precio: 30, grupo: "OTROS", unidad: "Pza" })],
       ["PROD_099", pub({ nombre: "Sin precio", precio: 0 })],
     ]);
     const l = aplicarCatalogo(productos, c);
-    expect(buscar(l, "costilla-adobada")).toMatchObject({ firebaseIds: ["PROD_052"], precio: 380 });
-    expect(l.filter((p) => p.nombre === "Costilla de Cerdo adobada")).toHaveLength(1);
+    expect(buscar(l, "costilla-adobada")).toMatchObject({ firebaseIds: ["PROD_058"], precio: 380 });
+    expect(l.filter((p) => /costilla de cerdo adobada/i.test(p.nombre))).toHaveLength(1);
+    // El combo se liga por nombre (sin importar mayúsculas) y su precio sigue saliendo de sus partes.
+    expect(buscar(l, "combo-pavo")).toMatchObject({ firebaseIds: ["PROD_060"] });
+    expect(l.find((p) => p.id === "fs-prod_060")).toBeUndefined();
     expect(buscar(l, "fs-prod_026")).toMatchObject({ nombre: "Gravy", categoria: "guarn", unidad: "pza", precio: 75, firebaseIds: ["PROD_026"] });
     expect(buscar(l, "fs-prod_044")).toMatchObject({ categoria: "otros", unidad: "pza" });
     expect(buscar(l, "fs-prod_099")).toBeUndefined();
@@ -76,14 +80,37 @@ describe("productos eliminados en el panel", () => {
     expect(l.find((p) => p.id === "strudel")).toBeDefined();
   });
 
-  it("los productos sin id (combo, los que faltan de dar de alta) se quedan", () => {
+  it("un producto de la web que no está en Firestore no sale (el combo, si no se ha dado de alta)", () => {
     const l = aplicarCatalogo(productos, new Map([["PROD_025", pub({ nombre: "Strudel de Manzana", precio: 520 })]]));
-    expect(l.find((p) => p.id === "combo-pavo")).toBeDefined();
-    expect(l.find((p) => p.id === "costilla-adobada")).toBeDefined();
+    expect(l.find((p) => p.id === "combo-pavo")).toBeUndefined();
+    expect(l.find((p) => p.id === "costilla-adobada")).toBeUndefined();
+    expect(l.map((p) => p.id)).toEqual(["strudel"]);
   });
 
-  it("con versiones, basta con que quede uno de sus ids", () => {
-    const l = aplicarCatalogo(productos, new Map([["PROD_030", pub({ nombre: "Espagueti 3 quesos", precio: 250 })]]));
-    expect(l.find((p) => p.id === "espagueti")).toBeDefined();
+  it("sin datos de Firestore se usa la lista de la web completa", () => {
+    expect(aplicarCatalogo(productos, new Map()).find((p) => p.id === "combo-pavo")).toBeDefined();
+  });
+
+  it("con versiones, basta con que quede uno de sus ids y solo salen sus versiones", () => {
+    const l = aplicarCatalogo(productos, new Map([["PROD_030", pub({ nombre: "Espagueti a las Finas Hierbas", precio: 250 })]]));
+    expect(buscar(l, "espagueti")).toMatchObject({ versiones: ["A las finas hierbas"], descripcion: "A las finas hierbas." });
+  });
+
+  it("versiones de la pechuga: cada una sigue a su id; la oculta no sale", () => {
+    const c = new Map([
+      ["PROD_017", pub({ nombre: "Pechuga de Pavo Mechada", precio: 590 })],
+      ["PROD_018", pub({ nombre: "Pechuga de Pavo Adobada", precio: 590, oculto: true })],
+      ["PROD_019", pub({ nombre: "Pechuga de Pavo Horneada", precio: 590 })],
+      ["PROD_020", pub({ nombre: "Pechuga de Pavo Ahumada", precio: 590, grupo: "CARNES" })],
+    ]);
+    const l = aplicarCatalogo(productos, c);
+    expect(buscar(l, "pechuga-pavo")).toMatchObject({ versiones: ["Horneada", "Mechada", "Ahumada"], descripcion: "Horneada, mechada o ahumada." });
+    // La ahumada ya no sale suelta (antes caía en Cerdo).
+    expect(l.find((p) => p.id === "fs-prod_020")).toBeUndefined();
+  });
+
+  it("lee oculto del documento publicado", () => {
+    const doc = { fields: { productos: { mapValue: { fields: { PROD_018: { mapValue: { fields: { nombre: { stringValue: "X" }, oculto: { booleanValue: true } } } } } } } } };
+    expect(parsearCatalogo(doc).get("PROD_018")?.oculto).toBe(true);
   });
 });

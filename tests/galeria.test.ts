@@ -41,7 +41,7 @@ describe("galería ligada a los productos", () => {
 
   it("pechuga: se oculta solo si todas sus versiones están ocultas", () => {
     expect(galeria(new Map(), [], ["PROD_017"]).some((f) => f.clave === "pechuga-pavo-adobada")).toBe(true);
-    expect(galeria(new Map(), [], ["PROD_017", "PROD_018", "PROD_019"]).some((f) => f.clave === "pechuga-pavo-adobada")).toBe(false);
+    expect(galeria(new Map(), [], ["PROD_017", "PROD_018", "PROD_019", "PROD_020"]).some((f) => f.clave === "pechuga-pavo-adobada")).toBe(false);
   });
 
   it("producto agotado: sus fotos llevan la marca", () => {
@@ -150,5 +150,35 @@ describe("mezclar la galería", () => {
   it("si un producto tiene casi todas las fotos, las separa lo más posible", () => {
     const m = mezclarSinRepetir(["a", "a", "a", "b"].map((nombre, i) => ({ nombre, i })), (f) => f.nombre, semilla(7));
     expect(m).toHaveLength(4);
+  });
+});
+
+describe("fotos que se ocultan desde el panel", () => {
+  it("una foto marcada galeria: false no sale; las demás del producto sí", () => {
+    const c = new Map([
+      [
+        "PROD_009",
+        pub({
+          nombre: "Romeritos",
+          imagen: STORAGE(1),
+          fotos: [
+            { url: STORAGE(1), forma: "h", galeria: false },
+            { url: STORAGE(2), forma: "h", carrusel: false },
+          ],
+        }),
+      ],
+    ]);
+    const romeritos = galeria(c).filter((f) => f.nombre === "Romeritos");
+    expect(romeritos.map((f) => f.url)).toEqual([STORAGE(2)]);
+    expect(romeritos[0]?.carrusel).toBe(false);
+    // La oculta sigue siendo la foto principal del pedido.
+    expect(aplicarCatalogo(productos, c).find((p) => p.id === "romeritos")?.imagen).toBe(STORAGE(1));
+  });
+
+  it("lee galeria: false del documento publicado", () => {
+    const doc = {
+      fields: { productos: { mapValue: { fields: { PROD_009: { mapValue: { fields: { nombre: { stringValue: "Romeritos" }, fotos: { arrayValue: { values: [{ mapValue: { fields: { url: { stringValue: STORAGE(1) }, galeria: { booleanValue: false } } } }] } } } } } } } } },
+    };
+    expect(parsearCatalogo(doc).get("PROD_009")?.fotos).toEqual([{ url: STORAGE(1), forma: "h", galeria: false }]);
   });
 });

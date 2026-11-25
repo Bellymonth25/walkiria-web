@@ -91,7 +91,7 @@
           <h3 id="fFotosTit">Fotos <span class="adm-fotos-n" id="fFotosN"></span></h3>
           <label class="btn btn-ghost btn-sm adm-agregar" id="fFotoAgregar">+ Agregar fotos<input id="fFotoArchivo" type="file" accept="image/*" multiple hidden></label>
         </div>
-        <p class="adm-fotos-ayuda">La <b>★ Principal</b> es la que se ve en la app y al elegir el producto en el pedido. <b>Todas</b> salen en la galería de la página.</p>
+        <p class="adm-fotos-ayuda">La <b>★ Principal</b> es la que se ve en la app y al elegir el producto en el pedido. Toca la etiqueta de abajo de cada foto para elegir dónde sale: <b>Visible</b> (inicio y galería), <b>Solo galería</b> u <b>Oculta</b> (no sale en la página).</p>
         <ul class="adm-fotos-lista" id="fFotos"></ul>
         <button class="btn btn-ghost btn-sm adm-enc-btn" type="button" id="fEncuadre" hidden></button>
         <p class="adm-fotos-estado" id="fFotosEstado" hidden></p>
@@ -115,7 +115,32 @@
         <label class="adm-check"><input id="fMostrar" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Mostrar</b><small>Apagado: no aparece ni en la app ni en la página, tampoco sus fotos.</small></span></label>
         <label class="adm-check"><input id="fPeso" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Peso ajustable</b><small>Cocina puede ajustar el peso real.</small></span></label>
         <label class="adm-check"><input id="fMaquila" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Es maquila</b><small>Pide número de ficha al levantar el pedido.</small></span></label>
+        <label class="adm-check"><input id="fEsCombo" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Es un combo</b><small>Se arma con otros productos y se cobra por lo que lleva.</small></span></label>
       </div>
+      <section class="adm-receta" id="fReceta" aria-labelledby="fRecetaTit" hidden>
+        <h3 id="fRecetaTit">Receta del combo</h3>
+        <p class="adm-sub">Esto es lo que ve la app al agregar el combo y lo que la página usa para cobrarlo. Los precios salen de cada producto, no se escriben aquí.</p>
+        <div class="adm-tres">
+          <label>Personas mínimas<input id="fRecMin" type="number" inputmode="numeric" min="1" step="1"></label>
+          <label>Entra con<input id="fRecDef" type="number" inputmode="numeric" min="1" step="1"></label>
+          <label>Personas máximas<input id="fRecMax" type="number" inputmode="numeric" min="1" step="1"></label>
+        </div>
+        <div class="adm-dos">
+          <label>Redondeo (kg)<input id="fRecRedondeo" type="number" inputmode="decimal" min="0" step="0.005"></label>
+          <label>Empaque con el que entra<select id="fRecEmpaque"></select></label>
+        </div>
+        <fieldset class="adm-permitidos">
+          <legend>Empaques que puede llevar</legend>
+          <div class="adm-permitidos-lista" id="fRecPermitidos"></div>
+        </fieldset>
+        <label>Indicaciones para producción<textarea id="fRecInstrucciones" rows="2" placeholder="Todo el combo va en una sola charola."></textarea></label>
+        <div class="adm-partes-top">
+          <h4>Qué lleva</h4>
+          <button class="btn btn-ghost btn-sm adm-agregar" type="button" id="fRecAgregarParte">+ Agregar parte</button>
+        </div>
+        <ul class="adm-partes" id="fRecPartes"></ul>
+        <p class="adm-receta-previa" id="fRecPrevia"></p>
+      </section>
       <p class="adm-id" id="fId"></p>
       <p class="adm-error" id="errorFicha" role="alert" hidden></p>
     </div>
