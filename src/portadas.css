@@ -73,3 +73,13 @@
   .hero-bajar{width:46px;height:46px;margin:0 auto 2.4svh}
 }
 .carrusel .gal-foto[data-tam="chica"] .gal-agotado{display:none}
+
+/* Compu: la portada se ajusta al alto real de la ventana (no solo al ancho), para que logo, título,
+   botones y flecha quepan aunque la ventana sea ancha y bajita (laptops, barra de favoritos, Dock). */
+@media (min-width:861px){
+  .hero .wrap{padding-top:calc(var(--alto-top,72px) + 1.5svh);padding-bottom:calc(46px + 5svh)}
+  .hero-logo{width:clamp(120px,min(17vw,23svh),260px);margin-bottom:1svh}
+  .hero h1{font-size:clamp(2.4rem,min(6.4vw,7.4svh),5.4rem);margin-top:1.2svh}
+  .hero p.lead{margin:2svh auto 3svh}
+  .hero-bajar{bottom:clamp(12px,2.6svh,26px)}
+}
