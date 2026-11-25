@@ -39,6 +39,7 @@ import {
   type Categoria,
   type ProductoFirestore,
   type ResultadoRol,
+  asignarClaves,
 } from "./lib/admin";
 import { dinero, escapar } from "./lib/formato";
 import { productos as productosWeb } from "./data/productos";
@@ -418,7 +419,7 @@ function iniciar(): void {
       oculto: !f.mostrar.checked,
       pesoAjustable: f.peso.checked,
       maquila: f.maquila.checked,
-      receta: f.esCombo.checked ? receta : null,
+      receta: f.esCombo.checked && receta ? asignarClaves(receta) : null,
     };
   }
 
@@ -470,7 +471,6 @@ function iniciar(): void {
         const faltantes = libres.filter((p) => !c.opciones.includes(p.id));
         return `<li class="adm-parte">
         <div class="adm-parte-top">
-          <label>Clave<input type="text" data-parte="${i}" data-campo="clave" value="${escapar(c.clave)}" autocomplete="off" placeholder="pechuga"></label>
           <label>Nombre<input type="text" data-parte="${i}" data-campo="nombre" value="${escapar(c.nombre)}" autocomplete="off" placeholder="Pechuga de pavo"></label>
           <button class="adm-quitar-parte" type="button" data-quitaparte="${i}" aria-label="Quitar esta parte">✕</button>
         </div>
@@ -547,8 +547,7 @@ function iniciar(): void {
     const campo = el.dataset.campo;
     const c = receta?.componentes[i];
     if (!c || !campo) return;
-    if (campo === "clave") c.clave = el.value.trim();
-    else if (campo === "nombre") c.nombre = el.value;
+    if (campo === "nombre") c.nombre = el.value;
     else if (campo === "cantidad" || campo === "minimo" || campo === "kgPorPieza") c[campo] = el.value.trim() === "" ? 0 : Number(el.value);
     pintarPrevia();
   });

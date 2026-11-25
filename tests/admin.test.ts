@@ -20,6 +20,7 @@ import {
   urlVista,
   validar,
   componenteNuevo,
+  asignarClaves,
   leerReceta,
   recetaNueva,
   validarReceta,
@@ -250,10 +251,8 @@ describe("receta en el súper panel", () => {
     expect(validarReceta({ ...base, redondeoKg: 0 }, catalogoCombo)).toMatch(/redondeo/);
     expect(validarReceta({ ...base, empaque: { alAgregar: "ACRILICO", permitidos: ["CHAROLA_CHICA"] } }, catalogoCombo)).toMatch(/empaque con el que entra/);
     expect(validarReceta({ ...base, empaque: { alAgregar: "ACRILICO", permitidos: [] } }, catalogoCombo)).toMatch(/al menos un empaque/);
-    const conClaveRepetida = { ...base, componentes: [base.componentes[0]!, { ...base.componentes[1]!, clave: "pechuga" }] };
-    expect(validarReceta(conClaveRepetida, catalogoCombo)).toMatch(/dos partes con la clave/);
-    const conEspacio = { ...base, componentes: [{ ...base.componentes[0]!, clave: "de pechuga" }] };
-    expect(validarReceta(conEspacio, catalogoCombo)).toMatch(/espacios/);
+    const sinNombre = { ...base, componentes: [{ ...base.componentes[0]!, nombre: " " }] };
+    expect(validarReceta(sinNombre, catalogoCombo)).toMatch(/Ponle nombre a la parte 1/);
     const sinOpciones = { ...base, componentes: [{ ...base.componentes[0]!, opciones: [], alAgregar: "" }] };
     expect(validarReceta(sinOpciones, catalogoCombo)).toMatch(/Elige los productos/);
     const productoBorrado = { ...base, componentes: [{ ...base.componentes[0]!, opciones: ["PROD_777"] }] };
@@ -278,5 +277,31 @@ describe("receta en el súper panel", () => {
     expect(v.total).toBe(775);
     // Nunca pasa del máximo de personas de la receta
     expect(vistaPreviaReceta(recetaCombo(), 9, catalogoCombo).texto).toContain("Para 5:");
+  });
+});
+
+describe("asignarClaves", () => {
+  it("saca la clave del nombre, sin acentos, y no repite", () => {
+    const r = asignarClaves({
+      ...recetaNueva(),
+      componentes: [
+        { ...componenteNuevo(), nombre: "Pechuga de pavo" },
+        { ...componenteNuevo(), nombre: "Pechuga extra" },
+        { ...componenteNuevo(), nombre: "Puré de papa" },
+        { ...componenteNuevo(), nombre: "" },
+      ],
+    });
+    expect(r.componentes.map((c) => c.clave)).toEqual(["pechuga", "pechuga2", "pure", "parte"]);
+  });
+
+  it("una parte guardada conserva su clave aunque cambie de nombre", () => {
+    const r = asignarClaves({
+      ...recetaNueva(),
+      componentes: [
+        { ...componenteNuevo(), clave: "relleno", nombre: "Relleno de manzana" },
+        { ...componenteNuevo(), nombre: "Relleno tradicional" },
+      ],
+    });
+    expect(r.componentes.map((c) => c.clave)).toEqual(["relleno", "relleno2"]);
   });
 });

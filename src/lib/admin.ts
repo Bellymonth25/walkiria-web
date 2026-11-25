@@ -103,6 +103,33 @@ export const recetaNueva = (): RecetaAdmin => ({
   componentes: [],
 });
 
+/** "Pechuga de pavo" -> "pechuga": la primera palabra, sin acentos ni símbolos. */
+const claveBase = (nombre: string): string =>
+  nombre
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .find((w) => w.length > 0) ?? "parte";
+
+/**
+ * Cada parte necesita una clave interna para que la app reconozca la parte al modificar un
+ * pedido. No se le pide a nadie: sale del nombre ("pechuga", "relleno"…). Una parte ya guardada
+ * conserva la suya aunque se le cambie el nombre, para no romper los pedidos que ya la usan.
+ */
+export function asignarClaves(r: RecetaAdmin): RecetaAdmin {
+  const usadas = new Set(r.componentes.map((c) => c.clave).filter(Boolean));
+  const componentes = r.componentes.map((c) => {
+    if (c.clave) return c;
+    const base = claveBase(c.nombre);
+    let clave = base;
+    for (let n = 2; usadas.has(clave); n++) clave = `${base}${n}`;
+    usadas.add(clave);
+    return { ...c, clave };
+  });
+  return { ...r, componentes };
+}
+
 export const componenteNuevo = (): ComponenteAdmin => ({
   clave: "",
   nombre: "",
@@ -229,14 +256,9 @@ export function validarReceta(r: RecetaAdmin, productos: readonly ProductoFirest
   if (!r.empaque.permitidos.length) return "Elige al menos un empaque para el combo.";
   if (!r.empaque.permitidos.includes(r.empaque.alAgregar)) return "El empaque con el que entra el combo tiene que estar entre los permitidos.";
 
-  const claves = new Set<string>();
-  for (const c of r.componentes) {
-    const quien = c.nombre.trim() || c.clave.trim() || "una parte";
-    if (!c.clave.trim()) return `Ponle una clave corta a ${quien} (por ejemplo "pechuga").`;
-    if (/\s/.test(c.clave)) return `La clave de ${quien} no puede llevar espacios.`;
-    if (claves.has(c.clave)) return `Hay dos partes con la clave "${c.clave}".`;
-    claves.add(c.clave);
-    if (!c.nombre.trim()) return `Ponle nombre a la parte "${c.clave}".`;
+  for (const [n, c] of r.componentes.entries()) {
+    const quien = c.nombre.trim() || "una parte";
+    if (!c.nombre.trim()) return `Ponle nombre a la parte ${n + 1}.`;
     if (!c.opciones.length) return `Elige los productos que pueden ir en ${quien}.`;
     const fuera = c.opciones.filter((id) => !productos.some((p) => p.id === id));
     if (fuera.length) return `${quien}: ${fuera.join(", ")} ya no existe${fuera.length > 1 ? "n" : ""} en el panel.`;

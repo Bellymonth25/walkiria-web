@@ -199,7 +199,8 @@ function detalle(p: Producto, id: string, l: Linea, numero: number, titulo = "")
 /** Lo que lleva el combo, con las versiones que se pueden elegir y las partes opcionales. */
 function partesCombo(p: Producto, id: string, l: Linea): string {
   const d = desgloseCombo(p, l);
-  const filas = d.partes.map((x) => {
+  // Lo que el cliente quitó no se enseña: solo se le ofrece volver a agregarlo abajo.
+  const filas = d.partes.filter((x) => x.incluida).map((x) => {
     const cantidad = x.unidad === "PIEZA" ? `${x.cantidad} ${x.cantidad === 1 ? "pza" : "pzas"}` : kilos(x.cantidad);
     const aprox = x.kgAprox && x.cantidad > 0 ? ` <small>aprox. ${Math.round((x.kgAprox / x.cantidad) * 1000)} g c/u</small>` : "";
     // Solo se ofrecen versiones cuando de verdad hay de dónde escoger.
@@ -207,21 +208,24 @@ function partesCombo(p: Producto, id: string, l: Linea): string {
       ? `<div class="seg combo-ver" role="group" aria-label="Versión de ${escapar(x.clave)}">${x.opciones
           .map((o) => {
             const corto = o.nombre.split(" ").slice(-1)[0] ?? o.nombre;
-            return `<button type="button" data-combover="${id}:${x.clave}:${o.id}" aria-pressed="${o.id === x.elegida?.id}"${o.agotado ? " disabled" : ""}>${escapar(corto)}${o.agotado ? " <small>agotada</small>" : ""}</button>`;
+            return `<button type="button" data-combover="${id}:${x.clave}:${o.id}" aria-pressed="${o.id === x.elegida?.id}"${o.agotado ? ' class="agotada" disabled' : ""}>${escapar(corto)}${o.agotado ? ' <small class="sello-agotado">Agotada</small>' : ""}</button>`;
           })
           .join("")}</div>`
       : "";
     const quitar = x.opcional
-      ? `<button type="button" class="combo-opt" data-comboopt="${id}:${x.clave}" aria-pressed="${!x.incluida}">${x.incluida ? "Quitar" : "Agregar"}</button>`
+      ? `<button type="button" class="combo-opt" data-comboopt="${id}:${x.clave}" aria-pressed="false">Quitar</button>`
       : "";
-    return `<div class="combo-parte${x.incluida ? "" : " fuera"}">
+    return `<div class="combo-parte">
       <span class="combo-nom">${escapar(x.nombre)}${aprox}</span>
-      <span class="combo-cant num">${x.incluida ? cantidad : "—"}</span>
-      <span class="combo-precio num">${x.incluida ? dinero(x.importe) : "sin ella"}</span>
+      <span class="combo-cant num">${cantidad}</span>
+      <span class="combo-precio num">${dinero(x.importe)}</span>
       ${quitar}${versiones}</div>`;
   });
+  const quitadas = d.partes
+    .filter((x) => !x.incluida)
+    .map((x) => `<button type="button" class="combo-regresa" data-comboopt="${id}:${x.clave}" aria-pressed="true">+ Agregar ${escapar(x.nombre.toLowerCase())}</button>`);
   return `<div class="dfield dwide"><span class="dlabel">Qué lleva</span>
-    <div class="combo-partes">${filas.join("")}</div></div>`;
+    <div class="combo-partes">${filas.join("")}</div>${quitadas.length ? `<div class="combo-quitadas">${quitadas.join("")}</div>` : ""}</div>`;
 }
 
 export function renglon(p: Producto, lineas: readonly [string, Linea][], agotado: boolean): string {
@@ -273,7 +277,7 @@ function renglonGrupo(v: VistaMenu, f: Fila): string {
       const ya = Boolean(lineaDe(o));
       const no = v.agotados(o.producto);
       const precio = precios.length > 1 ? `<small>${dinero(o.producto.precio)}/${unidad}</small>` : "";
-      return `<button type="button" class="vchip" data-addv="${o.producto.id}|${escapar(o.version)}" aria-pressed="${ya}"${no ? " disabled" : ""}>${ya ? "✓ " : "+ "}${escapar(o.etiqueta)}${no ? " <small>agotado</small>" : precio}</button>`;
+      return `<button type="button" class="vchip${no ? " agotada" : ""}" data-addv="${o.producto.id}|${escapar(o.version)}" aria-pressed="${ya}"${no ? " disabled" : ""}>${no ? "" : ya ? "✓ " : "+ "}${escapar(o.etiqueta)}${no ? ' <small class="sello-agotado">Agotado</small>' : precio}</button>`;
     })
     .join("");
   const detalles = opciones

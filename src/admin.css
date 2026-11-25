@@ -233,7 +233,7 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-partes-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .adm-partes{list-style:none;margin:0;padding:0;display:grid;gap:12px}
 .adm-parte{display:grid;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
-.adm-parte-top{display:grid;grid-template-columns:1fr 1.4fr 44px;gap:10px;align-items:end}
+.adm-parte-top{display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:end}
 .adm-parte-top label{display:grid;gap:6px;font-weight:600;font-size:.92rem}
 .adm-quitar-parte{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--line);background:transparent;color:var(--alerta);font-size:1rem;cursor:pointer}
 .adm-quitar-parte:hover{background:color-mix(in srgb,var(--alerta) 12%,transparent)}
@@ -250,7 +250,7 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-receta-previa{margin:0;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .adm-receta-previa.mal{color:var(--alerta);border-color:var(--alerta)}
 @media (max-width:560px){
-  .adm-tres,.adm-parte-top{grid-template-columns:1fr}
-  .adm-parte-top{align-items:stretch}
+  .adm-tres{grid-template-columns:1fr}
+  .adm-parte-top{align-items:end}
   .adm-quitar-parte{justify-self:end}
 }

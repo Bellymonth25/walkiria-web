@@ -956,11 +956,15 @@ button.thumb:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 .combo-parte .combo-nom small{display:block;font-weight:500;font-size:.75rem;color:var(--muted)}
 .combo-parte .combo-cant{font-weight:700}
 .combo-parte .combo-precio{color:var(--brand);font-weight:700}
-.combo-parte.fuera{opacity:.55}
-.combo-parte.fuera .combo-nom{text-decoration:line-through}
-.combo-parte.fuera .combo-precio{color:var(--muted);font-weight:600;font-style:italic}
+.combo-quitadas{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.combo-regresa{border:1.5px dashed var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:6px 12px;font:700 .8rem var(--font-body);cursor:pointer}
+.combo-regresa:hover{border-color:var(--primary);color:var(--fg)}
 .combo-opt{grid-column:3;justify-self:end;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:3px 10px;font:700 .75rem var(--font-body);cursor:pointer}
 .combo-opt[aria-pressed="true"]{border-color:var(--primary);color:var(--fg)}
 .combo-parte .seg.combo-ver{grid-column:1 / -1;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:4px;margin-top:2px}
 .combo-parte .seg.combo-ver button{padding:6px 8px;font-size:.8rem}
-.combo-parte .seg.combo-ver button:disabled{text-decoration:line-through}
+
+/* Versión agotada (combo y versiones de un producto): en vez de tacharla, se ve apagada con rayas
+   y lleva el mismo sello rojo que las fotos agotadas de la galería. */
+.seg button.agotada{opacity:1;border-style:dashed;color:var(--muted);background:repeating-linear-gradient(-45deg,transparent 0 6px,rgba(142,27,27,.06) 6px 12px),var(--surface)}
+.seg button small.sello-agotado{display:block;width:max-content;margin:5px auto 0;font:800 .62rem/1 var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#8E1B1B;padding:4px 7px;border-radius:5px;transform:rotate(-3deg);box-shadow:0 1px 4px rgba(0,0,0,.2)}
