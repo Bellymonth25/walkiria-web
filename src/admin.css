@@ -152,7 +152,8 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
   .adm-ficha-pie .btn{flex:1}
 }
 
-.adm-toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;max-width:calc(100vw - 32px);z-index:10;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.adm-toast{position:fixed;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto;background:var(--fg);color:var(--bg);padding:14px 16px;border-radius:8px;font-weight:500;font-size:.95rem;line-height:1.4;z-index:10;box-shadow:0 6px 20px rgba(0,0,0,.28);animation:snack-in .22s ease-out}
+@keyframes snack-in{from{opacity:0;transform:translateY(16px)}}
 .adm-toast{display:flex;align-items:center;gap:8px}
 .adm-toast.error{background:var(--alerta);color:var(--alerta-ink)}
 @media (max-width:560px){.adm-ficha.adm-confirmar{height:fit-content;margin:auto 0 0;border-radius:var(--r) var(--r) 0 0}}
