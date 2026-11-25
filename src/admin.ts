@@ -490,7 +490,7 @@ function iniciar(): void {
         const faltantes = libres.filter((p) => !c.opciones.includes(p.id));
         return `<li class="adm-parte">
         <div class="adm-parte-top">
-          <label>Qué parte es<input type="text" data-parte="${i}" data-campo="nombre" value="${escapar(c.nombre)}" autocomplete="off" placeholder="Pechuga de pavo"><span class="adm-sub">Solo agrupa las versiones (p. ej. "Pechuga"). Al cliente y a cocina les sale el nombre del producto elegido.</span></label>
+          <label>Qué parte es<input type="text" data-parte="${i}" data-campo="nombre" value="${escapar(c.nombre)}" autocomplete="off" placeholder="Escríbelo aquí, p. ej. Pechuga"><span class="adm-sub">Solo agrupa las versiones (p. ej. "Pechuga"). Al cliente y a cocina les sale el nombre del producto elegido.</span></label>
           <button class="adm-quitar-parte" type="button" data-quitaparte="${i}" aria-label="Quitar esta parte">✕</button>
         </div>
         <div class="adm-parte-ops">

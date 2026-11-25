@@ -259,6 +259,8 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
   .adm-agrega-op option[value=""]{display:none}
   .adm-ficha select optgroup legend{padding:8px 12px 4px;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-ink)}
 }
+/* El texto de ejemplo se ve como ejemplo, no como algo ya escrito */
+.adm-ficha input::placeholder,.adm-ficha textarea::placeholder{color:var(--muted);opacity:.6;font-style:italic}
 .adm-campo-ayuda{font-weight:500;font-size:.8rem;color:var(--muted)}
 .adm-partes-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .adm-partes{list-style:none;margin:0;padding:0;display:grid;gap:12px}
