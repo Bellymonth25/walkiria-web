@@ -67,60 +67,130 @@ Página sin enlace en el menú (y con `noindex`) en `lawalkiria.com.mx/admin.htm
 
 ### Reglas de Firestore
 
-Las reglas de Firebase se suman (si una permite, pasa); por eso la regla general excluye
-las colecciones que tienen reglas propias. Reemplaza todo el texto de las reglas por:
+Las reglas de Firebase se suman (si una permite, pasa); por eso la regla general deja fuera las
+colecciones con regla propia (`tieneReglaPropia`). La copia de referencia es `walkiria-os/firestore.rules`
+(repo de la app). Reemplaza todo el texto de las reglas por:
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ---------- Funciones de apoyo ----------
+
+    // Cualquier usuario con sesión y correo @lawalkiria.com.mx.
     function esEmpleado() {
       return request.auth != null
         && request.auth.token.email.matches('.*@lawalkiria[.]com[.]mx$');
     }
+
+    // Súper admin: su UID tiene documento en /superadmins (se da de alta desde la consola).
     function esSuperadmin() {
       return request.auth != null
         && exists(/databases/$(database)/documents/superadmins/$(request.auth.uid));
     }
+
     // Súper admin o usuario ADMIN de la app (user/{uid}.type).
     function esAdmin() {
       return esSuperadmin() || (esEmpleado()
         && get(/databases/$(database)/documents/user/$(request.auth.uid)).data.get('type', '') == 'ADMIN');
     }
-    // Todo lo demás: cualquier empleado con correo de La Walkiria.
-    match /{col}/{doc=**} {
-      allow read, write: if esEmpleado() && !(col in ['products', 'publicWeb', 'superadmins', 'config',
-        'user', 'empleados', 'asistencias', 'pagosEmpleados', 'asistenciasConfig']);
+
+    // Colecciones que tienen reglas propias más abajo y NO entran en la regla general.
+    function tieneReglaPropia(col) {
+      return col in ['products', 'publicWeb', 'superadmins', 'config',
+                     'counters', 'metadata', 'idempotencyKeys', 'user',
+                     'empleados', 'asistencias', 'pagosEmpleados', 'asistenciasConfig'];
     }
-    // Productos: los empleados leen; solo el súper admin crea, edita y elimina.
+
+    // ---------- Regla general ----------
+
+    // Pedidos, clientes, producción, hornos (ovenLoads), etc.:
+    // cualquier empleado lee y escribe. El usuario de hornos entra aquí
+    // siempre que su correo sea @lawalkiria.com.mx.
+    // Está partida en dos para poder dejar fuera el historial de los pedidos:
+    // en Firestore basta con que UNA regla permita algo, así que si la regla
+    // general cubriera las subcolecciones, la del historial no serviría.
+
+    // Documentos de primer nivel (orders/{id}, clients/{id}, ...).
+    match /{col}/{docId} {
+      allow read, write: if esEmpleado() && !tieneReglaPropia(col);
+    }
+
+    // Subcolecciones (cualquier profundidad), menos orders/{id}/history.
+    match /{col}/{docId}/{sub}/{resto=**} {
+      allow read, write: if esEmpleado()
+        && !tieneReglaPropia(col)
+        && !(col == 'orders' && sub == 'history');
+    }
+
+    // ---------- Colecciones con reglas propias ----------
+
+    // Historial de cambios del pedido: lo escriben solo las Cloud Functions
+    // (que no pasan por estas reglas). La app solo lo lee, así nadie puede
+    // borrar ni maquillar lo que se cambió.
+    match /orders/{orderId}/history/{entryId} {
+      allow read: if esEmpleado();
+      allow write: if false;
+    }
+
+    // Folios y control de pedidos: solo los usan las Cloud Functions.
+    // counters/{año}: consecutivo de cada tipo de pedido por año de entrega.
+    // metadata/counters: el contador viejo, solo como registro.
+    // idempotencyKeys: evita que un pedido se cree dos veces si se reintenta.
+    // La app no los lee; los empleados pueden verlos pero nadie los edita,
+    // así nadie puede brincarse o repetir un folio.
+    match /counters/{doc} {
+      allow read: if esEmpleado();
+      allow write: if false;
+    }
+    match /metadata/{doc} {
+      allow read: if esEmpleado();
+      allow write: if false;
+    }
+    match /idempotencyKeys/{doc} {
+      allow read: if esEmpleado();
+      allow write: if false;
+    }
+
+    // Productos: los empleados leen; solo el súper admin crea, edita y borra.
+    // El campo "id" del documento debe coincidir con su ID y no se puede cambiar.
     match /products/{id} {
       allow read: if esEmpleado() || esSuperadmin();
       allow create: if esSuperadmin() && request.resource.data.id == id;
       allow update: if esSuperadmin() && request.resource.data.id == resource.data.id;
       allow delete: if esSuperadmin();
     }
-    // Lista de súper admins: cada quien solo puede ver si está; se edita desde la consola.
+
+    // Lista de súper admins: cada quien solo ve su propio documento; se edita desde la consola.
     match /superadmins/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if false;
     }
-    // Catálogo público de la web: lo llena la Cloud Function.
+
+    // Catálogo público de la página web: lo llena la Cloud Function.
     match /publicWeb/{doc} {
       allow read: if true;
       allow write: if false;
     }
-    // Versión publicada de la app: los empleados solo leen; se edita desde la consola.
+
+    // Configuración de la app (por ahora la versión publicada para las actualizaciones).
+    // Los empleados solo leen; se edita únicamente desde la consola de Firebase,
+    // así nadie puede apuntar la actualización a un APK que no sea el oficial.
     match /config/{doc} {
       allow read: if esEmpleado();
       allow write: if false;
     }
-    // Usuarios de la app: se leen; el rol (type) solo se cambia desde la consola. Si no, cualquiera
-    // podría hacerse ADMIN y ver los sueldos.
+
+    // Usuarios de la app (nombre y rol en `type`: ADMIN, WORKER, DASHBOARD). Los empleados solo
+    // leen; se crean y editan desde la consola (o scripts con el SDK de admin). Antes entraban en
+    // la regla general y cualquier cuenta podía cambiarse sola a ADMIN.
     match /user/{uid} {
       allow read: if esEmpleado() || esSuperadmin();
       allow write: if false;
     }
-    // Asistencias y pagos de empleados: solo admins (tienen sueldos).
+
+    // Asistencias y pagos de empleados (asistencias.html de walkiria-web): solo admins (sueldos).
     match /empleados/{id} {
       allow read, write: if esAdmin();
     }
