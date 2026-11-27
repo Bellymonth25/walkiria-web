@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="only light">
+  <title>Asistencias · La Walkiria</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#5E111C">
+  <script>
+    try { var t = localStorage.getItem("walkiria-tema"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600;700;800&display=swap">
+</head>
+<body class="adm-body">
+<header class="adm-top">
+  <div class="wrap adm-top-in">
+    <a class="logo" href="./"><img src="/img/logo.webp" alt="" width="36" height="32"><span class="logo-text">La <span>Walkiria</span></span></a>
+    <span class="adm-etq">Admin</span>
+    <nav class="adm-nav" aria-label="Secciones del panel">
+      <a href="admin.html" id="navProductos">Productos</a>
+      <a href="asistencias.html" aria-current="page">Asistencias</a>
+    </nav>
+    <button class="btn btn-ghost btn-sm" id="salir" type="button" hidden>Salir</button>
+  </div>
+</header>
+
+<main class="wrap adm-main">
+  <section id="sinConfig" class="adm-card" hidden>
+    <h1>Falta configurar Firebase</h1>
+    <p>Copia la configuración de la app web de Firebase en <code>src/data/temporada.ts</code> (<code>firebaseWeb</code>).</p>
+  </section>
+
+  <section id="entrar" class="adm-card adm-login" hidden>
+    <h1>Iniciar sesión</h1>
+    <p class="adm-sub">Entra con tu usuario de la app de La Walkiria. Solo para administradores.</p>
+    <form id="formEntrar" novalidate>
+      <label>Correo<input id="correo" type="email" autocomplete="username" required></label>
+      <label>Contraseña<input id="clave" type="password" autocomplete="current-password" required></label>
+      <p class="adm-error" id="errorEntrar" role="alert" hidden></p>
+      <button class="btn btn-gold adm-ancho" id="btnEntrar" type="submit">Entrar</button>
+    </form>
+  </section>
+
+  <!-- Panel de asistencias -->
+  <section id="panel" hidden>
+    <div class="as-cabeza">
+      <h1>Asistencias</h1>
+      <div class="as-herr">
+        <button class="btn btn-gold btn-sm" id="abrirChecador" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 12h8"/></svg>
+          Checador QR
+        </button>
+        <button class="btn btn-ghost btn-sm" id="abrirEmpleados" type="button">Empleados</button>
+      </div>
+    </div>
+
+    <!-- En celular "Por pagar" queda abajo: este atajo dice cuánto y lleva ahí. -->
+    <a class="as-ir-pagar" id="irPagar" href="#tPagar" hidden></a>
+
+    <div class="as-columnas">
+      <!-- Asistencia del día -->
+      <section class="as-card" aria-labelledby="tDia">
+        <header class="as-dia">
+          <button class="as-flecha" type="button" id="diaAnterior" aria-label="Día anterior">‹</button>
+          <div class="as-dia-txt">
+            <h2 id="tDia">Hoy</h2>
+            <p id="tFecha"></p>
+          </div>
+          <button class="as-flecha" type="button" id="diaSiguiente" aria-label="Día siguiente">›</button>
+        </header>
+        <button class="as-volver" type="button" id="irHoy" hidden>Volver a hoy</button>
+        <div class="as-conteo" id="conteo" aria-live="polite"></div>
+        <ul class="as-lista" id="listaDia"></ul>
+        <div class="as-masivo" id="masivo" hidden>
+          <span id="masivoTxt"></span>
+          <div>
+            <button class="btn btn-ghost btn-sm" type="button" id="todosVinieron">Vinieron</button>
+            <button class="btn btn-ghost btn-sm as-btn-falto" type="button" id="todosFaltaron">Faltaron</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Por pagar -->
+      <section class="as-card as-pagar" aria-labelledby="tPagar">
+        <header class="as-pagar-top">
+          <h2 id="tPagar">Por pagar</h2>
+          <p class="as-total" id="totalPagar"></p>
+        </header>
+        <ul class="as-lista" id="listaPagar"></ul>
+        <p class="as-vacio" id="nadaPagar" hidden>No hay pagos pendientes.</p>
+        <div class="as-semana" id="semana" hidden></div>
+        <details class="as-pagados" id="pagados" hidden>
+          <summary id="pagadosTxt"></summary>
+          <ul class="as-lista" id="listaPagados"></ul>
+        </details>
+      </section>
+    </div>
+  </section>
+
+  <div id="cargando" class="adm-sub adm-cargando">
+    <p id="cargandoTexto">Cargando…</p>
+    <button class="btn btn-gold btn-sm" type="button" id="recargar" hidden onclick="location.reload()">Recargar</button>
+  </div>
+</main>
+
+<!-- Modo checador: la tablet de la entrada escanea el gafete. No muestra sueldos. -->
+<section id="checador" class="as-checador" hidden aria-label="Checador QR">
+  <header class="as-ch-top">
+    <div>
+      <p class="as-ch-fecha" id="chFecha"></p>
+      <p class="as-ch-cuenta" id="chCuenta"></p>
+    </div>
+    <div class="as-ch-botones">
+      <button class="btn btn-ghost btn-sm" type="button" id="chCamara">Cambiar cámara</button>
+      <button class="btn btn-ghost btn-sm" type="button" id="chSalir">Salir</button>
+    </div>
+  </header>
+  <div class="as-ch-video">
+    <video id="chVideo" playsinline muted></video>
+    <div class="as-ch-marco" aria-hidden="true"></div>
+    <p class="as-ch-ayuda" id="chAyuda">Acerca tu gafete a la cámara</p>
+    <div class="as-ch-resultado" id="chResultado" hidden role="status" aria-live="assertive">
+      <span class="as-ch-icono" id="chIcono"></span>
+      <strong id="chNombre"></strong>
+      <span id="chMensaje"></span>
+    </div>
+  </div>
+  <ul class="as-ch-llegaron" id="chLlegaron" aria-label="Ya llegaron hoy"></ul>
+</section>
+
+<!-- Empleados -->
+<dialog id="empleados" class="adm-ficha as-emp" aria-labelledby="empTitulo">
+  <header class="adm-ficha-top">
+    <h2 id="empTitulo">Empleados</h2>
+    <button class="adm-cerrar" type="button" id="empCerrar" aria-label="Cerrar">✕</button>
+  </header>
+  <div class="adm-ficha-cuerpo">
+    <div class="as-emp-herr">
+      <button class="btn btn-gold btn-sm" type="button" id="empNuevo">+ Nuevo empleado</button>
+      <button class="btn btn-ghost btn-sm" type="button" id="empGafetes">Imprimir gafetes</button>
+    </div>
+    <label class="as-diapago">Día de pago semanal
+      <select id="diaPago"></select>
+      <span class="adm-campo-ayuda">La semana termina ese día; ese día salen en "Por pagar" los de pago por semana.</span>
+    </label>
+    <ul class="as-emp-lista" id="empLista"></ul>
+  </div>
+</dialog>
+
+<!-- Ficha de un empleado -->
+<dialog id="ficha" class="adm-ficha" aria-labelledby="fichaTitulo">
+  <form id="formFicha" method="dialog" novalidate>
+    <header class="adm-ficha-top">
+      <h2 id="fichaTitulo">Empleado</h2>
+      <button class="adm-cerrar" type="button" id="cerrarFicha" aria-label="Cerrar">✕</button>
+    </header>
+    <div class="adm-ficha-cuerpo">
+      <label>Nombre<input id="fNombre" type="text" required autocomplete="off" placeholder="Como lo conocen todos"></label>
+      <label>Pago por día<input id="fPago" type="number" inputmode="decimal" min="0" step="10" required placeholder="400"></label>
+      <fieldset class="as-segmento">
+        <legend>Se le paga</legend>
+        <label><input type="radio" name="fFrecuencia" value="DIA" checked><span>Cada día</span></label>
+        <label><input type="radio" name="fFrecuencia" value="SEMANA"><span>Por semana</span></label>
+      </fieldset>
+      <p class="as-ficha-nota" id="fNota"></p>
+      <div class="adm-checks" id="fActivoCampo"><label class="adm-check"><input id="fActivo" type="checkbox" role="switch"><span class="adm-switch" aria-hidden="true"></span><span><b>Trabaja aquí</b><small>Apágalo si ya no viene: deja de salir en la lista y su gafete ya no funciona. Lo que se le debe sigue en "Por pagar".</small></span></label></div>
+      <section class="as-gafete" id="fGafete" hidden>
+        <h3>Gafete</h3>
+        <div class="as-gafete-fila">
+          <div class="as-etiqueta" id="fEtiqueta"></div>
+          <div class="as-gafete-btns">
+            <button class="btn btn-ghost btn-sm" type="button" id="fImprimir">Imprimir gafete</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="fNuevoCodigo">Cambiar código</button>
+            <small>Si lo pierde, cambia el código: el gafete viejo deja de funcionar.</small>
+          </div>
+        </div>
+      </section>
+      <p class="adm-error" id="errorFicha" role="alert" hidden></p>
+    </div>
+    <footer class="adm-ficha-pie">
+      <button class="btn btn-ghost" type="button" id="cancelarFicha">Cancelar</button>
+      <button class="btn btn-gold" type="submit" id="guardarFicha">Guardar</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- Solo se ve al imprimir: una etiqueta de 60 × 40 mm por gafete -->
+<div id="imprimir" class="as-imprimir" aria-hidden="true"></div>
+
+<div class="adm-toast" id="toast" role="status" hidden></div>
+<script>
+  setTimeout(function () {
+    if (window.__adminArranco) return;
+    var t = document.getElementById("cargandoTexto");
+    if (t) t.textContent = "La página no arrancó. Puede que tu navegador tenga guardada la versión anterior: toca Recargar (o Ctrl+Shift+R en compu).";
+    var b = document.getElementById("recargar");
+    if (b) b.hidden = false;
+  }, 8000);
+</script>
+<script type="module" src="/src/asistencias.ts"></script>
+</body>
+</html>

@@ -68,7 +68,7 @@ Página sin enlace en el menú (y con `noindex`) en `lawalkiria.com.mx/admin.htm
 ### Reglas de Firestore
 
 Las reglas de Firebase se suman (si una permite, pasa); por eso la regla general excluye
-`products`, `publicWeb` y `superadmins`. Reemplaza todo el texto de las reglas por:
+las colecciones que tienen reglas propias. Reemplaza todo el texto de las reglas por:
 
 ```
 rules_version = '2';
@@ -82,9 +82,15 @@ service cloud.firestore {
       return request.auth != null
         && exists(/databases/$(database)/documents/superadmins/$(request.auth.uid));
     }
+    // Súper admin o usuario ADMIN de la app (user/{uid}.type).
+    function esAdmin() {
+      return esSuperadmin() || (esEmpleado()
+        && get(/databases/$(database)/documents/user/$(request.auth.uid)).data.get('type', '') == 'ADMIN');
+    }
     // Todo lo demás: cualquier empleado con correo de La Walkiria.
     match /{col}/{doc=**} {
-      allow read, write: if esEmpleado() && !(col in ['products', 'publicWeb', 'superadmins']);
+      allow read, write: if esEmpleado() && !(col in ['products', 'publicWeb', 'superadmins', 'config',
+        'user', 'empleados', 'asistencias', 'pagosEmpleados', 'asistenciasConfig']);
     }
     // Productos: los empleados leen; solo el súper admin crea, edita y elimina.
     match /products/{id} {
@@ -102,6 +108,30 @@ service cloud.firestore {
     match /publicWeb/{doc} {
       allow read: if true;
       allow write: if false;
+    }
+    // Versión publicada de la app: los empleados solo leen; se edita desde la consola.
+    match /config/{doc} {
+      allow read: if esEmpleado();
+      allow write: if false;
+    }
+    // Usuarios de la app: se leen; el rol (type) solo se cambia desde la consola. Si no, cualquiera
+    // podría hacerse ADMIN y ver los sueldos.
+    match /user/{uid} {
+      allow read: if esEmpleado() || esSuperadmin();
+      allow write: if false;
+    }
+    // Asistencias y pagos de empleados: solo admins (tienen sueldos).
+    match /empleados/{id} {
+      allow read, write: if esAdmin();
+    }
+    match /asistencias/{dia} {
+      allow read, write: if esAdmin();
+    }
+    match /pagosEmpleados/{id} {
+      allow read, write: if esAdmin();
+    }
+    match /asistenciasConfig/{doc} {
+      allow read, write: if esAdmin();
     }
   }
 }
@@ -126,6 +156,34 @@ service firebase.storage {
 
 El nombre del bucket va en `firebaseWeb.storageBucket` (`src/data/temporada.ts`).
 Firebase solo se carga en `admin.html`; las páginas públicas no cambian de peso.
+
+## Asistencias y pagos de empleados (`asistencias.html`)
+
+Página del panel (botón **Asistencias** arriba) para dar de alta a los empleados, marcar quién vino y
+saber a quién hay que pagarle. Entran súper admins y usuarios **ADMIN** de la app (`user/{uid}.type`).
+No se guardan horas de entrada ni de salida: solo si vino o faltó.
+
+- **Hoy:** cada empleado activo con **Vino** / **Faltó** (un toque; tocar el marcado lo quita). Con las
+  flechas se corrigen días pasados. Abajo, "N sin marcar" se marcan todos de golpe (al cerrar el día).
+- **Por pagar:** los de pago diario, cada día que vinieron; los de pago semanal, el día de pago (sábado si
+  no se cambia en **Empleados**) con los días de esa semana (los 7 días que terminan en el día de pago).
+  **Pagado** lo guarda en `pagosEmpleados/{empleado}_{periodo}` (id fijo: no se paga dos veces) y
+  "Pagados hoy" deja deshacerlo. Lo que no se pagó sigue saliendo en rojo hasta 35 días atrás. Si se marca
+  un día después de pagar, sale solo la diferencia.
+- Cada día marcado guarda el sueldo de ese momento (`marcas.{id}.pago`): si se cambia el sueldo, lo ya
+  trabajado no cambia.
+- **Empleados:** nombre, pago por día y si se paga cada día o por semana. Los que se van se apagan
+  ("Trabaja aquí"), no se borran.
+- **Gafete QR + Checador:** cada empleado tiene un código al azar (`empleados/{id}.qr`); su gafete es una
+  etiqueta de 60 × 40 mm (botón **Imprimir gafete** o **Imprimir gafetes** para todos; en la impresora
+  hay que elegir papel de 60 × 40 mm y márgenes en cero). **Checador QR** pone la página en pantalla
+  completa para la tablet de la entrada: escanea el gafete con la cámara y lo marca como Vino, con aviso
+  verde y sonido. No muestra sueldos. **Cambiar código** deja inservible un gafete perdido.
+  La tablet entra con un usuario ADMIN. Usa `BarcodeDetector` (Chrome en Android) o `jsQR` si no existe.
+
+Lógica en `src/lib/asistencias.ts` (con pruebas). Las reglas de Firestore de arriba dejan estas
+colecciones solo a admins. **Pendiente:** cuando existan los recados en la app, avisar solo a los ADMIN
+que "hay pagos pendientes" (sin montos); lo calcularía una Cloud Function programada con la misma lógica.
 
 ## Fotos de los productos
 

@@ -204,3 +204,12 @@ td.c-sw > .adm-giro + .adm-pal{vertical-align:middle;color:var(--muted)}
 .adm-enc-zoom{display:flex;align-items:center;gap:12px;font-weight:600}
 .adm-enc-zoom input{flex:1;accent-color:var(--gold);min-height:44px}
 @media (max-width:560px){.adm-enc-vistas{grid-template-columns:1fr 96px}}
+
+/* Navegación entre Productos y Asistencias */
+.adm-nav{display:flex;gap:4px;margin-left:8px}
+.adm-nav a{color:var(--hero-fg);text-decoration:none;font-weight:600;font-size:.92rem;padding:8px 12px;border-radius:999px;opacity:.8}
+.adm-nav a:hover{opacity:1;background:rgba(255,255,255,.08)}
+.adm-nav a[aria-current="page"]{opacity:1;background:rgba(255,255,255,.16)}
+.adm-nav a[hidden]{display:none}
+@media (max-width:560px){.adm-top .logo-text,.adm-top .adm-etq{display:none}.adm-top .logo img{flex:none}.adm-nav{margin-left:0}}
+.adm-campo-ayuda{display:block;font-weight:400;font-size:.82rem;color:var(--muted)}
